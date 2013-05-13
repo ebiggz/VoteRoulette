@@ -1,0 +1,6 @@
+main: com.mythicacraft.votifierlistener.VotifierListener
+name: VotifierListener
+version: 0.1
+author: ebiggz
+description: A listener for Votifier
+depends: [Votifier]

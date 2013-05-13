@@ -1,0 +1,3 @@
+#VotifierListener Config
+doRewardsOnThreshold: true
+voteThreshold: 10
