@@ -37,6 +37,7 @@ public class VotifierListener extends JavaPlugin {
 		}
 		loadConfig();
 		loadPlayerData();
+		loadLocalizations();
 		pm.registerEvents(new VoteListener(this), this);
 		log.info("[VotifierListener] Enabled!");
 	}
@@ -100,10 +101,7 @@ public class VotifierListener extends JavaPlugin {
 
 		if (!playerDataFile.exists()) {
 			try {
-				playerDataFile.createNewFile();
-				playerData.getConfig().options().header("You do NOT need to touch this file!");
-				playerData.getConfig().options().copyHeader();
-				playerData.saveConfig();
+				playerData.saveDefaultConfig();
 			} catch (Exception e) {
 				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/players.yml", e);
 				pm.disablePlugin(this);
@@ -115,10 +113,36 @@ public class VotifierListener extends JavaPlugin {
 				playerData.getConfig().options().copyHeader();
 				playerData.reloadConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VotifierListener/config.yml", e);
+				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/players.yml", e);
 				pm.disablePlugin(this);
 			}
 		}
+	}
 
+	public void loadLocalizations() {
+		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		(new File(pluginFolder)).mkdirs();
+		String playerFolder = pluginFolder + File.separator + "data";
+		(new File(playerFolder)).mkdirs();
+		File localizationsFile = new File(playerFolder, "localizations.yml");
+		ConfigAccessor localizations = new ConfigAccessor("localizations.yml");
+
+		if (!localizationsFile.exists()) {
+			try {
+				localizations.saveDefaultConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/localizations.yml", e);
+				pm.disablePlugin(this);
+			}
+			return;
+		} else {
+			try {
+				localizations.reloadConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/localizations.yml", e);
+				pm.disablePlugin(this);
+			}
+		}
 	}
 }

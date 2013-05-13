@@ -28,18 +28,20 @@ public class VoteListener implements Listener {
 
 	void processVote(Vote vote) {
 		String playername = vote.getUsername();
-		boolean doRewardsOnThreshold = plugin.getConfig().getBoolean("doRewardsOnThreshold");
+		boolean giveRewardsOnThreshold = plugin.getConfig().getBoolean("giveRewardsOnThreshold");
 		int voteThreshold = plugin.getConfig().getInt("voteThreshold");
 		if(playerCfg.getConfig().contains(playername)) {
 			int currentCycle = playerCfg.getConfig().getInt(playername + ".currentCycle");
 			int lifetimeVotes = playerCfg.getConfig().getInt(playername + ".lifetimeVotes");
 			lifetimeVotes = lifetimeVotes + 1;
 			currentCycle = currentCycle + 1;
-			if(doRewardsOnThreshold && currentCycle >= voteThreshold) {
-				//do rewards
-				currentCycle = 0;
+			if(giveRewardsOnThreshold) {
+				if(currentCycle >= voteThreshold) {
+					//do rewards
+					currentCycle = 0;
+				}
 			} else {
-				//do rewards
+				//do rewards if giveRewardsOnThreshold is false
 			}
 			playerCfg.getConfig().set(playername + ".currentCycle", currentCycle);
 			playerCfg.getConfig().set(playername + ".lifetimeVotes", lifetimeVotes);
