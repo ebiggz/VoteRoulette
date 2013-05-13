@@ -1,3 +1,42 @@
 #VotifierListener Config
-doRewardsOnThreshold: true
-voteThreshold: 10
+
+#Set the following to true if you only want players to get rewarded after they vote so many times
+#For example, you want them to vote on all your server lists before getting rewarded
+giveRewardsOnThreshold: false
+
+#If the above is set to true, this is the number of how many votes till a player will receive a reward
+voteThreshold: 5
+
+#Whether or not to send a message to a player when they vote
+#You can customize this message in the localization.yml file
+messagePlayer: true
+
+#Whether or not to broadcast to the server when a player votes
+#You can customize this message in the localization.yml file
+broadcastToServer: false
+
+#Rewards Section
+
+#Set the following to true if you want a reward to be chosen at random (see rewards section below)
+useRandomReward: false
+
+#Use to set the default reward. useRandomReward will override this.
+defaultReward: ‘Default Reward’
+
+#Rewards list
+Rewards:
+    ‘Default Reward’:
+        items: 1(64), 2(32)
+        currency: 0
+        xpLevels: 0
+        #permGroup: Members
+
+
+#Blacklisted Players 
+#These players will not receive rewards
+blacklistedPlayers:
+    - Steve
+    - Notch
+
+#set the following to true to switch the above blacklist to a whitelist, meaning only the players on that list will get rewards
+useBlacklistAsWhitelist: false

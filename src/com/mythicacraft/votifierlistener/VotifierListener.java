@@ -79,6 +79,13 @@ public class VotifierListener extends JavaPlugin {
 
 	public void loadConfig() {
 		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		(new File(pluginFolder)).mkdirs();
+		File configFile = new File(pluginFolder, "config.yml");
+		if(!configFile.exists()) {
+			this.saveResource("config.yml", true);
+			return;
+		}
 		try {
 			reloadConfig();
 			newConfig = this.getConfig();
