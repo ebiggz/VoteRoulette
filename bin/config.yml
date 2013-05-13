@@ -6,6 +6,7 @@
 
 # Set the following to true if you only want players to get rewarded after they vote so many times
 # For example, you want them to vote on all your server lists before getting rewarded
+# If this is false, players will receive an award every time they vote
 giveRewardsOnThreshold: false
 
 # If the above is set to true, this is the number of how many votes till a player will receive a reward
@@ -23,19 +24,36 @@ broadcastToServer: false
 #Rewards Section#
 #################
 
-# Set the following to true if you want a reward to be chosen at random (see rewards section below)
+##Rewards List##
+#
+# Here you can make multiple rewards. 
+# Each reward can have:
+# - a list of items with quantities for each. 
+# - an amount of money (if Vault is installed)
+# - an amount of xp levels that will be given
+# - a list of permission groups the reward will be considered for
+# You can leave out any of these options if you do not wish to use them
+#
+#Example reward:
+#    ‘Awesome Reward’: -- Name of the reward
+#        items: 264(10), 276, 364(16) — This one gives 10 diamonds, a diamond sword, and 16 steak 
+#        currency: 100 —- $100 in-game currency (if vault is installed)
+#        xpLevels: 5 —- Player will gain 5 xp levels
+#        permGroups: Members, Donators —- Only players in the ‘Members’ or ‘Donators’ permission groups are eligible for the reward
+
+Rewards:
+
+    ‘Default Reward’:
+        items: 264(1)
+
+    #’Lame Reward’:
+    #    items: 3(64)
+
+# Set the following to true if you want a reward to be chosen at random (see rewards list below)
 useRandomReward: false
 
-# Use to set the default reward. useRandomReward will override this.
+# Use to set the default reward. (useRandomReward will override this if set to true)
 defaultReward: ‘Default Reward’
-
-# Rewards list
-Rewards:
-    ‘Default Reward’:
-        items: 1(64), 2(32)
-        currency: 0
-        xpLevels: 0
-        #permGroup: Members
 
 #####################
 #Blacklisted Players# 
