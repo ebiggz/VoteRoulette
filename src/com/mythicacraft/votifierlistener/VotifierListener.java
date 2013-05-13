@@ -135,7 +135,6 @@ public class VotifierListener extends JavaPlugin {
 				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/localizations.yml", e);
 				pm.disablePlugin(this);
 			}
-			return;
 		} else {
 			try {
 				localizations.reloadConfig();
