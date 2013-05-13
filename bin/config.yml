@@ -35,18 +35,18 @@ broadcastToServer: false
 # You can leave out any of these options if you do not wish to use them
 #
 #Example reward:
-#    ‘Awesome Reward’: -- Name of the reward
-#        items: 264(10), 276, 364(16) — This one gives 10 diamonds, a diamond sword, and 16 steak 
+#    Awesome Reward: -- Name of the reward
+#        items: 264(10), 276, 364(16) —- This one gives 10 diamonds, a diamond sword, and 16 steak 
 #        currency: 100 —- $100 in-game currency (if vault is installed)
 #        xpLevels: 5 —- Player will gain 5 xp levels
 #        permGroups: Members, Donators —- Only players in the ‘Members’ or ‘Donators’ permission groups are eligible for the reward
 
 Rewards:
 
-    ‘Default Reward’:
+    Default Reward:
         items: 264(1)
 
-    #’Lame Reward’:
+    #Lame Reward:
     #    items: 3(64)
 
 # Set the following to true if you want a reward to be chosen at random (see rewards list below)
