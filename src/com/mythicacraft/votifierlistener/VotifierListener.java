@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -17,10 +18,12 @@ import com.mythicacraft.votifierlistener.utils.ConfigAccessor;
 
 public class VotifierListener extends JavaPlugin {
 
-	FileConfiguration newConfig;
-	private static final Logger log = Logger.getLogger("VotifierListener");
 	public Economy economy = null;
+	public static Permission permission = null;
 	private boolean vaultEnabled = false;
+	private static final Logger log = Logger.getLogger("VotifierListener");
+	FileConfiguration newConfig;
+	RewardManager rm = new RewardManager(this);
 
 	public void onDisable() {
 		log.info("[VotifierListener] Disabled!");
@@ -38,6 +41,7 @@ public class VotifierListener extends JavaPlugin {
 		loadConfig();
 		loadPlayerData();
 		loadLocalizations();
+		rm.loadRewards();
 		pm.registerEvents(new VoteListener(this), this);
 		log.info("[VotifierListener] Enabled!");
 	}
@@ -58,6 +62,10 @@ public class VotifierListener extends JavaPlugin {
 				log.warning("[VotifierListener] No plugin to handle cash, cash rewards will NOT be given!");
 				return false;
 			}
+			if(!setupPermissions()) {
+				log.warning("[VotifierListener] No plugin to handle permission groups, perm group settings will be igored!");
+				return false;
+			}
 		} else {
 			log.warning("[VotifierListener] Vault plugin not found, cash rewards will NOT be given!");
 			return false;
@@ -71,6 +79,14 @@ public class VotifierListener extends JavaPlugin {
 			economy = economyProvider.getProvider();
 		}
 		return (economy != null);
+	}
+
+	private boolean setupPermissions() {
+		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
+		if (permissionProvider != null) {
+			permission = permissionProvider.getProvider();
+		}
+		return (permission != null);
 	}
 
 	public boolean isVaultEnabled() {
@@ -88,9 +104,6 @@ public class VotifierListener extends JavaPlugin {
 		}
 		try {
 			reloadConfig();
-			newConfig = this.getConfig();
-			newConfig.options().copyDefaults(true);
-			saveConfig();
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Exception while loading VotifierListener/config.yml", e);
 			pm.disablePlugin(this);
