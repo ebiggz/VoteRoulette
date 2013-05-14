@@ -21,12 +21,12 @@ public class VoteRoulette extends JavaPlugin {
 	public Economy economy = null;
 	public static Permission permission = null;
 	private boolean vaultEnabled = false;
-	private static final Logger log = Logger.getLogger("VotifierListener");
+	private static final Logger log = Logger.getLogger("VoteRoulette");
 	FileConfiguration newConfig;
 	RewardManager rm = new RewardManager(this);
 
 	public void onDisable() {
-		log.info("[VotifierListener] Disabled!");
+		log.info("[VoteRoulette] Disabled!");
 	}
 
 	public void onEnable() {
@@ -42,14 +42,16 @@ public class VoteRoulette extends JavaPlugin {
 		loadPlayerData();
 		loadLocalizations();
 		rm.loadRewards();
+		rm.loadMilestones();
 		pm.registerEvents(new VoteListener(this), this);
-		log.info("[VotifierListener] Enabled!");
+		rm.printRewards();
+		log.info("[VoteRoulette] Enabled!");
 	}
 
 	private boolean setupVotifier() {
 		Plugin votifier =  getServer().getPluginManager().getPlugin("Votifier");
 		if (!(votifier != null && votifier instanceof com.vexsoftware.votifier.Votifier)) {
-			log.severe("[VotifierListener] Votifier was not found!");
+			log.severe("[VoteRoulette] Votifier was not found!");
 			return false;
 		}
 		return true;
@@ -59,15 +61,15 @@ public class VoteRoulette extends JavaPlugin {
 		Plugin vault =  getServer().getPluginManager().getPlugin("Vault");
 		if (vault != null && vault instanceof net.milkbowl.vault.Vault) {
 			if(!setupEconomy()) {
-				log.warning("[VotifierListener] No plugin to handle cash, cash rewards will NOT be given!");
+				log.warning("[VoteRoulette] No plugin to handle cash, cash rewards will NOT be given!");
 				return false;
 			}
 			if(!setupPermissions()) {
-				log.warning("[VotifierListener] No plugin to handle permission groups, perm group settings will be igored!");
+				log.warning("[VoteRoulette] No plugin to handle permission groups, perm group settings will be igored!");
 				return false;
 			}
 		} else {
-			log.warning("[VotifierListener] Vault plugin not found, cash rewards will NOT be given!");
+			log.warning("[VoteRoulette] Vault plugin not found, cash rewards will NOT be given!");
 			return false;
 		}
 		return true;
@@ -105,7 +107,7 @@ public class VoteRoulette extends JavaPlugin {
 		try {
 			reloadConfig();
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception while loading VotifierListener/config.yml", e);
+			log.log(Level.SEVERE, "Exception while loading VoteRoulette/config.yml", e);
 			pm.disablePlugin(this);
 		}
 	}
@@ -123,7 +125,7 @@ public class VoteRoulette extends JavaPlugin {
 			try {
 				playerData.saveDefaultConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/players.yml", e);
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/players.yml", e);
 				pm.disablePlugin(this);
 			}
 			return;
@@ -133,7 +135,7 @@ public class VoteRoulette extends JavaPlugin {
 				playerData.getConfig().options().copyHeader();
 				playerData.reloadConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/players.yml", e);
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/players.yml", e);
 				pm.disablePlugin(this);
 			}
 		}
@@ -148,18 +150,18 @@ public class VoteRoulette extends JavaPlugin {
 		File localizationsFile = new File(playerFolder, "localizations.yml");
 		ConfigAccessor localizations = new ConfigAccessor("localizations.yml");
 
-		if (!localizationsFile.exists()) {
+		if(!localizationsFile.exists()) {
 			try {
 				localizations.saveDefaultConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/localizations.yml", e);
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/localizations.yml", e);
 				pm.disablePlugin(this);
 			}
 		} else {
 			try {
 				localizations.reloadConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VotifierListener/data/localizations.yml", e);
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/localizations.yml", e);
 				pm.disablePlugin(this);
 			}
 		}

@@ -5,24 +5,47 @@ import java.util.logging.Logger;
 
 import org.bukkit.configuration.ConfigurationSection;
 
-public class Reward {
+
+public class Milestone {
 
 	private static final Logger log = Logger.getLogger("VoteRoulette");
+	private int votes = 0;
 	private double currency = 0;
 	private int xpLevels = 0;
 	private ArrayList<Integer> items = new ArrayList<Integer>();
 	private ArrayList<Integer> quants = new ArrayList<Integer>();
 	private String[] permGroups;
 	private String name;
+	private boolean recurring = false;
 
-	Reward(String name, ConfigurationSection cs) {
+	Milestone(String name, ConfigurationSection cs) {
 		this.setName(name);
+		if(!cs.contains("votes")) {
+			log.warning("[VoteRoulette] Milestone \"" + name + "\" doesn't have a vote number set! Ignoring Milestone...");
+			try {
+				this.finalize();
+			} catch (Throwable e) {
+			}
+			return;
+		}
+		String votes = cs.getString("votes");
+		try {
+			this.votes = Integer.parseInt(votes);
+		} catch (Exception e) {
+			log.warning("[VoteRoulette] Milestone \"" + name + "\" votes format invalid! Ignoring Milestone...");
+			try {
+				this.finalize();
+			}
+			catch (Throwable t) {
+			}
+			return;
+		}
 		if(cs.contains("currency")) {
 			try {
 				String currency = cs.getString("currency");
 				this.currency = Integer.parseInt(currency);
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid currency format for reward: " + name + ", Skipping currency...");
+				log.warning("[VoteRoulette] Invalid currency format for milestone: " + name + ", Skipping currency...");
 			}
 		}
 		if(cs.contains("xpLevels")) {
@@ -30,7 +53,15 @@ public class Reward {
 				String xp = cs.getString("xpLevels");
 				this.xpLevels = Integer.parseInt(xp);
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid xpLevel format for reward: " + name + ", Skipping xpLevels...");
+				log.warning("[VoteRoulette] Invalid xpLevel format for milestone: " + name + ", Skipping xpLevels...");
+			}
+		}
+		if(cs.contains("recurring")) {
+			try {
+				boolean tmp = Boolean.parseBoolean(cs.getString("recurring"));
+				this.recurring = tmp;
+			} catch (Exception e) {
+				log.warning("[VoteRoulette] Invalid recurring format for milestone: " + name + ", Recurring defaulting to false...");
 			}
 		}
 		if(cs.contains("items")) {
@@ -49,7 +80,7 @@ public class Reward {
 					items.add(iItem);
 					quants.add(iQuant);
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] Invalid item formatting for reward: " + item + ", Skipping...");
+					log.warning("[VoteRoulette] Invalid item formatting for milestone(" + name + "): " + item + ", Skipping item...");
 				}
 			}
 		}
@@ -91,6 +122,22 @@ public class Reward {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public int getVotes() {
+		return votes;
+	}
+
+	public void setVotes(int votes) {
+		this.votes = votes;
+	}
+
+	public boolean isRecurring() {
+		return recurring;
+	}
+
+	public void setRecurring(boolean recurring) {
+		this.recurring = recurring;
 	}
 
 }
