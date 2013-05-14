@@ -51,12 +51,13 @@ Rewards:
 #        items: 3(64)
 
 # Set the following to true if you want a reward to be chosen at random (see rewards list below)
-useRandomReward: false
+giveRandomReward: false
 
 # Use to set the default reward. (useRandomReward set to true will override this)
 defaultReward: ‘Default Reward’
 
 ##Milestones List##
+#
 # Milestones are special rewards that are given after so a player has made so many votes
 # They are created in the config the same way as regular rewards, however you must include
 # a “votes: #“ section with how many votes you want the milestone to be! The milestone will otherwise 
@@ -66,11 +67,16 @@ defaultReward: ‘Default Reward’
 
 Milestones:
 
-    Default Milestone:
-        votes: 50
-        currency:
-        items:
-        
+#    Default Milestone:
+#        votes: 50
+#        currency: 100
+#        recurring: true
+
+# Set this to true to if you set multiple milestones with the same vote count and you want a random one to be chosen (if false, the first will be chosen)     
+giveRandomMilestone: true
+
+# Set the following to false if you want players to get a regular reward on top of a milestone reward when they reach a milestone.
+onlyRewardMilestoneUponCompletion: true
 
 #####################
 #Blacklisted Players# 
@@ -83,3 +89,7 @@ blacklistedPlayers:
 
 # Set the following to true to switch the above blacklist to a whitelist, meaning only the players on that list will get rewards
 useBlacklistAsWhitelist: false
+#####################
+
+# No need to touch this
+configVerison: 1.0
