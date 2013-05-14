@@ -52,8 +52,29 @@ public class RewardManager {
 		}
 	}
 
-	public void getQualifiedRewards(Player player) {
+	public Reward[] getQualifiedRewards(Player player) {
+		ArrayList<Reward> qualifiedRewards = new ArrayList<Reward>();
+		Reward[] rewardsArray;
+		if(VoteRoulette.hasPermPlugin()) {
+			for(int i = 0; i < rewards.size(); i++) {
+				if(rewards.get(i).hasPermissionGroups()) {
+					String[] permGroups = rewards.get(i).getPermGroups();
+					for(int j = 0; j < permGroups.length; j++) {
+						if(plugin.permission.playerInGroup(player, permGroups[j])) {
+							qualifiedRewards.add(rewards.get(i));
+							break;
 
+						}
+					}
+				}
+			}
+			rewardsArray = new Reward[qualifiedRewards.size()];
+			qualifiedRewards.toArray(rewardsArray);
+			return rewardsArray;
+		}
+		rewardsArray = new Reward[rewards.size()];
+		rewards.toArray(rewardsArray);
+		return rewardsArray;
 	}
 
 	public Reward getDefaultReward() {
