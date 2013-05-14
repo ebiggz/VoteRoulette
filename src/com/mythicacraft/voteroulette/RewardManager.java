@@ -40,12 +40,12 @@ public class RewardManager {
 			for (String milestoneName : cs.getKeys(false)) {
 				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
 				if (milestoneOptions != null) {
-					if(!milestoneOptions.contains("votes")) {
-						log.warning("[VoteRoulette] Milestone \"" + milestoneName + "\" doesn't have a vote number set! Ignoring Milestone...");
+					if(milestoneOptions.contains("votes")) {
+						milestones.add(new Milestone(milestoneName, milestoneOptions));
+						System.out.println("[VL] Added Milestone: " + milestoneName);
 						continue;
 					}
-					milestones.add(new Milestone(milestoneName, milestoneOptions));
-					System.out.println("[VL] Added Milestone: " + milestoneName);
+					log.warning("[VoteRoulette] Milestone \"" + milestoneName + "\" doesn't have a vote number set! Ignoring Milestone...");
 				}
 			}
 		}
