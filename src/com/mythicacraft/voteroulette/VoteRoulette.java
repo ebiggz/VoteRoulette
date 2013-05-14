@@ -31,6 +31,7 @@ public class VoteRoulette extends JavaPlugin {
 
 	public void onEnable() {
 		PluginManager pm = getServer().getPluginManager();
+
 		if(!setupVotifier()) {
 			pm.disablePlugin(this);
 			return;
@@ -38,13 +39,13 @@ public class VoteRoulette extends JavaPlugin {
 		if(setupVault()) {
 			vaultEnabled = true;
 		}
+
 		loadConfig();
 		loadPlayerData();
 		loadLocalizations();
 		rm.loadRewards();
 		rm.loadMilestones();
 		pm.registerEvents(new VoteListener(this), this);
-		rm.printRewards();
 		log.info("[VoteRoulette] Enabled!");
 	}
 
@@ -65,11 +66,11 @@ public class VoteRoulette extends JavaPlugin {
 				return false;
 			}
 			if(!setupPermissions()) {
-				log.warning("[VoteRoulette] No plugin to handle permission groups, perm group settings will be igored!");
+				log.warning("[VoteRoulette] No plugin to handle permission groups, permission group reward settings will be ignored!");
 				return false;
 			}
 		} else {
-			log.warning("[VoteRoulette] Vault plugin not found, cash rewards will NOT be given!");
+			log.warning("[VoteRoulette] Vault plugin not found, cash rewards will NOT be given, and permission group reward settings will be ignored!");
 			return false;
 		}
 		return true;
