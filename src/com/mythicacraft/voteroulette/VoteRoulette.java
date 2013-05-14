@@ -19,8 +19,10 @@ import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 public class VoteRoulette extends JavaPlugin {
 
 	public Economy economy = null;
-	public static Permission permission = null;
-	private boolean vaultEnabled = false;
+	public Permission permission = null;
+	private static boolean vaultEnabled = false;
+	private static boolean hasPermPlugin = false;
+	private static boolean hasEconPlugin = false;
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	FileConfiguration newConfig;
 	RewardManager rm = new RewardManager(this);
@@ -62,15 +64,15 @@ public class VoteRoulette extends JavaPlugin {
 		Plugin vault =  getServer().getPluginManager().getPlugin("Vault");
 		if (vault != null && vault instanceof net.milkbowl.vault.Vault) {
 			if(!setupEconomy()) {
-				log.warning("[VoteRoulette] No plugin to handle cash, cash rewards will NOT be given!");
-				return false;
+				log.warning("[VoteRoulette] No plugin to handle currency, cash rewards will not be given!");
+				return true;
 			}
 			if(!setupPermissions()) {
 				log.warning("[VoteRoulette] No plugin to handle permission groups, permission group reward settings will be ignored!");
-				return false;
+				return true;
 			}
 		} else {
-			log.warning("[VoteRoulette] Vault plugin not found, cash rewards will NOT be given, and permission group reward settings will be ignored!");
+			log.warning("[VoteRoulette] Vault plugin not found. Currency and permission group reward settings will be ignored!");
 			return false;
 		}
 		return true;
@@ -79,6 +81,7 @@ public class VoteRoulette extends JavaPlugin {
 	private boolean setupEconomy() {
 		RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
 		if (economyProvider != null) {
+			hasEconPlugin = true;
 			economy = economyProvider.getProvider();
 		}
 		return (economy != null);
@@ -87,12 +90,13 @@ public class VoteRoulette extends JavaPlugin {
 	private boolean setupPermissions() {
 		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
 		if (permissionProvider != null) {
+			hasPermPlugin = true;
 			permission = permissionProvider.getProvider();
 		}
 		return (permission != null);
 	}
 
-	public boolean isVaultEnabled() {
+	public static boolean vaultIsEnabled() {
 		return vaultEnabled;
 	}
 
@@ -166,5 +170,13 @@ public class VoteRoulette extends JavaPlugin {
 				pm.disablePlugin(this);
 			}
 		}
+	}
+
+	public static boolean hasPermPlugin() {
+		return hasPermPlugin;
+	}
+
+	public static boolean hasEconPlugin() {
+		return hasEconPlugin;
 	}
 }
