@@ -1,4 +1,4 @@
-package com.mythicacraft.votifierlistener.listeners;
+package com.mythicacraft.voteroulette.listeners;
 
 
 import org.bukkit.entity.Player;
@@ -6,8 +6,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
-import com.mythicacraft.votifierlistener.VotifierListener;
-import com.mythicacraft.votifierlistener.utils.ConfigAccessor;
+import com.mythicacraft.voteroulette.VoteRoulette;
+import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
 
@@ -15,9 +15,9 @@ public class VoteListener implements Listener {
 
 	ConfigAccessor playerCfg = new ConfigAccessor("players.yml");
 
-	private VotifierListener plugin;
+	private VoteRoulette plugin;
 
-	public VoteListener(VotifierListener plugin) {
+	public VoteListener(VoteRoulette plugin) {
 		this.plugin = plugin;
 	}
 
@@ -30,5 +30,6 @@ public class VoteListener implements Listener {
 	void processVote(Vote vote) {
 		String playername = vote.getUsername();
 		Player p = plugin.getServer().getPlayerExact(playername);
+
 	}
 }

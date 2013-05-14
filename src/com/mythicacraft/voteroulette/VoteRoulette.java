@@ -1,4 +1,4 @@
-package com.mythicacraft.votifierlistener;
+package com.mythicacraft.voteroulette;
 
 import java.io.File;
 import java.util.logging.Level;
@@ -13,10 +13,10 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.mythicacraft.votifierlistener.listeners.VoteListener;
-import com.mythicacraft.votifierlistener.utils.ConfigAccessor;
+import com.mythicacraft.voteroulette.listeners.VoteListener;
+import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 
-public class VotifierListener extends JavaPlugin {
+public class VoteRoulette extends JavaPlugin {
 
 	public Economy economy = null;
 	public static Permission permission = null;

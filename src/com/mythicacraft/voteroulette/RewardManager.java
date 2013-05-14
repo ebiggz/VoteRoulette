@@ -1,4 +1,4 @@
-package com.mythicacraft.votifierlistener;
+package com.mythicacraft.voteroulette;
 
 import java.util.ArrayList;
 
@@ -7,10 +7,10 @@ import org.bukkit.configuration.ConfigurationSection;
 public class RewardManager {
 
 	private ArrayList<Reward> rewards = new ArrayList<Reward>();
-	private VotifierListener plugin;
+	private VoteRoulette plugin;
 	private Reward defaultReward;
 
-	public RewardManager(VotifierListener plugin) {
+	public RewardManager(VoteRoulette plugin) {
 		this.plugin = plugin;
 	}
 

@@ -1,4 +1,4 @@
-package com.mythicacraft.votifierlistener;
+package com.mythicacraft.voteroulette;
 
 import java.util.ArrayList;
 import java.util.logging.Logger;

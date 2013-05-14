@@ -1,4 +1,4 @@
-package com.mythicacraft.votifierlistener.utils;
+package com.mythicacraft.voteroulette.utils;
 
 import java.io.File;
 import java.io.IOException;
