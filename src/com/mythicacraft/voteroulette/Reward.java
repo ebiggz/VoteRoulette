@@ -93,4 +93,24 @@ public class Reward {
 		this.name = name;
 	}
 
+	public boolean hasPermissionGroups() {
+		if(permGroups == null) return false;
+		return true;
+	}
+
+	public boolean hasItems() {
+		if(items.isEmpty()) return false;
+		return true;
+	}
+
+	public boolean hasCurrency() {
+		if(currency == 0) return false;
+		return true;
+	}
+
+	public boolean hasXpLevels() {
+		if(xpLevels == 0) return false;
+		return true;
+	}
+
 }

@@ -20,14 +20,6 @@ public class Milestone {
 
 	Milestone(String name, ConfigurationSection cs) {
 		this.setName(name);
-		if(!cs.contains("votes")) {
-			log.warning("[VoteRoulette] Milestone \"" + name + "\" doesn't have a vote number set! Ignoring Milestone...");
-			try {
-				this.finalize();
-			} catch (Throwable e) {
-			}
-			return;
-		}
 		String votes = cs.getString("votes");
 		try {
 			this.votes = Integer.parseInt(votes);
@@ -138,6 +130,26 @@ public class Milestone {
 
 	public void setRecurring(boolean recurring) {
 		this.recurring = recurring;
+	}
+
+	public boolean hasPermissionGroups() {
+		if(permGroups == null) return false;
+		return true;
+	}
+
+	public boolean hasItems() {
+		if(items.isEmpty()) return false;
+		return true;
+	}
+
+	public boolean hasCurrency() {
+		if(currency == 0) return false;
+		return true;
+	}
+
+	public boolean hasXpLevels() {
+		if(xpLevels == 0) return false;
+		return true;
 	}
 
 }
