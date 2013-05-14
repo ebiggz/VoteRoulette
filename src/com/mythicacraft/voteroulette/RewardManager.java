@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 
 public class RewardManager {
 
@@ -24,10 +25,10 @@ public class RewardManager {
 				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
 				if (rewardOptions != null) {
 					rewards.add(new Reward(rewardName, rewardOptions));
-					System.out.println("[VL] Added Reward: " + rewardName);
+					System.out.println("[VR] Added Reward: " + rewardName);
 					if(rewardName.equals(plugin.getConfig().getString("defaultReward"))) {
 						setDefaultReward(new Reward(rewardName, rewardOptions));
-						System.out.println("[VL] Saved as default.");
+						System.out.println("[VR] Saved as default.");
 					}
 				}
 			}
@@ -42,7 +43,7 @@ public class RewardManager {
 				if (milestoneOptions != null) {
 					if(milestoneOptions.contains("votes")) {
 						milestones.add(new Milestone(milestoneName, milestoneOptions));
-						System.out.println("[VL] Added Milestone: " + milestoneName);
+						System.out.println("[VR] Added Milestone: " + milestoneName);
 						continue;
 					}
 					log.warning("[VoteRoulette] Milestone \"" + milestoneName + "\" doesn't have a vote number set! Ignoring Milestone...");
@@ -51,10 +52,8 @@ public class RewardManager {
 		}
 	}
 
-	public void printRewards() {
-		for(int i = 0; i < rewards.size(); i++) {
-			System.out.println(rewards.get(i).getName());
-		}
+	public void getQualifiedRewards(Player player) {
+
 	}
 
 	public Reward getDefaultReward() {
