@@ -18,11 +18,15 @@ public class Reward {
 	Reward(String name, ConfigurationSection cs) {
 		this.setName(name);
 		if(cs.contains("currency")) {
-			try {
-				String currency = cs.getString("currency");
-				this.currency = Integer.parseInt(currency);
-			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid currency format for reward: " + name + ", Skipping currency...");
+			if(!VoteRoulette.hasEconPlugin()) {
+				log.warning("[VoteRoulette] Reward \"" + name + "\" contains currency settings but Vault is not installed or there is no economy plugin, Skipping currency...");
+			} else {
+				try {
+					String currency = cs.getString("currency");
+					this.currency = Integer.parseInt(currency);
+				} catch (Exception e) {
+					log.warning("[VoteRoulette] Invalid currency format for reward: " + name + ", Skipping currency...");
+				}
 			}
 		}
 		if(cs.contains("xpLevels")) {
@@ -54,9 +58,13 @@ public class Reward {
 			}
 		}
 		if(cs.contains("permGroups")) {
-			permGroups = cs.getString("permGroups").split(",");
-			for(int i = 0; i < permGroups.length; i++) {
-				permGroups[i] = permGroups[i].trim();
+			if(!VoteRoulette.hasPermPlugin()) {
+				log.warning("[VoteRoulette] Reward \"" + name + "\" contains perm group settings but Vault is not installed or there is no permission plugin, Skipping perm groups...");
+			} else {
+				permGroups = cs.getString("permGroups").split(",");
+				for(int i = 0; i < permGroups.length; i++) {
+					permGroups[i] = permGroups[i].trim();
+				}
 			}
 		}
 	}
