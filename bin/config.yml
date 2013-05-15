@@ -89,7 +89,8 @@ blacklistedPlayers:
 
 # Set the following to true to switch the above blacklist to a whitelist, meaning only the players on that list will get rewards
 useBlacklistAsWhitelist: false
-#####################
 
+# End of config
+#####################
 # No need to touch this
 configVerison: 1.0
