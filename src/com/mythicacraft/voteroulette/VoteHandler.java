@@ -18,7 +18,7 @@ public class VoteHandler implements ConfigConstants {
 		String playername = player.getName();
 		System.out.println("Checking if player is blacklisted");
 		if((BLACKLIST_AS_WHITELIST == false && Utils.playerIsBlacklisted(player)) || (BLACKLIST_AS_WHITELIST && Utils.playerIsBlacklisted(player) == false)) return;
-		System.out.println("if player is NOT blacklisted");
+		System.out.println("player is NOT blacklisted");
 		if(rm.playerReachedMilestone(player)) {
 			if(GIVE_RANDOM_MILESTONE) {
 				rm.sendRandMilestone(player);
