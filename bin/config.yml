@@ -4,14 +4,6 @@
 #Settings#
 ##########
 
-# Set the following to true if you only want players to get rewarded after they vote so many times
-# For example, you want them to vote on all your server lists before getting rewarded
-# If this is false, players will receive an award every time they vote
-giveRewardsOnThreshold: false
-
-# If the above is set to true, this is the number of how many votes till a player will receive a reward
-voteThreshold: 5
-
 # Whether or not to send a message to a player when they vote
 # You can customize this message in the localizations.yml file
 messagePlayer: true
@@ -51,10 +43,18 @@ Rewards:
 #        items: 3(64)
 
 # Set the following to true if you want a reward to be chosen at random (see rewards list below)
-giveRandomReward: false
+giveRandomReward: true
 
-# Use to set the default reward. (useRandomReward set to true will override this)
+# Use to set the default reward. (This is for if you have “giveRandomReward” set to false.)
 defaultReward: ‘Default Reward’
+
+# Set the following to true if you only want players to get rewarded after they vote so many times
+# For example, you want them to vote on all your server lists before getting rewarded
+# If this is false, players will receive an award every time they vote
+giveRewardsOnThreshold: false
+
+# If the above is set to true, this is the number of how many votes till a player will receive a reward
+voteThreshold: 5
 
 ##Milestones List##
 #
@@ -71,6 +71,7 @@ Milestones:
 #        votes: 50
 #        currency: 100
 #        recurring: true
+#        priority: 10
 
 # Set this to true to if you set multiple milestones with the same vote count and you want a random one to be chosen (if false, the first will be chosen)     
 giveRandomMilestone: true

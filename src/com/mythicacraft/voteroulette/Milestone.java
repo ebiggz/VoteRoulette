@@ -15,6 +15,7 @@ public class Milestone {
 	private ArrayList<Integer> items = new ArrayList<Integer>();
 	private ArrayList<Integer> quants = new ArrayList<Integer>();
 	private String[] permGroups;
+	private int priority = 10;
 	private String name;
 	private boolean recurring = false;
 
@@ -33,11 +34,15 @@ public class Milestone {
 			return;
 		}
 		if(cs.contains("currency")) {
-			try {
-				String currency = cs.getString("currency");
-				this.currency = Integer.parseInt(currency);
-			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid currency format for milestone: " + name + ", Skipping currency...");
+			if(!VoteRoulette.hasEconPlugin()) {
+				log.warning("[VoteRoulette] Reward \"" + name + "\" contains currency settings but Vault is not installed or there is no economy plugin, Skipping currency...");
+			} else {
+				try {
+					String currency = cs.getString("currency");
+					this.currency = Integer.parseInt(currency);
+				} catch (Exception e) {
+					log.warning("[VoteRoulette] Invalid currency format for reward: " + name + ", Skipping currency...");
+				}
 			}
 		}
 		if(cs.contains("xpLevels")) {
@@ -77,11 +82,27 @@ public class Milestone {
 			}
 		}
 		if(cs.contains("permGroups")) {
-			permGroups = cs.getString("permGroups").split(",");
-			for(int i = 0; i < permGroups.length; i++) {
-				permGroups[i] = permGroups[i].trim();
+			if(!VoteRoulette.hasPermPlugin()) {
+				log.warning("[VoteRoulette] Reward \"" + name + "\" contains perm group settings but Vault is not installed or there is no permission plugin, Skipping perm groups...");
+			} else {
+				permGroups = cs.getString("permGroups").split(",");
+				for(int i = 0; i < permGroups.length; i++) {
+					permGroups[i] = permGroups[i].trim();
+				}
 			}
 		}
+		if(cs.contains("priority")) {
+			try {
+				String prior = cs.getString("priority");
+				this.priority = Integer.parseInt(prior);
+			} catch (Exception e) {
+				log.warning("[VoteRoulette] Invalid priority format for milestone: " + name + ", Setting priorty to default of 10...");
+			}
+		}
+		if(!cs.contains("priority")) {
+			log.warning("[VoteRoulette] No priority format for milestone: " + name + " found, Setting priorty to default of 10...");
+		}
+
 	}
 
 	public double getCurrency() {
@@ -150,6 +171,14 @@ public class Milestone {
 	public boolean hasXpLevels() {
 		if(xpLevels == 0) return false;
 		return true;
+	}
+
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
 	}
 
 }

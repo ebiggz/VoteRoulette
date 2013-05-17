@@ -5,3 +5,7 @@ author: ebiggz
 description: A listener for Votifier
 depends: [Votifier]
 softdepends: [Vault]
+commands:
+    debugvote:
+        description: debug vote
+        usage: /<command>

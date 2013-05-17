@@ -62,7 +62,7 @@ public class ConfigAccessor {
 
 	public void saveDefaultConfig() {
 		if (!configFile.exists()) {
-			this.plugin.saveResource("data/" + fileName, false);
+			this.plugin.saveResource("data" + File.separator + fileName, false);
 		}
 	}
 }

@@ -7,25 +7,27 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.mythicacraft.voteroulette.cmdexecutors.Commands;
 import com.mythicacraft.voteroulette.listeners.VoteListener;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 
 public class VoteRoulette extends JavaPlugin {
 
-	public Economy economy = null;
-	public Permission permission = null;
+	public static Economy economy = null;
+	public static Permission permission = null;
 	private static boolean vaultEnabled = false;
 	private static boolean hasPermPlugin = false;
 	private static boolean hasEconPlugin = false;
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	FileConfiguration newConfig;
-	RewardManager rm = new RewardManager(this);
+	static RewardManager rm = new RewardManager();
 
 	public void onDisable() {
 		log.info("[VoteRoulette] Disabled!");
@@ -45,9 +47,10 @@ public class VoteRoulette extends JavaPlugin {
 		loadConfig();
 		loadPlayerData();
 		loadLocalizations();
-		rm.loadRewards();
-		rm.loadMilestones();
+		loadRewards();
+		loadMilestones();
 		pm.registerEvents(new VoteListener(this), this);
+		getCommand("debugvote").setExecutor(new Commands());
 		log.info("[VoteRoulette] Enabled!");
 	}
 
@@ -172,11 +175,60 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
+	void loadRewards() {
+		ConfigurationSection cs = getConfig().getConfigurationSection("Rewards");
+		if(cs != null) {
+			for(String rewardName : cs.getKeys(false)) {
+				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
+				if (rewardOptions != null) {
+					rm.addReward(new Reward(rewardName, rewardOptions));
+					System.out.println("[VR] Added Reward: " + rewardName);
+					if(rewardName.equals(getConfig().getString("defaultReward"))) {
+						rm.setDefaultReward(new Reward(rewardName, rewardOptions));
+						System.out.println("[VR] Saved as default.");
+					}
+					continue;
+				}
+				log.warning("[VoteRoulette] The reward \"" + rewardName + "\" is empty! Skipping...");
+			}
+			if(rm.hasDefaultReward() == false && getConfig().getBoolean("giveRandomReward") == false) {
+				log.warning("[VoteRoulette] The deafult reward coult not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
+			}
+			return;
+		}
+		log.severe("[VoteRoulette] Your reward section is empty, no rewards will be given!");
+	}
+
+	void loadMilestones() {
+		ConfigurationSection cs = getConfig().getConfigurationSection("Milestones");
+		if(cs != null) {
+			for (String milestoneName : cs.getKeys(false)) {
+				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
+				if (milestoneOptions != null) {
+					if(milestoneOptions.contains("votes")) {
+						rm.addMilestone(new Milestone(milestoneName, milestoneOptions));
+						System.out.println("[VR] Added Milestone: " + milestoneName);
+						continue;
+					}
+					log.warning("[VoteRoulette] Milestone \"" + milestoneName + "\" doesn't have a vote number set! Ignoring Milestone...");
+					continue;
+				}
+				log.warning("[VoteRoulette] The reward \"" + milestoneName + "\" is empty! Skipping...");
+			}
+			return;
+		}
+		log.warning("[VoteRoulette] Your milestone section is empty, no milestones will be given!");
+	}
+
 	public static boolean hasPermPlugin() {
 		return hasPermPlugin;
 	}
 
 	public static boolean hasEconPlugin() {
 		return hasEconPlugin;
+	}
+
+	public static RewardManager getRewardManager() {
+		return rm;
 	}
 }
