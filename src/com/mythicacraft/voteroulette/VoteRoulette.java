@@ -49,7 +49,7 @@ public class VoteRoulette extends JavaPlugin {
 		loadLocalizations();
 		loadRewards();
 		loadMilestones();
-		pm.registerEvents(new VoteListener(this), this);
+		pm.registerEvents(new VoteListener(), this);
 		getCommand("debugvote").setExecutor(new Commands());
 		log.info("[VoteRoulette] Enabled!");
 	}
@@ -176,6 +176,7 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	void loadRewards() {
+		rm.clearRewards();
 		ConfigurationSection cs = getConfig().getConfigurationSection("Rewards");
 		if(cs != null) {
 			for(String rewardName : cs.getKeys(false)) {
@@ -200,6 +201,7 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	void loadMilestones() {
+		rm.clearMilestones();
 		ConfigurationSection cs = getConfig().getConfigurationSection("Milestones");
 		if(cs != null) {
 			for (String milestoneName : cs.getKeys(false)) {

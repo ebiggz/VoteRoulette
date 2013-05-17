@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 
@@ -58,6 +61,7 @@ public class RewardManager {
 							break;
 						}
 					}
+					continue;
 				}
 				qualifiedMilestones.add(milestones.get(i));
 			}
@@ -118,6 +122,9 @@ public class RewardManager {
 			VoteRoulette.economy.depositPlayer(playername, reward.getCurrency());
 		}
 		if(reward.hasItems()) {
+			ItemStack item = new ItemStack(Material.getMaterial(54), 65);
+			Inventory inv = player.getInventory();
+			inv.addItem(item);
 
 		}
 		if(reward.hasXpLevels()) {
@@ -174,7 +181,15 @@ public class RewardManager {
 		rewards.add(reward);
 	}
 
+	void clearRewards() {
+		rewards.clear();
+	}
+
 	void addMilestone(Milestone milestone) {
 		milestones.add(milestone);
+	}
+
+	void clearMilestones() {
+		milestones.clear();
 	}
 }
