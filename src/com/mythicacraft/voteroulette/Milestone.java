@@ -39,7 +39,7 @@ public class Milestone {
 			} else {
 				try {
 					String currency = cs.getString("currency");
-					this.currency = Integer.parseInt(currency);
+					this.currency = Double.parseDouble(currency);
 				} catch (Exception e) {
 					log.warning("[VoteRoulette] Invalid currency format for reward: " + name + ", Skipping currency...");
 				}

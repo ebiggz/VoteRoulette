@@ -115,7 +115,7 @@ public class RewardManager {
 	public void administerRewardContents(Reward reward, Player player) {
 		String playername = player.getName();
 		if(reward.hasCurrency()) {
-			VoteRoulette.economy.bankDeposit(playername, reward.getCurrency());
+			VoteRoulette.economy.depositPlayer(playername, reward.getCurrency());
 		}
 		if(reward.hasItems()) {
 
