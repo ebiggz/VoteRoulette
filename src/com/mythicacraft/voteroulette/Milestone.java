@@ -3,7 +3,9 @@ package com.mythicacraft.voteroulette;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.ItemStack;
 
 
 public class Milestone {
@@ -12,8 +14,7 @@ public class Milestone {
 	private int votes = 0;
 	private double currency = 0;
 	private int xpLevels = 0;
-	private ArrayList<Integer> items = new ArrayList<Integer>();
-	private ArrayList<Integer> quants = new ArrayList<Integer>();
+	private ArrayList<ItemStack> items = new ArrayList<ItemStack>();
 	private String[] permGroups;
 	private int priority = 10;
 	private String name;
@@ -74,8 +75,7 @@ public class Milestone {
 				try {
 					int iItem = Integer.parseInt(item);
 					int iQuant = Integer.parseInt(quant);
-					items.add(iItem);
-					quants.add(iQuant);
+					items.add(new ItemStack(Material.getMaterial(iItem), iQuant));
 				} catch (Exception e) {
 					log.warning("[VoteRoulette] Invalid item formatting for milestone(" + name + "): " + item + ", Skipping item...");
 				}
@@ -179,6 +179,26 @@ public class Milestone {
 
 	public void setPriority(int priority) {
 		this.priority = priority;
+	}
+
+	public ItemStack[] getItems() {
+		ItemStack[] itemStacks = new ItemStack[items.size()];
+		for(int i = 0; i < items.size();i++) {
+			itemStacks[i] = items.get(i);
+		}
+		return itemStacks;
+	}
+
+	public int getRequiredSlots() {
+		int totalSlots = 0;
+		for(int i = 0; i < items.size(); i++) {
+			int itemSlots = items.get(i).getAmount()/64;
+			if(items.get(i).getAmount() % 64 != 0) {
+				itemSlots = itemSlots + 1;
+			}
+			totalSlots = totalSlots + itemSlots;
+		}
+		return totalSlots;
 	}
 
 }

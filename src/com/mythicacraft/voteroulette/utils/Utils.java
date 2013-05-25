@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 
@@ -30,4 +32,16 @@ public class Utils {
 		}
 		return false;
 	}
+
+	public static int getPlayerOpenInvSlots(Player player) {
+		Inventory inv = player.getInventory();
+		ItemStack[] contents = inv.getContents();
+		int count = 0;
+		for (int i = 0; i < contents.length; i++) {
+			if (contents[i] == null)
+				count++;
+		}
+		return count;
+	}
+
 }

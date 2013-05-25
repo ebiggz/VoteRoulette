@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.logging.Logger;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
+import com.mythicacraft.voteroulette.utils.Utils;
 
 public class RewardManager {
 
@@ -122,10 +122,15 @@ public class RewardManager {
 			VoteRoulette.economy.depositPlayer(playername, reward.getCurrency());
 		}
 		if(reward.hasItems()) {
-			ItemStack item = new ItemStack(Material.getMaterial(54), 65);
-			Inventory inv = player.getInventory();
-			inv.addItem(item);
-
+			if(reward.getRequiredSlots() <= Utils.getPlayerOpenInvSlots(player)) {
+				Inventory inv = player.getInventory();
+				ItemStack[] items = reward.getItems();
+				for(int i = 0; i < items.length; i++) {
+					inv.addItem(items[i]);
+				}
+			} else {
+				//message for inventory is full, save in player config that they didnt get reward yet
+			}
 		}
 		if(reward.hasXpLevels()) {
 			player.giveExpLevels(reward.getXpLevels());

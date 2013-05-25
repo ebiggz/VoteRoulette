@@ -3,15 +3,16 @@ package com.mythicacraft.voteroulette;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.ItemStack;
 
 public class Reward {
 
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private double currency = 0;
 	private int xpLevels = 0;
-	private ArrayList<Integer> items = new ArrayList<Integer>();
-	private ArrayList<Integer> quants = new ArrayList<Integer>();
+	private ArrayList<ItemStack> items = new ArrayList<ItemStack>();
 	private String[] permGroups;
 	private String name;
 
@@ -50,8 +51,7 @@ public class Reward {
 				try {
 					int iItem = Integer.parseInt(item);
 					int iQuant = Integer.parseInt(quant);
-					items.add(iItem);
-					quants.add(iQuant);
+					items.add(new ItemStack(Material.getMaterial(iItem), iQuant));
 				} catch (Exception e) {
 					log.warning("[VoteRoulette] Invalid item formatting for reward: " + item + ", Skipping...");
 				}
@@ -119,6 +119,26 @@ public class Reward {
 	public boolean hasXpLevels() {
 		if(xpLevels == 0) return false;
 		return true;
+	}
+
+	public ItemStack[] getItems() {
+		ItemStack[] itemStacks = new ItemStack[items.size()];
+		for(int i = 0; i < items.size();i++) {
+			itemStacks[i] = items.get(i);
+		}
+		return itemStacks;
+	}
+
+	public int getRequiredSlots() {
+		int totalSlots = 0;
+		for(int i = 0; i < items.size(); i++) {
+			int itemSlots = items.get(i).getAmount()/64;
+			if(items.get(i).getAmount() % 64 != 0) {
+				itemSlots = itemSlots + 1;
+			}
+			totalSlots = totalSlots + itemSlots;
+		}
+		return totalSlots;
 	}
 
 }

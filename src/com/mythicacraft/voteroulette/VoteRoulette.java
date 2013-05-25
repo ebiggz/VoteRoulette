@@ -51,6 +51,8 @@ public class VoteRoulette extends JavaPlugin {
 		loadMilestones();
 		pm.registerEvents(new VoteListener(), this);
 		getCommand("debugvote").setExecutor(new Commands());
+		getCommand("vr").setExecutor(new Commands());
+		getCommand("voteroulette").setExecutor(new Commands());
 		log.info("[VoteRoulette] Enabled!");
 	}
 

@@ -21,12 +21,12 @@ public class Paginate {
 		ChatPage message = ChatPaginator.paginate(paginateString, pageNumber, 53, 8); //paginate string, pulling the page number the player provided. It creates the page with the lines 53 characters long and 8 lines per page
 		String[] pages = message.getLines(); //puts the lines from the page into a string array
 
-		sender.sendMessage(ChatColor.BLUE + "Issues " + ChatColor.GOLD + "Page " + pageNumber + "/" + pageTotal()); //header of page with current and total pages
+		sender.sendMessage(ChatColor.BLUE + "Rewards " + ChatColor.GOLD + "Page " + pageNumber + "/" + pageTotal()); //header of page with current and total pages
 		sender.sendMessage(pages); //send page string array
 
 		if(pageNumber < pageTotal()) { //if page number is less than total, include this footer
 			int nextPage = pageNumber + 1;
-			sender.sendMessage(ChatColor.GOLD + "Type \"/test " + nextPage + "\" for next page.");
+			sender.sendMessage(ChatColor.GOLD + "Type \"/vr rewards " + nextPage + "\" for next page.");
 		}
 	}
 

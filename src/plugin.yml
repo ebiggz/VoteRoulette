@@ -9,3 +9,9 @@ commands:
     debugvote:
         description: debug vote
         usage: /<command>
+    voteroulette:
+        description: debug vote
+        usage: /<command>
+    vr:
+        description: debug vote
+        usage: /<command>
