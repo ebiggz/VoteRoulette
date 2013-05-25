@@ -53,11 +53,13 @@ public class Commands implements CommandExecutor {
 				}
 				if(args[0].equalsIgnoreCase("rewards")) {
 					Reward[] rewards = rm.getQualifiedRewards((Player) sender);
+
 					String message = "";
 					for(int i = 0; i < rewards.length; i++) {
 						message = message + "Reward #" + Integer.toString(i) + ": " + rewards[i].getName() + "\nCurrency: " + Double.toString(rewards[i].getCurrency()) + "\nXp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
 					}
 					Paginate rewardPag = new Paginate(message);
+
 					if(args.length >= 2) {
 						try {
 							int pageNumber = Integer.parseInt(args[1]);
@@ -67,12 +69,12 @@ public class Commands implements CommandExecutor {
 								sender.sendMessage("Not a valid page number!");
 							}
 						} catch (Exception e) {
-							sender.sendMessage("Not a valid number!");
+							sender.sendMessage("Not a valid page number!");
 						}
 					} else {
 						rewardPag.sendPage(1, sender);
 					}
-					//show qualifing rewards
+					//show qualifying rewards
 				}
 				if(args[0].equalsIgnoreCase("reload")) {
 					plugin.reloadConfig();
