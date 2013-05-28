@@ -141,4 +141,11 @@ public class Reward {
 		return totalSlots;
 	}
 
+	public boolean isEmpty() {
+		if(currency == 0 && xpLevels == 0 && items.isEmpty()) {
+			return true;
+		}
+		return false;
+	}
+
 }

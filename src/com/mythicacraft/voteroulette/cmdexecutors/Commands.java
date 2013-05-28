@@ -44,7 +44,6 @@ public class Commands implements CommandExecutor {
 							message = message + " Current Vote Cycle: " + voteCycle;
 						}
 						sender.sendMessage(message);
-
 					}
 					//send vote totals, how many votes till next milestone, how many votes in threshold
 				}
@@ -52,12 +51,24 @@ public class Commands implements CommandExecutor {
 					//show qualifing milestones
 				}
 				if(args[0].equalsIgnoreCase("rewards")) {
-					Reward[] rewards = rm.getQualifiedRewards((Player) sender);
 
+					Reward[] rewards = rm.getQualifiedRewards((Player) sender);
 					String message = "";
+
 					for(int i = 0; i < rewards.length; i++) {
-						message = message + "Reward #" + Integer.toString(i) + ": " + rewards[i].getName() + "\nCurrency: " + Double.toString(rewards[i].getCurrency()) + "\nXp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
+						if(rewards[i].isEmpty()) continue;
+						message = message + "Reward #" + Integer.toString(i+1) + ": " + rewards[i].getName() + "\nCurrency: " + Double.toString(rewards[i].getCurrency()) + "\nXp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
+						if(rewards[i].hasCurrency()) {
+							message = message + "Currency: " + Double.toString(rewards[i].getCurrency()) + "\n";
+						}
+						if(rewards[i].hasXpLevels()) {
+							message = message + "Xp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
+						}
+						if(rewards[i].hasItems()) {
+							message = message + "items sheit" + "\n";
+						}
 					}
+
 					Paginate rewardPag = new Paginate(message);
 
 					if(args.length >= 2) {
@@ -83,9 +94,7 @@ public class Commands implements CommandExecutor {
 					sender.sendMessage("Reload complete!");
 					//reload configs
 				}
-
 			}
-
 		}
 		//commands
 		return true;

@@ -19,7 +19,7 @@
 
 serverBroadcast: “%player% has just voted for %serverName% and got kindly rewarded!”
 voteConfirmation: “Thanks for your vote, %player%!”
-reward: “You are rewarded: \n %items% \n $%currency% \n %xpLevels%”
+reward: “You are rewarded %items% \n $%currency% \n %xpLevels%”
 noSelfCmdPerms: “You don’t have permission to view your vote totals.”
 noOtherCmdPerms : “You don’t have permission to view other’s vote totals.”
  

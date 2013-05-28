@@ -107,9 +107,9 @@ public class RewardManager {
 	}
 
 	public void sendRandReward(Player player) {
-		Reward[] qualRewards = getQualifiedRewards(player);
+		Reward[] qualRewards = this.getQualifiedRewards(player);
 		Random rand = new Random();
-		int randNum = rand.nextInt(qualRewards.length-1);
+		int randNum = rand.nextInt(qualRewards.length);
 		System.out.println("amount of rewards: " + qualRewards.length + ", Looking in index: " + randNum);
 		System.out.println("Sending random reward: " + qualRewards[randNum].getName() + " to " + player.getName());
 		administerRewardContents(qualRewards[randNum], player);
