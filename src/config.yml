@@ -1,4 +1,4 @@
-#VoteRoulette Config
+VoteRoulette Config
 
 ##########
 #Settings#
@@ -28,11 +28,11 @@ broadcastToServer: false
 #
 #Example reward:
 #    Awesome Reward: -- Name of the reward
-#        items: 264(10), 276, 364(16) ó- This one gives 10 diamonds, a diamond sword, and 16 steak
-#        currency: 100 ó- $100 in-game currency (if vault is installed)
-#        xpLevels: 5 ó- Player will gain 5 xp levels
-#        permGroups: Members, Donators ó- Only players in the ëMembersí or ëDonatorsí permission groups are eligible for the reward
-#        message: You just received an awesome reward! ó Custom message that will override the default message
+#        items: 264(10), 276, 364(16) —- This one gives 10 diamonds, a diamond sword, and 16 steak
+#        currency: 100 —- $100 in-game currency (if vault is installed)
+#        xpLevels: 5 —- Player will gain 5 xp levels
+#        permGroups: Members, Donators —- Only players in the ‘Members’ or ‘Donators’ permission groups are eligible for the reward
+#        message: You just received an awesome reward! — Custom message that will override the default message
 
 Rewards:
 
@@ -45,8 +45,8 @@ Rewards:
 # Set the following to true if you want a reward to be chosen at random (see rewards list below)
 giveRandomReward: true
 
-# Use to set the default reward. (This is for if you have ìgiveRandomRewardî set to false.)
-defaultReward: ëDefault Rewardí
+# Use to set the default reward. (This is for if you have “giveRandomReward” set to false.)
+defaultReward: ‘Default Reward’
 
 # Set the following to true if you only want players to get rewarded after they vote so many times
 # For example, you want them to vote on all your server lists before getting rewarded
@@ -60,8 +60,8 @@ voteThreshold: 5
 #
 # Milestones are special rewards that are given after so a player has made so many votes
 # They are created in the config the same way as regular rewards, however you must include
-# a ìvotes: #ì section with how many votes you want the milestone to be! The milestone will otherwise
-# be ignored. You can also include a ìrecurring: trueî section to have the milestone recur upon multiples
+# a “votes: #“ section with how many votes you want the milestone to be! The milestone will otherwise
+# be ignored. You can also include a “recurring: true” section to have the milestone recur upon multiples
 # For example, if the votes is set to 50 and recurring is true, players will receive this reward every 50 votes! (50, 100, 150, etc)
 #
 
