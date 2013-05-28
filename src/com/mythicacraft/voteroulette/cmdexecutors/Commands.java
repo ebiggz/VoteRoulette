@@ -6,6 +6,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import com.mythicacraft.voteroulette.Reward;
@@ -63,10 +64,16 @@ public class Commands implements CommandExecutor {
 							message = message + ChatColor.GRAY + "    Currency: " + Double.toString(rewards[i].getCurrency()) + "\n";
 						}
 						if(rewards[i].hasXpLevels()) {
-							message = message + ChatColor.GRAY + "     Xp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
+							message = message + ChatColor.GRAY + "    Xp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
 						}
 						if(rewards[i].hasItems()) {
-							message = message + ChatColor.GRAY + "     items sheit" + "\n";
+							ItemStack[] items = rewards[i].getItems();
+							String itemsString = "";
+							for(int j = 0; j < items.length; j++) {
+								itemsString = itemsString + items[j].getType().toString().toLowerCase().replaceAll("_", " ") + "(x" + Integer.toString(items[j].getAmount()) + "), ";
+							}
+							itemsString = itemsString.substring(0, itemsString.length() - 2);
+							message = message + ChatColor.GRAY + "    Items: " + itemsString + "\n";
 						}
 					}
 
