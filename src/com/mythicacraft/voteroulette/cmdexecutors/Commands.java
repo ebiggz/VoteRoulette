@@ -1,6 +1,7 @@
 package com.mythicacraft.voteroulette.cmdexecutors;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -57,15 +58,15 @@ public class Commands implements CommandExecutor {
 
 					for(int i = 0; i < rewards.length; i++) {
 						if(rewards[i].isEmpty()) continue;
-						message = message + "Reward #" + Integer.toString(i+1) + ": " + rewards[i].getName() + "\nCurrency: " + Double.toString(rewards[i].getCurrency()) + "\nXp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
+						message = message + ChatColor.BLUE + "Reward #" + Integer.toString(i+1) + ": " + ChatColor.AQUA + rewards[i].getName() + "\n";
 						if(rewards[i].hasCurrency()) {
-							message = message + "Currency: " + Double.toString(rewards[i].getCurrency()) + "\n";
+							message = message + ChatColor.GRAY + "    Currency: " + Double.toString(rewards[i].getCurrency()) + "\n";
 						}
 						if(rewards[i].hasXpLevels()) {
-							message = message + "Xp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
+							message = message + ChatColor.GRAY + "     Xp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
 						}
 						if(rewards[i].hasItems()) {
-							message = message + "items sheit" + "\n";
+							message = message + ChatColor.GRAY + "     items sheit" + "\n";
 						}
 					}
 

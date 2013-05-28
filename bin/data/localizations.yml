@@ -1,13 +1,13 @@
 #Change default messages here
 
 #Varibles:
-# %player% - voting playerâ€™s name
-# %server% - serverâ€™s name
+# %player% - voting player’s name
+# %server% - server’s name
 # %items% - the item(s) (if any) in the given reward
 # %currency% - the currency amount (if any) in the given reward
 # %xpLevels% - the number of levels rewarded (if any)
 #
-# You may use color codes in the messages. Precede the number with a â€™&â€™
+# You may use color codes in the messages. Precede the number with a ’&’
 # For example: &4 (for dark red.)
 #
 # You can use the new line character (\n) to skip to the next chat line.
@@ -17,9 +17,8 @@
 # wrapped and color/format changes are not carried over to the next
 # line.
 
-serverBroadcast: â€œ%player% has just voted for %serverName% and got kindly rewarded!â€
-voteConfirmation: â€œThanks for your vote, %player%!â€
-reward: â€œYou are rewarded %items% \n $%currency% \n %xpLevels%â€
-noSelfCmdPerms: â€œYou donâ€™t have permission to view your vote totals.â€
-noOtherCmdPerms : â€œYou donâ€™t have permission to view otherâ€™s vote totals.â€
- 
+serverBroadcast: “%player% has just voted for %serverName% and got kindly rewarded!”
+voteConfirmation: “Thanks for your vote, %player%!”
+reward: “You are rewarded %items% \n $%currency% \n %xpLevels%”
+noSelfCmdPerms: “You don’t have permission to view your vote totals.”
+noOtherCmdPerms : “You don’t have permission to view other’s vote totals.”
