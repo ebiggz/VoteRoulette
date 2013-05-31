@@ -43,16 +43,16 @@ public class VoteRoulette extends JavaPlugin {
 		if(setupVault()) {
 			vaultEnabled = true;
 		}
-
+		pm.registerEvents(new VoteListener(), this);
+		getCommand("debugvote").setExecutor(new Commands());
+		getCommand("vr").setExecutor(new Commands());
+		getCommand("voteroulette").setExecutor(new Commands());
+		System.out.println("starting...");
 		loadConfig();
 		loadPlayerData();
 		loadLocalizations();
 		loadRewards();
 		loadMilestones();
-		pm.registerEvents(new VoteListener(), this);
-		getCommand("debugvote").setExecutor(new Commands());
-		getCommand("vr").setExecutor(new Commands());
-		getCommand("voteroulette").setExecutor(new Commands());
 		log.info("[VoteRoulette] Enabled!");
 	}
 

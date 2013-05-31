@@ -117,6 +117,7 @@ public class RewardManager {
 	}
 
 	public void administerRewardContents(Reward reward, Player player) {
+		ConfigAccessor playerCfg = new ConfigAccessor("players.yml");
 		String playername = player.getName();
 		if(reward.hasCurrency()) {
 			VoteRoulette.economy.depositPlayer(playername, reward.getCurrency());
@@ -129,9 +130,8 @@ public class RewardManager {
 					inv.addItem(items[i]);
 				}
 			} else {
-				//message for inventory is full, save in player config that they didnt get reward yet
-				//need to make sure that when the reward is saved, only the items are given when they issue the command to
-				//retrieve ungiven rewards, because they will have already recieved any money and xp portions
+				playerCfg.getConfig().addDefault(playername + ".unclaimedRewards", "test");
+				playerCfg.getConfig().addDefault(playername + ".unclaimedRewards", "test2");
 			}
 		}
 		if(reward.hasXpLevels()) {

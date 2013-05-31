@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -61,7 +62,11 @@ public class Commands implements CommandExecutor {
 						if(rewards[i].isEmpty()) continue;
 						message = message + ChatColor.BLUE + "Reward #" + Integer.toString(i+1) + ": " + ChatColor.AQUA + rewards[i].getName() + "\n";
 						if(rewards[i].hasCurrency()) {
-							message = message + ChatColor.GRAY + "    Currency: " + Double.toString(rewards[i].getCurrency()) + "\n";
+							String currency = Double.toString(rewards[i].getCurrency());
+							if(currency.length() < 4) {
+								currency = currency + "0";
+							}
+							message = message + ChatColor.GRAY + "    Currency: " + currency + "\n";
 						}
 						if(rewards[i].hasXpLevels()) {
 							message = message + ChatColor.GRAY + "    Xp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
@@ -101,6 +106,14 @@ public class Commands implements CommandExecutor {
 					localCfg.reloadConfig();
 					sender.sendMessage("Reload complete!");
 					//reload configs
+				}
+				if(args[0].equalsIgnoreCase("claim")) {
+					ConfigurationSection playUnclaimR = playCfg.getConfig().getConfigurationSection(playername + ".unclaimedRewards");
+					if(playUnclaimR != null) {
+						//give rewards
+					} else {
+						sender.sendMessage("You do not have unclaimed rewards!");
+					}
 				}
 			}
 		}
