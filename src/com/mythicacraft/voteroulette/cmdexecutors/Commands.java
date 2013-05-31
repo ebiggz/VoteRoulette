@@ -42,10 +42,11 @@ public class Commands implements CommandExecutor {
 						if(plugin.getConfig().getBoolean("giveRewardsOnThreshold") == true) {
 							voteCycle = playCfg.getConfig().getString(playername + ".voteCycle");
 						}
-						String message = "Lifetime Votes: " + lifetimeVotes;
+						String message = ChatColor.BLUE + "Lifetime Votes: " + ChatColor.AQUA + lifetimeVotes;
 						if(voteCycle != null) {
-							message = message + " Current Vote Cycle: " + voteCycle;
+							message = message + ChatColor.BLUE + " Current Vote Cycle: " + ChatColor.AQUA + voteCycle;
 						}
+						sender.sendMessage(ChatColor.GOLD + "-----" + ChatColor.DARK_GREEN + "Stats for: " + sender.getName() + ChatColor.GOLD + "-----"); //header of page with current and total pages
 						sender.sendMessage(message);
 					}
 					//send vote totals, how many votes till next milestone, how many votes in threshold
