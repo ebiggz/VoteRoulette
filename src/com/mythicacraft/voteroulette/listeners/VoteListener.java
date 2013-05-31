@@ -50,7 +50,7 @@ public class VoteListener implements Listener {
 		processVote(p, vote);
 	}
 
-	void updatePlayerVoteTotals(String playername) {
+	public static void updatePlayerVoteTotals(String playername) {
 		if(playerCfg.getConfig().contains(playername)) {
 			int currentCycle = playerCfg.getConfig().getInt(playername + ".currentCycle");
 			int lifetimeVotes = playerCfg.getConfig().getInt(playername + ".lifetimeVotes");
@@ -60,6 +60,7 @@ public class VoteListener implements Listener {
 			playerCfg.getConfig().set(playername + ".lifetimeVotes", lifetimeVotes);
 			playerCfg.saveConfig();
 		} else {
+			System.out.println("doesnt contain player in yml");
 			playerCfg.getConfig().addDefault(playername + ".currentCycle", 1);
 			playerCfg.getConfig().addDefault(playername + ".lifetimeVotes", 1);
 			playerCfg.saveConfig();

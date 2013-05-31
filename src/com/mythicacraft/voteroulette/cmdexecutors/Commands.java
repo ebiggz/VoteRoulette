@@ -27,6 +27,7 @@ public class Commands implements CommandExecutor {
 		ConfigAccessor localCfg = new ConfigAccessor("localizations.yml");
 		String playername = sender.getName();
 		if(commandLabel.equalsIgnoreCase("debugvote")) {
+			VoteListener.updatePlayerVoteTotals(playername);
 			VoteListener.processVote((Player) sender, null);
 		}
 		if(commandLabel.equalsIgnoreCase("vr") || commandLabel.equalsIgnoreCase("voteroulette")) {

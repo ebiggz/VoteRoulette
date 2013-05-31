@@ -130,8 +130,13 @@ public class RewardManager {
 					inv.addItem(items[i]);
 				}
 			} else {
-				playerCfg.getConfig().addDefault(playername + ".unclaimedRewards", "test");
-				playerCfg.getConfig().addDefault(playername + ".unclaimedRewards", "test2");
+				if(playerCfg.getConfig().contains(playername + ".unclaimedRewards")) {
+					playerCfg.getConfig().set(playername + ".unclaimedRewards", "test");
+					playerCfg.saveConfig();
+				} else {
+					playerCfg.getConfig().addDefault(playername + ".unclaimedRewards", "test");
+					playerCfg.saveConfig();
+				}
 			}
 		}
 		if(reward.hasXpLevels()) {
