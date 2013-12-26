@@ -20,13 +20,13 @@ public class Reward {
 		this.setName(name);
 		if(cs.contains("currency")) {
 			if(!VoteRoulette.hasEconPlugin()) {
-				log.warning("[VoteRoulette] Reward \"" + name + "\" contains currency settings but Vault is not installed or there is no economy plugin, Skipping currency...");
+				log.warning("[VoteRoulette] Reward \"" + name + "\" contains currency settings but Vault is not installed or there is no economy plugin, Skipping currency.");
 			} else {
 				try {
 					String currency = cs.getString("currency");
 					this.currency = Double.parseDouble(currency);
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] Invalid currency format for reward: " + name + ", Skipping currency...");
+					log.warning("[VoteRoulette] Invalid currency format for reward: " + name + ", Skipping currency.");
 				}
 			}
 		}
@@ -35,7 +35,7 @@ public class Reward {
 				String xp = cs.getString("xpLevels");
 				this.xpLevels = Integer.parseInt(xp);
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid xpLevel format for reward: " + name + ", Skipping xpLevels...");
+				log.warning("[VoteRoulette] Invalid xpLevel format for reward: " + name + ", Skipping xpLevels.");
 			}
 		}
 		if(cs.contains("items")) {
@@ -53,13 +53,13 @@ public class Reward {
 					int iQuant = Integer.parseInt(quant);
 					items.add(new ItemStack(Material.getMaterial(iItem), iQuant));
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] Invalid item formatting for reward: " + item + ", Skipping...");
+					log.warning("[VoteRoulette] Invalid item formatting for reward: " + item + ", Skipping.");
 				}
 			}
 		}
 		if(cs.contains("permGroups")) {
 			if(!VoteRoulette.hasPermPlugin()) {
-				log.warning("[VoteRoulette] Reward \"" + name + "\" contains perm group settings but Vault is not installed or there is no permission plugin, Skipping perm groups...");
+				log.warning("[VoteRoulette] Reward \"" + name + "\" contains perm group settings but Vault is not installed or there is no permission plugin, Skipping perm groups.");
 			} else {
 				permGroups = cs.getString("permGroups").split(",");
 				for(int i = 0; i < permGroups.length; i++) {

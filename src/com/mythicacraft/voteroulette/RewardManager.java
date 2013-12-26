@@ -1,9 +1,12 @@
 package com.mythicacraft.voteroulette;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -22,9 +25,9 @@ public class RewardManager {
 		ArrayList<Reward> qualifiedRewards = new ArrayList<Reward>();
 		Reward[] rewardsArray;
 		if(VoteRoulette.hasPermPlugin()) {
-			System.out.println("server has vault and plugin plugin");
+			System.out.println("server has vault and perm plugin");
 			for(int i = 0; i < rewards.size(); i++) {
-				System.out.println("Checking for:" + rewards.get(i).getName());
+				System.out.println("Checking for: " + rewards.get(i).getName());
 				if(rewards.get(i).hasPermissionGroups()) {
 					String[] permGroups = rewards.get(i).getPermGroups();
 					for(int j = 0; j < permGroups.length; j++) {
@@ -93,7 +96,7 @@ public class RewardManager {
 		return true;
 	}
 
-	public void sendReward(Player player) {
+	public void giveDefaultReward(Player player) {
 		if(defaultReward == null ) {
 			log.warning("[VoteRoulette] No default reward set to send!");
 			return;
@@ -101,12 +104,12 @@ public class RewardManager {
 		System.out.println("Sending default reward: " + defaultReward.getName());
 	}
 
-	public void sendMilestone(Player player) {
+	public void giveDefaultMilestone(Player player) {
 		System.out.println("Sending milestone");
 
 	}
 
-	public void sendRandReward(Player player) {
+	public void giveRandomReward(Player player) {
 		Reward[] qualRewards = this.getQualifiedRewards(player);
 		Random rand = new Random();
 		int randNum = rand.nextInt(qualRewards.length);
@@ -130,13 +133,10 @@ public class RewardManager {
 					inv.addItem(items[i]);
 				}
 			} else {
-				if(playerCfg.getConfig().contains(playername + ".unclaimedRewards")) {
-					playerCfg.getConfig().set(playername + ".unclaimedRewards", "test");
-					playerCfg.saveConfig();
-				} else {
-					playerCfg.getConfig().addDefault(playername + ".unclaimedRewards", "test");
-					playerCfg.saveConfig();
-				}
+				List<ItemStack> items = Arrays.asList(reward.getItems());
+				playerCfg.getConfig().addDefault(playername + ".unclaimedRewards." + reward.getName(), items);
+				playerCfg.saveConfig();
+				player.sendMessage(ChatColor.RED + "You not have the required space for the items in this reward. Please type \"/vr claim\" once you have cleared room in your inventory.");
 			}
 		}
 		if(reward.hasXpLevels()) {
@@ -144,9 +144,8 @@ public class RewardManager {
 		}
 	}
 
-	public void sendRandMilestone(Player player) {
+	public void giveRandomMilestone(Player player) {
 		System.out.println("Sending random milestone");
-
 	}
 
 	public boolean playerReachedMilestone(Player player) {
@@ -179,9 +178,7 @@ public class RewardManager {
 	}
 
 	public boolean hasDefaultReward() {
-		System.out.println("Checking for default reward");
 		if(defaultReward == null) return false;
-		System.out.println("Theres a reward!");
 		return true;
 	}
 

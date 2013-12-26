@@ -6,6 +6,7 @@
 # %items% - the item(s) (if any) in the given reward
 # %currency% - the currency amount (if any) in the given reward
 # %xpLevels% - the number of levels rewarded (if any)
+# %website% - the website the player voted on
 #
 # You may use color codes in the messages. Precede the number with a &
 # For example: &4 (for dark red.)
@@ -17,8 +18,8 @@
 # wrapped and color/format changes are not carried over to the next
 # line.
 
-serverBroadcast: %player% has just voted for %serverName% and got kindly rewarded!
+serverBroadcast: %player% has just voted for %serverName% on %website and got kindly rewarded!
 voteConfirmation: Thanks for your vote, %player%!
-reward: You are rewarded %items% \n $%currency% \n %xpLevels%
+reward: You have been rewarded %items% \n $%currency% \n %xpLevels%
 noSelfCmdPerms: You dont have permission to view your vote totals.
 noOtherCmdPerms: You dont have permission to view others vote totals.

@@ -1,6 +1,5 @@
 package com.mythicacraft.voteroulette.cmdexecutors;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -8,27 +7,30 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 
 import com.mythicacraft.voteroulette.Reward;
 import com.mythicacraft.voteroulette.RewardManager;
 import com.mythicacraft.voteroulette.VoteRoulette;
-import com.mythicacraft.voteroulette.listeners.VoteListener;
+import com.mythicacraft.voteroulette.listeners.VoteHandler;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.Paginate;
 
 public class Commands implements CommandExecutor {
 
-	Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("VoteRoulette");
+	private static VoteRoulette plugin;
+
+	public Commands(VoteRoulette instance) {
+		plugin = instance;
+	}
+
 	RewardManager rm = VoteRoulette.getRewardManager();
 
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		ConfigAccessor playCfg = new ConfigAccessor("players.yml");
-		ConfigAccessor localCfg = new ConfigAccessor("localizations.yml");
 		String playername = sender.getName();
 		if(commandLabel.equalsIgnoreCase("debugvote")) {
-			VoteListener.updatePlayerVoteTotals(playername);
-			VoteListener.processVote((Player) sender, null);
+			VoteHandler.updatePlayerVoteTotals(playername);
+			VoteHandler.processVote((Player) sender, null);
 		}
 		if(commandLabel.equalsIgnoreCase("vr") || commandLabel.equalsIgnoreCase("voteroulette")) {
 			if(args.length == 0 || (args.length == 1 && (args[0].equalsIgnoreCase("?") || args[0].equalsIgnoreCase("help")))) {
@@ -103,9 +105,7 @@ public class Commands implements CommandExecutor {
 					//show qualifying rewards
 				}
 				if(args[0].equalsIgnoreCase("reload")) {
-					plugin.reloadConfig();
-					playCfg.reloadConfig();
-					localCfg.reloadConfig();
+					plugin.reloadConfigs();
 					sender.sendMessage("Reload complete!");
 					//reload configs
 				}

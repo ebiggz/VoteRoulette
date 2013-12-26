@@ -8,64 +8,91 @@ import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.mythicacraft.voteroulette.cmdexecutors.Commands;
-import com.mythicacraft.voteroulette.listeners.VoteListener;
+import com.mythicacraft.voteroulette.listeners.VoteHandler;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
+import com.mythicacraft.voteroulette.utils.Utils;
 
 public class VoteRoulette extends JavaPlugin {
+
+	private static final Logger log = Logger.getLogger("VoteRoulette");
 
 	public static Economy economy = null;
 	public static Permission permission = null;
 	private static boolean vaultEnabled = false;
 	private static boolean hasPermPlugin = false;
 	private static boolean hasEconPlugin = false;
-	private static final Logger log = Logger.getLogger("VoteRoulette");
-	FileConfiguration newConfig;
-	static RewardManager rm = new RewardManager();
+
+	private static RewardManager rm = new RewardManager();
+
+	//config constants
+	public boolean REWARDS_ON_THRESHOLD;
+	public int VOTE_THRESHOLD;
+	public boolean MESSAGE_PLAYER;
+	public boolean BROADCAST_TO_SERVER;
+	public boolean GIVE_RANDOM_REWARD;
+	public boolean GIVE_RANDOM_MILESTONE;
+	public boolean ONLY_MILESTONE_ON_COMPLETION;
+	public boolean BLACKLIST_AS_WHITELIST;
+	public Player[] BLACKLIST_PLAYERS;
+
+	//localizations constants
+	public String SERVER_VOTE_CONFIRMATION;
+	public String PLAYER_VOTE_CONFIRMATION;
+	public String REWARD_MESSAGE;
+	public String NO_PERMS_SELF_MESSAGE;
+	public String NO_PERMS_OTHERS_MESSAGE;
+
+
 
 	public void onDisable() {
 		log.info("[VoteRoulette] Disabled!");
 	}
 
 	public void onEnable() {
-		PluginManager pm = getServer().getPluginManager();
 
+		//check for votifier
 		if(!setupVotifier()) {
-			pm.disablePlugin(this);
+			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
+
+		//check for and setup vault
 		if(setupVault()) {
 			vaultEnabled = true;
 		}
-		pm.registerEvents(new VoteListener(), this);
-		getCommand("debugvote").setExecutor(new Commands());
-		getCommand("vr").setExecutor(new Commands());
-		getCommand("voteroulette").setExecutor(new Commands());
-		System.out.println("starting...");
-		loadConfig();
-		loadPlayerData();
-		loadLocalizations();
-		loadRewards();
-		loadMilestones();
+
+		//register events and commands
+		getServer().getPluginManager().registerEvents(new VoteHandler(this), this);
+		getCommand("debugvote").setExecutor(new Commands(this));
+		getCommand("vr").setExecutor(new Commands(this));
+		getCommand("voteroulette").setExecutor(new Commands(this));
+
+		//load configs
+		reloadConfigs();
+
 		log.info("[VoteRoulette] Enabled!");
 	}
 
 	private boolean setupVotifier() {
+		System.out.println("[VoteRoulette] Checking for Votifier...");
 		Plugin votifier =  getServer().getPluginManager().getPlugin("Votifier");
 		if (!(votifier != null && votifier instanceof com.vexsoftware.votifier.Votifier)) {
-			log.severe("[VoteRoulette] Votifier was not found!");
+			log.severe("[VoteRoulette] Votifier was not found! Voltifer is required for VoteRoulette to work!");
 			return false;
 		}
+		System.out.println("[VoteRoulette] ...found Votifier!");
 		return true;
 	}
 
 	private boolean setupVault() {
+		System.out.println("[VoteRoulette] Checking for Vault...");
 		Plugin vault =  getServer().getPluginManager().getPlugin("Vault");
 		if (vault != null && vault instanceof net.milkbowl.vault.Vault) {
 			if(!setupEconomy()) {
@@ -80,6 +107,7 @@ public class VoteRoulette extends JavaPlugin {
 			log.warning("[VoteRoulette] Vault plugin not found. Currency and permission group reward settings will be ignored!");
 			return false;
 		}
+		System.out.println("[VoteRoulette] ...found Vault!");
 		return true;
 	}
 
@@ -101,17 +129,24 @@ public class VoteRoulette extends JavaPlugin {
 		return (permission != null);
 	}
 
-	public static boolean vaultIsEnabled() {
-		return vaultEnabled;
+	public void reloadConfigs() {
+		System.out.println("[VoteRoulette] Loading configs...");
+		loadConfig();
+		loadConfigOptions();
+		loadPlayerData();
+		loadLocalizations();
+		loadRewards();
+		loadMilestones();
+		System.out.println("[VoteRoulette] ...finished loading configs!");
 	}
 
-	public void loadConfig() {
+	private void loadConfig() {
 		PluginManager pm = getServer().getPluginManager();
-		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		String pluginFolder = getDataFolder().getAbsolutePath();
 		(new File(pluginFolder)).mkdirs();
 		File configFile = new File(pluginFolder, "config.yml");
 		if(!configFile.exists()) {
-			this.saveResource("config.yml", true);
+			saveResource("config.yml", true);
 			return;
 		}
 		try {
@@ -122,7 +157,7 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
-	public void loadPlayerData() {
+	void loadPlayerData() {
 		PluginManager pm = getServer().getPluginManager();
 		String pluginFolder = this.getDataFolder().getAbsolutePath();
 		(new File(pluginFolder)).mkdirs();
@@ -151,7 +186,7 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
-	public void loadLocalizations() {
+	private void loadLocalizations() {
 		PluginManager pm = getServer().getPluginManager();
 		String pluginFolder = this.getDataFolder().getAbsolutePath();
 		(new File(pluginFolder)).mkdirs();
@@ -177,35 +212,59 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
-	void loadRewards() {
+	private void loadConfigOptions() {
+		REWARDS_ON_THRESHOLD = getConfig().getBoolean("giveRewardsOnThreshold");
+
+		VOTE_THRESHOLD = getConfig().getInt("voteThreshold");
+
+		MESSAGE_PLAYER = getConfig().getBoolean("messagePlayer");
+
+		BROADCAST_TO_SERVER = getConfig().getBoolean("broadcastToServer");
+
+		GIVE_RANDOM_REWARD = getConfig().getBoolean("giveRandomReward");
+
+		GIVE_RANDOM_MILESTONE = getConfig().getBoolean("giveRandomMilestone");
+
+		ONLY_MILESTONE_ON_COMPLETION = getConfig().getBoolean("onlyRewardMilestoneUponCompletion");
+
+		BLACKLIST_AS_WHITELIST = getConfig().getBoolean("useBlacklistAsWhitelist");
+
+		BLACKLIST_PLAYERS = Utils.getBlacklistPlayers();
+	}
+
+	private void loadRewards() {
 		rm.clearRewards();
 		ConfigurationSection cs = getConfig().getConfigurationSection("Rewards");
 		if(cs != null) {
+			System.out.println("[VoteRoulette] Loading rewards...");
 			for(String rewardName : cs.getKeys(false)) {
 				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
 				if (rewardOptions != null) {
-					rm.addReward(new Reward(rewardName, rewardOptions));
-					System.out.println("[VR] Added Reward: " + rewardName);
+					Reward newReward = new Reward(rewardName, rewardOptions);
+					rm.addReward(newReward);
+					System.out.println("[VoteRoulette] Added Reward: " + rewardName);
 					if(rewardName.equals(getConfig().getString("defaultReward"))) {
-						rm.setDefaultReward(new Reward(rewardName, rewardOptions));
-						System.out.println("[VR] Saved as default.");
+						rm.setDefaultReward(newReward);
+						System.out.println("[VoteRoulette] + \"" + rewardName + "\" saved as default reward.");
 					}
 					continue;
 				}
-				log.warning("[VoteRoulette] The reward \"" + rewardName + "\" is empty! Skipping...");
+				log.warning("[VoteRoulette] The reward \"" + rewardName + "\" is empty! Skipping reward.");
 			}
 			if(rm.hasDefaultReward() == false && getConfig().getBoolean("giveRandomReward") == false) {
-				log.warning("[VoteRoulette] The deafult reward coult not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
+				log.warning("[VoteRoulette] The deafult reward name could not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
 			}
-			return;
+			System.out.println("[VoteRoulette] ...Finished loading rewards!");
+		} else {
+			log.severe("[VoteRoulette] Your reward section is empty, no rewards will be given!");
 		}
-		log.severe("[VoteRoulette] Your reward section is empty, no rewards will be given!");
 	}
 
-	void loadMilestones() {
+	private void loadMilestones() {
 		rm.clearMilestones();
 		ConfigurationSection cs = getConfig().getConfigurationSection("Milestones");
 		if(cs != null) {
+			System.out.println("[VoteRoulette] Loading milestones...");
 			for (String milestoneName : cs.getKeys(false)) {
 				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
 				if (milestoneOptions != null) {
@@ -219,9 +278,14 @@ public class VoteRoulette extends JavaPlugin {
 				}
 				log.warning("[VoteRoulette] The reward \"" + milestoneName + "\" is empty! Skipping...");
 			}
-			return;
+			System.out.println("[VoteRoulette] ... Finished loading milestones!");
+		} else {
+			log.warning("[VoteRoulette] Your milestone section is empty, no milestones will be given!");
 		}
-		log.warning("[VoteRoulette] Your milestone section is empty, no milestones will be given!");
+	}
+
+	public static boolean vaultIsEnabled() {
+		return vaultEnabled;
 	}
 
 	public static boolean hasPermPlugin() {
