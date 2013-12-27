@@ -134,9 +134,9 @@ public class Reward {
 		for(int i = 0; i < items.size(); i++) {
 			int itemSlots = items.get(i).getAmount()/64;
 			if(items.get(i).getAmount() % 64 != 0) {
-				itemSlots = itemSlots + 1;
+				itemSlots++;
 			}
-			totalSlots = totalSlots + itemSlots;
+			totalSlots =+ itemSlots;
 		}
 		return totalSlots;
 	}
@@ -147,5 +147,4 @@ public class Reward {
 		}
 		return false;
 	}
-
 }

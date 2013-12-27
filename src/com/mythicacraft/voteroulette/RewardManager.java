@@ -21,11 +21,44 @@ public class RewardManager {
 	private ArrayList<Milestone> milestones = new ArrayList<Milestone>();
 	private Reward defaultReward = null;
 
+	//reward methods
+	void addReward(Reward reward) {
+		rewards.add(reward);
+	}
+
+	void clearRewards() {
+		rewards.clear();
+	}
+
+	public boolean hasDefaultReward() {
+		if(defaultReward == null) return false;
+		return true;
+	}
+
+	public Reward getDefaultReward() {
+		return defaultReward;
+	}
+
+	public void setDefaultReward(Reward defaultReward) {
+		this.defaultReward = defaultReward;
+	}
+
+	public boolean playerHasRewards(Player player) {
+		Reward[] qualRewards = getQualifiedRewards(player);
+		if(qualRewards.length == 0) {
+			System.out.println("no qualified rewards");
+			return false;
+		}
+		for(int i = 0; i < qualRewards.length; i++) {
+			System.out.println(qualRewards[i].getName());
+		}
+		return true;
+	}
+
 	public Reward[] getQualifiedRewards(Player player) {
 		ArrayList<Reward> qualifiedRewards = new ArrayList<Reward>();
 		Reward[] rewardsArray;
 		if(VoteRoulette.hasPermPlugin()) {
-			System.out.println("server has vault and perm plugin");
 			for(int i = 0; i < rewards.size(); i++) {
 				System.out.println("Checking for: " + rewards.get(i).getName());
 				if(rewards.get(i).hasPermissionGroups()) {
@@ -35,11 +68,9 @@ public class RewardManager {
 							qualifiedRewards.add(rewards.get(i));
 							break;
 						}
-						System.out.println("player isnt in group: " + permGroups[j]);
 					}
 					continue;
 				}
-				System.out.println(rewards.get(i).getName() + " doesnt have a permgroup section, adding");
 				qualifiedRewards.add(rewards.get(i));
 			}
 			rewardsArray = new Reward[qualifiedRewards.size()];
@@ -49,6 +80,73 @@ public class RewardManager {
 		rewardsArray = new Reward[rewards.size()];
 		rewards.toArray(rewardsArray);
 		return rewardsArray;
+	}
+
+	public void giveDefaultReward(Player player) {
+		if(defaultReward == null) {
+			log.warning("[VoteRoulette] Player earned the default reward but there's no default reward set to give!");
+			return;
+		}
+	}
+
+	public void giveRandomReward(Player player) {
+		Reward[] qualRewards = this.getQualifiedRewards(player);
+		Random rand = new Random();
+		int randNum = rand.nextInt(qualRewards.length);
+		administerRewardContents(qualRewards[randNum], player);
+	}
+
+	public void administerRewardContents(Reward reward, Player player) {
+		ConfigAccessor playerCfg = new ConfigAccessor("players.yml");
+		String playername = player.getName();
+		if(reward.hasCurrency()) {
+			VoteRoulette.economy.depositPlayer(playername, reward.getCurrency());
+		}
+		if(reward.hasItems()) {
+			if(reward.getRequiredSlots() <= Utils.getPlayerOpenInvSlots(player)) {
+				Inventory inv = player.getInventory();
+				ItemStack[] items = reward.getItems();
+				for(int i = 0; i < items.length; i++) {
+					inv.addItem(items[i]);
+				}
+			} else {
+				List<ItemStack> items = Arrays.asList(reward.getItems());
+				playerCfg.getConfig().addDefault(playername + ".unclaimedRewards." + reward.getName(), items);
+				playerCfg.saveConfig();
+				player.sendMessage(ChatColor.RED + "You not have the required space for the items in this reward. Please type \"/vr claim\" once you have cleared room in your inventory.");
+			}
+		}
+		if(reward.hasXpLevels()) {
+			player.giveExpLevels(reward.getXpLevels());
+		}
+		player.sendMessage(getPlayerRewardMessage(reward));
+	}
+
+	//milestone methods
+
+	void addMilestone(Milestone milestone) {
+		milestones.add(milestone);
+	}
+
+	void clearMilestones() {
+		milestones.clear();
+	}
+
+	public void giveDefaultMilestone(Player player) {
+		System.out.println("Sending milestone");
+
+	}
+
+	public void giveRandomMilestone(Player player) {
+		System.out.println("Sending random milestone");
+	}
+
+
+	public boolean playerHasMilestones(Player player) {
+		if(getQualifiedMilestones(player).length == 0) {
+			return false;
+		}
+		return true;
 	}
 
 	public Milestone[] getQualifiedMilestones(Player player) {
@@ -77,84 +175,13 @@ public class RewardManager {
 		return milestonesArray;
 	}
 
-	public boolean playerHasRewards(Player player) {
-		Reward[] qualRewards = getQualifiedRewards(player);
-		if(qualRewards.length == 0) {
-			System.out.println("no qualified rewards");
-			return false;
-		}
-		for(int i = 0; i < qualRewards.length; i++) {
-			System.out.println(qualRewards[i].getName());
-		}
-		return true;
-	}
-
-	public boolean playerHasMilestones(Player player) {
-		if(getQualifiedMilestones(player).length == 0) {
-			return false;
-		}
-		return true;
-	}
-
-	public void giveDefaultReward(Player player) {
-		if(defaultReward == null ) {
-			log.warning("[VoteRoulette] No default reward set to send!");
-			return;
-		}
-		System.out.println("Sending default reward: " + defaultReward.getName());
-	}
-
-	public void giveDefaultMilestone(Player player) {
-		System.out.println("Sending milestone");
-
-	}
-
-	public void giveRandomReward(Player player) {
-		Reward[] qualRewards = this.getQualifiedRewards(player);
-		Random rand = new Random();
-		int randNum = rand.nextInt(qualRewards.length);
-		System.out.println("amount of rewards: " + qualRewards.length + ", Looking in index: " + randNum);
-		System.out.println("Sending random reward: " + qualRewards[randNum].getName() + " to " + player.getName());
-		administerRewardContents(qualRewards[randNum], player);
-
-	}
-
-	public void administerRewardContents(Reward reward, Player player) {
-		ConfigAccessor playerCfg = new ConfigAccessor("players.yml");
-		String playername = player.getName();
-		if(reward.hasCurrency()) {
-			VoteRoulette.economy.depositPlayer(playername, reward.getCurrency());
-		}
-		if(reward.hasItems()) {
-			if(reward.getRequiredSlots() <= Utils.getPlayerOpenInvSlots(player)) {
-				Inventory inv = player.getInventory();
-				ItemStack[] items = reward.getItems();
-				for(int i = 0; i < items.length; i++) {
-					inv.addItem(items[i]);
-				}
-			} else {
-				List<ItemStack> items = Arrays.asList(reward.getItems());
-				playerCfg.getConfig().addDefault(playername + ".unclaimedRewards." + reward.getName(), items);
-				playerCfg.saveConfig();
-				player.sendMessage(ChatColor.RED + "You not have the required space for the items in this reward. Please type \"/vr claim\" once you have cleared room in your inventory.");
-			}
-		}
-		if(reward.hasXpLevels()) {
-			player.giveExpLevels(reward.getXpLevels());
-		}
-	}
-
-	public void giveRandomMilestone(Player player) {
-		System.out.println("Sending random milestone");
-	}
-
 	public boolean playerReachedMilestone(Player player) {
 
 		String playername = player.getName();
 		ConfigAccessor playerCfg = new ConfigAccessor("players.yml");
 
-		if(playerHasMilestones(player) == false) return false;
-		if(playerCfg.getConfig().contains(playername) == false) return false;
+		if(!playerHasMilestones(player)) return false;
+		if(!playerCfg.getConfig().contains(playername)) return false;
 
 		Milestone[] playerMS = getQualifiedMilestones(player);
 		int playerVotes = playerCfg.getConfig().getInt(playername + ".lifetimeVotes");
@@ -173,32 +200,25 @@ public class RewardManager {
 		return false;
 	}
 
-	public Reward getDefaultReward() {
-		return defaultReward;
-	}
-
-	public boolean hasDefaultReward() {
-		if(defaultReward == null) return false;
-		return true;
-	}
-
-	public void setDefaultReward(Reward defaultReward) {
-		this.defaultReward = defaultReward;
-	}
-
-	void addReward(Reward reward) {
-		rewards.add(reward);
-	}
-
-	void clearRewards() {
-		rewards.clear();
-	}
-
-	void addMilestone(Milestone milestone) {
-		milestones.add(milestone);
-	}
-
-	void clearMilestones() {
-		milestones.clear();
+	private String getPlayerRewardMessage(Reward reward) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(ChatColor.GREEN + "You've just received the reward \"" + ChatColor.BLUE + reward.getName() + ChatColor.GREEN + "\" which gave you ");
+		if(reward.hasCurrency()) {
+			sb.append(ChatColor.AQUA + "$" + reward.getCurrency());
+		}
+		if(reward.hasXpLevels()) {
+			if(reward.hasCurrency()) {
+				sb.append( ChatColor.GREEN + ", ");
+			}
+			sb.append(ChatColor.AQUA + "" + reward.getXpLevels() + " XP levels");
+		}
+		if(reward.hasItems()) {
+			if(reward.hasCurrency() || reward.hasXpLevels()) {
+				sb.append( ChatColor.GREEN + ", ");
+			}
+			sb.append(ChatColor.DARK_AQUA + Utils.getItemListString(reward.getItems()));
+		}
+		sb.append(".");
+		return sb.toString();
 	}
 }
