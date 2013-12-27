@@ -82,7 +82,7 @@ public class VoteHandler implements Listener {
 				playerCfg.saveConfig();
 			}
 		}
-		//if there is rewards the player is qualified to recieve
+		//check if there is rewards the player is qualified to receive
 		if(rm.playerHasRewards(player)) {
 			//check if it should be random
 			if(plugin.GIVE_RANDOM_REWARD) {
