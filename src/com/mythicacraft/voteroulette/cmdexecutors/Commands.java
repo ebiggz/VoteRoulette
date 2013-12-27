@@ -6,14 +6,15 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
+import com.mythicacraft.voteroulette.Milestone;
 import com.mythicacraft.voteroulette.Reward;
 import com.mythicacraft.voteroulette.RewardManager;
 import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.listeners.VoteHandler;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.Paginate;
+import com.mythicacraft.voteroulette.utils.Utils;
 
 public class Commands implements CommandExecutor {
 
@@ -42,20 +43,45 @@ public class Commands implements CommandExecutor {
 				if(args[0].equalsIgnoreCase("stats")) {
 					if(playCfg.getConfig().contains(playername)) {
 						lifetimeVotes = playCfg.getConfig().getString(playername + ".lifetimeVotes");
-						if(plugin.getConfig().getBoolean("giveRewardsOnThreshold") == true) {
+						if(plugin.REWARDS_ON_THRESHOLD) {
 							voteCycle = playCfg.getConfig().getString(playername + ".voteCycle");
 						}
 						String message = ChatColor.BLUE + "Lifetime Votes: " + ChatColor.AQUA + lifetimeVotes;
 						if(voteCycle != null) {
 							message = message + ChatColor.BLUE + " Current Vote Cycle: " + ChatColor.AQUA + voteCycle;
 						}
-						sender.sendMessage(ChatColor.GOLD + "-----" + ChatColor.DARK_GREEN + "Stats for: " + sender.getName() + ChatColor.GOLD + "-----"); //header of page with current and total pages
+						sender.sendMessage(ChatColor.GOLD + "-----" + ChatColor.DARK_GREEN + "Voting Stats For: " + sender.getName() + ChatColor.GOLD + "-----"); //header of page with current and total pages
 						sender.sendMessage(message);
 					}
 					//send vote totals, how many votes till next milestone, how many votes in threshold
 				}
 				if(args[0].equalsIgnoreCase("milestones")) {
 					//show qualifing milestones
+					Milestone[] milestones = rm.getQualifiedMilestones((Player) sender);
+					String message = "";
+
+					for(int i = 0; i < milestones.length; i++) {
+						message = message + ChatColor.BLUE + "Milestone #" + Integer.toString(i+1) + ": " + ChatColor.AQUA + milestones[i].getName() + "\n";
+						message += ChatColor.GOLD + "    Vote Threshold: " + ChatColor.AQUA + milestones[i].getVotes() + "\n";
+						message += ChatColor.GOLD + "    Recurring: " + ChatColor.AQUA +  milestones[i].isRecurring() + "\n";
+						if(milestones[i].hasCurrency()) {
+							String currency = Double.toString(milestones[i].getCurrency());
+							if(currency.length() < 4) {
+								if(currency.length() > 2) {
+									currency += "0";
+								} else {
+									currency += "00";
+								}
+							}
+							message += ChatColor.GOLD + "    Currency: " + ChatColor.AQUA + currency + "\n";
+						}
+						if(milestones[i].hasXpLevels()) {
+							message += ChatColor.GOLD + "    XP Levels: " + ChatColor.AQUA + Integer.toString(milestones[i].getXpLevels()) + "\n";
+						}
+						if(milestones[i].hasItems()) {
+							message += ChatColor.GOLD + "    Items: " + ChatColor.DARK_AQUA + Utils.getItemListString(milestones[i].getItems()) + "\n";
+						}
+					}
 				}
 				if(args[0].equalsIgnoreCase("rewards")) {
 
@@ -68,21 +94,19 @@ public class Commands implements CommandExecutor {
 						if(rewards[i].hasCurrency()) {
 							String currency = Double.toString(rewards[i].getCurrency());
 							if(currency.length() < 4) {
-								currency = currency + "0";
+								if(currency.length() > 2) {
+									currency += "0";
+								} else {
+									currency += "00";
+								}
 							}
-							message = message + ChatColor.GRAY + "    Currency: " + currency + "\n";
+							message += ChatColor.GOLD + "    Currency: " + ChatColor.AQUA + currency + "\n";
 						}
 						if(rewards[i].hasXpLevels()) {
-							message = message + ChatColor.GRAY + "    Xp Levels: " + Integer.toString(rewards[i].getXpLevels()) + "\n";
+							message += ChatColor.GOLD + "    XP Levels: " + ChatColor.AQUA + Integer.toString(rewards[i].getXpLevels()) + "\n";
 						}
 						if(rewards[i].hasItems()) {
-							ItemStack[] items = rewards[i].getItems();
-							String itemsString = "";
-							for(int j = 0; j < items.length; j++) {
-								itemsString = itemsString + items[j].getType().toString().toLowerCase().replaceAll("_", " ") + "(x" + Integer.toString(items[j].getAmount()) + "), ";
-							}
-							itemsString = itemsString.substring(0, itemsString.length() - 2);
-							message = message + ChatColor.GRAY + "    Items: " + itemsString + "\n";
+							message += ChatColor.GOLD + "    Items: " + ChatColor.DARK_AQUA + Utils.getItemListString(rewards[i].getItems()) + "\n";
 						}
 					}
 
@@ -105,6 +129,7 @@ public class Commands implements CommandExecutor {
 					//show qualifying rewards
 				}
 				if(args[0].equalsIgnoreCase("reload")) {
+					if(!sender.isOp()) return true;
 					plugin.reloadConfigs();
 					sender.sendMessage("Reload complete!");
 					//reload configs
