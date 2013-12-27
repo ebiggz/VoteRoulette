@@ -3,6 +3,7 @@ package com.mythicacraft.voteroulette.utils;
 import java.util.List;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -43,5 +44,26 @@ public class Utils {
 		}
 		return count;
 	}
-
+	public static String getItemListString(ItemStack[] items) {
+		StringBuilder sb = new StringBuilder();
+		int count = 0;
+		for(int i = 0; i < items.length; i++) {
+			ItemStack is = items[i];
+			sb.append(is.getType().toString().toLowerCase().replace("_", " "));
+			if(is.getAmount() > 1) {
+				sb.append("(x" + is.getAmount() + ")");
+			}
+			int lastIndex = items.length-1;
+			if(i != lastIndex) {
+				sb.append(", ");
+			}
+			if(count % 2 == 0) {
+				sb.append(ChatColor.AQUA);
+			} else {
+				sb.append(ChatColor.DARK_AQUA);
+			}
+			count++;
+		}
+		return sb.toString();
+	}
 }
