@@ -1,0 +1,40 @@
+#########################
+# VoteRoulette Messages #
+#########################
+
+# Here you can edit all the default messages
+
+# All messages support color codes using the “&” symbol!
+# For example, “&4” would make text red.
+# If you need to use quotes, don’t forget to escape(backslash) them like this: \"
+
+# The following is the message that everyone sees when a player votes
+# Available variables:
+# %server%  - Name of the server
+# %player%  - Player who voted
+# %site%    - The website the player voted on
+
+server-broadcast-message: "&b[&e%player%&b just voted for %server% on &e%site%&b and got rewarded for it!]"
+
+# The following is the message the player sees when they receive a reward/milestone
+# Available variables:
+# %name%  - Name of the reward/milestone
+# %player%  - Player who is receiving the reward
+# %server%  - Name of the server
+# %type%    - The type of award, Reward/Milestone
+# %prizes%  - The stuff in the reward (money, xp levels, items)
+
+player-reward-message: "&bYou have received the %type% &e%name% &bwhich gave you:&e %prizes%"
+
+# The following is the message that is broadcasted if “broadcastVoteReminder” is set to true
+# in the config.yml file. You can also set how often it broadcasts there.
+# Available variables:
+# %server%
+
+periodic-reminder: "&b*Have you voted for %server% today? Type /vote see where you can and get rewarded!"
+
+# The following is the websites players will see when they type /vote
+
+vote-websites:
+- www.your-server-list-here.com
+- www.another-server-list.com

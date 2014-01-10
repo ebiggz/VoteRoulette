@@ -22,7 +22,7 @@ public class ConfigAccessor {
 		if (plugin == null)
 			throw new IllegalArgumentException("plugin cannot be null");
 		this.fileName = fileName;
-		folderPath = plugin.getDataFolder().getAbsolutePath() + File.separator + "data";
+		folderPath = plugin.getDataFolder().getAbsolutePath();
 		configFile = new File(folderPath + File.separator + fileName);
 	}
 
@@ -34,8 +34,8 @@ public class ConfigAccessor {
 			YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
 			fileConfiguration.setDefaults(defConfig);
 			try {
-				fileConfiguration.save(configFile);
-			} catch (IOException e) {
+				//fileConfiguration.save(configFile);
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -62,7 +62,7 @@ public class ConfigAccessor {
 
 	public void saveDefaultConfig() {
 		if (!configFile.exists()) {
-			this.plugin.saveResource("data" + File.separator + fileName, false);
+			this.plugin.saveResource(fileName, false);
 		}
 	}
 }

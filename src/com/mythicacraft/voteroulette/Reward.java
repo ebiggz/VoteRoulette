@@ -1,11 +1,17 @@
 package com.mythicacraft.voteroulette;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import com.mythicacraft.voteroulette.utils.Utils;
 
 public class Reward {
 
@@ -15,7 +21,10 @@ public class Reward {
 	private ArrayList<ItemStack> items = new ArrayList<ItemStack>();
 	private String[] permGroups;
 	private String name;
+	private List<String> commands = new ArrayList<String>();
+	private String message;
 
+	@SuppressWarnings("deprecation")
 	Reward(String name, ConfigurationSection cs) {
 		this.setName(name);
 		if(cs.contains("currency")) {
@@ -38,22 +47,101 @@ public class Reward {
 				log.warning("[VoteRoulette] Invalid xpLevel format for reward: " + name + ", Skipping xpLevels.");
 			}
 		}
+		if(cs.contains("commands")) {
+			try {
+				commands = cs.getStringList("commands");
+			} catch (Exception e) {
+				log.warning("[VoteRoulette] Error loading commands for reward:" + name + ", Skipping commands.");
+			}
+		}
+		if(cs.contains("message")) {
+			try {
+				message = ChatColor.translateAlternateColorCodes('&', cs.getString("message"));
+			} catch (Exception e) {
+				log.warning("[VoteRoulette] Error loading custom message for reward:" + name + ", Skipping message.");
+			}
+		}
 		if(cs.contains("items")) {
-			String[] tmp = cs.getString("items").split(",");
-			for (String item : tmp) {
-				String quant = "1";
-				if (item.equals("")) continue;
-				if (item.contains("(")) {
-					String[] itemAndQuant = item.split("\\(");
-					item = itemAndQuant[0].trim();
-					quant = itemAndQuant[1].replace(")", "").trim();
-				}
-				try {
-					int iItem = Integer.parseInt(item);
-					int iQuant = Integer.parseInt(quant);
-					items.add(new ItemStack(Material.getMaterial(iItem), iQuant));
-				} catch (Exception e) {
-					log.warning("[VoteRoulette] Invalid item formatting for reward: " + item + ", Skipping.");
+			ConfigurationSection items = cs.getConfigurationSection("items");
+			if(items != null) {
+				for(String itemID : items.getKeys(false)) {
+					int id;
+					try {
+						id = Integer.parseInt(itemID);
+					} catch (Exception e) {
+						System.out.println("[VoteRoulette] \"" + itemID + "\" is not a valid itemID, Skipping!");
+						continue;
+					}
+					ConfigurationSection itemData = items.getConfigurationSection(itemID);
+					ItemStack item;
+					ItemMeta itemMeta;
+					if(itemData != null) {
+						if(itemData.contains("dataID")) {
+							String dataIDStr = itemData.getString("dataID");
+							byte dataID;
+							try {
+								dataID = Byte.parseByte(dataIDStr);
+							} catch (Exception e) {
+								dataID = 1;
+								System.out.println("[VoteRoulette] \"" + dataIDStr + "\" is not a valid dataID, Defaulting to 0!");
+							}
+							item = new ItemStack(Material.getMaterial(id), 1, dataID);
+						} else {
+							item = new ItemStack(Material.getMaterial(id), 1);
+						}
+						itemMeta = item.getItemMeta();
+						if(itemData.contains("amount")) {
+							int amount = itemData.getInt("amount");
+							item.setAmount(amount);
+						}
+						if(itemData.contains("enchants")) {
+							String[] tmp = itemData.getString("enchants").split(",");
+							for (String enchantName : tmp) {
+								String level = "1";
+								if (enchantName.equals("")) continue;
+								if (enchantName.contains("(")) {
+									String[] enchantAndLevel = enchantName.split("\\(");
+									enchantName = enchantAndLevel[0].trim();
+									level = enchantAndLevel[1].replace(")", "").trim();
+								}
+								try {
+									Enchantment enchant = Utils.getEnchantEnumFromName(enchantName);
+									int iLevel = Integer.parseInt(level);
+									if(enchant == null) {
+										System.out.println("[VoteRoulette] Couldn't find enchant with the name \"" + enchantName + "\" for the item: " + itemID + "!");
+										continue;
+									}
+									itemMeta.addEnchant(enchant, iLevel, true);
+								} catch(Exception e) {
+									System.out.println("[VoteRoulette] Invalid enchant level for \"" + enchantName + "\" for the item: " + itemID + "!");
+								}
+							}
+						}
+						if(itemData.contains("name")) {
+							String customName = itemData.getString("name");
+							itemMeta.setDisplayName(customName);
+						}
+						if(itemData.contains("lore")) {
+							List<String> lore = new ArrayList<String>();
+							lore = itemData.getStringList("lore");
+							if(lore == null || lore.isEmpty()) {
+								String loreStr = itemData.getString("lore");
+								if(loreStr.isEmpty()) {
+									System.out.println("[VoteRoulette] The lore for item \"" + itemID + "\" is empty or formatted incorrectly!");
+								} else {
+									String[] loreLines = loreStr.split(",");
+									for(String loreLine: loreLines) {
+										lore.add(loreLine.trim());
+									}
+									itemMeta.setLore(lore);
+								}
+							} else {
+								itemMeta.setLore(lore);
+							}
+						}
+						item.setItemMeta(itemMeta);
+						this.items.add(item);
+					}
 				}
 			}
 		}
@@ -134,17 +222,39 @@ public class Reward {
 		for(int i = 0; i < items.size(); i++) {
 			int itemSlots = items.get(i).getAmount()/64;
 			if(items.get(i).getAmount() % 64 != 0) {
-				itemSlots++;
+				itemSlots = itemSlots + 1;
 			}
-			totalSlots =+ itemSlots;
+			totalSlots = totalSlots + itemSlots;
 		}
 		return totalSlots;
 	}
 
 	public boolean isEmpty() {
-		if(currency == 0 && xpLevels == 0 && items.isEmpty()) {
+		if(currency == 0 && xpLevels == 0 && items.isEmpty() && commands.isEmpty()) {
 			return true;
 		}
 		return false;
+	}
+
+	public List<String> getCommands() {
+		return commands;
+	}
+
+	public void setCommands(List<String> commands) {
+		this.commands = commands;
+	}
+
+	public boolean hasCommands() {
+		if(commands == null || commands.isEmpty()) return false;
+		return true;
+	}
+
+	public boolean hasMessage() {
+		if(message == null || message.length() == 0) return false;
+		return true;
+	}
+
+	public String getMessage() {
+		return message;
 	}
 }

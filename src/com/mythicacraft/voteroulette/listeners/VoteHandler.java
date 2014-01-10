@@ -1,11 +1,15 @@
 package com.mythicacraft.voteroulette.listeners;
 
+import java.io.File;
+
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
+import com.mythicacraft.voteroulette.PlayerManager;
 import com.mythicacraft.voteroulette.RewardManager;
 import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
@@ -15,9 +19,10 @@ import com.vexsoftware.votifier.model.VotifierEvent;
 
 public class VoteHandler implements Listener {
 
-	static ConfigAccessor playerCfg = new ConfigAccessor("players.yml");
+	static ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "players.yml");
 	static FileConfiguration playerData = playerCfg.getConfig();
 	static RewardManager rm = VoteRoulette.getRewardManager();
+	static PlayerManager pm = VoteRoulette.getPlayerManager();
 
 	private static VoteRoulette plugin;
 
@@ -27,68 +32,61 @@ public class VoteHandler implements Listener {
 
 	@EventHandler(priority=EventPriority.NORMAL)
 	public void onVotifierEvent(VotifierEvent event) {
+
 		Vote vote = event.getVote();
-		Player p = plugin.getServer().getPlayerExact(vote.getUsername());
 		updatePlayerVoteTotals(vote.getUsername());
-		processVote(p, vote);
+		processVote(vote.getUsername());
+
+		String voteMessage = plugin.SERVER_BROADCAST_MESSAGE;
+		voteMessage = voteMessage.replace("%player%", vote.getUsername()).replace("%server%", Bukkit.getServerName()).replace("%site%", vote.getServiceName());
+		if(plugin.BROADCAST_TO_SERVER) {
+			Player[] onlinePlayers = Bukkit.getOnlinePlayers();
+			for(Player player : onlinePlayers) {
+				if(player.getName().equals(vote.getUsername())) continue;
+				player.sendMessage(voteMessage);
+			}
+		}
+		if(plugin.LOG_TO_CONSOLE) {
+			System.out.println(voteMessage);
+		}
 	}
 
 	//increments players vote stats
 	public static void updatePlayerVoteTotals(String playername) {
-
-		ConfigAccessor playerCfg = new ConfigAccessor("players.yml");
-		int currentCycle;
-		int lifetimeVotes;
-
-		if(playerCfg.getConfig().contains(playername)) {
-			currentCycle = playerCfg.getConfig().getInt(playername + ".currentCycle") + 1;
-			lifetimeVotes = playerCfg.getConfig().getInt(playername + ".lifetimeVotes") + 1;
-		} else {
-			currentCycle = 1;
-			lifetimeVotes = 1;
-		}
-		playerCfg.getConfig().set(playername + ".currentCycle", currentCycle);
-		playerCfg.getConfig().set(playername + ".lifetimeVotes", lifetimeVotes);
-		playerCfg.saveConfig();
+		pm.setPlayerLifetimeVotes(playername, pm.getPlayerLifetimeVotes(playername) + 1);
+		pm.setPlayerCurrentVoteCycle(playername, pm.getPlayerCurrentVoteCycle(playername) + 1);
 	}
 
 	//checks if the player is eligible to receive a reward
-	public static void processVote(Player player, Vote vote) {
-
-		ConfigAccessor playerCfg = new ConfigAccessor("players.yml");
-		FileConfiguration playerData = playerCfg.getConfig();
-		String playername = player.getName();
+	public static void processVote(String playerName) {
 
 		//First check if player is blacklisted & check if the blacklist is being used as a white list
-		if((plugin.BLACKLIST_AS_WHITELIST == false && Utils.playerIsBlacklisted(player)) || (plugin.BLACKLIST_AS_WHITELIST && Utils.playerIsBlacklisted(player) == false)) return;
+		if((plugin.BLACKLIST_AS_WHITELIST == false && Utils.playerIsBlacklisted(playerName)) || (plugin.BLACKLIST_AS_WHITELIST && Utils.playerIsBlacklisted(playerName) == false)) return;
 		//now check if a player has reached a milestone
-		if(rm.playerReachedMilestone(player)) {
+		if(rm.playerReachedMilestone(playerName)) {
 			//if player has reached one, check if it should be a random
 			if(plugin.GIVE_RANDOM_MILESTONE) {
-				rm.giveRandomMilestone(player);
+				rm.giveRandomMilestone(playerName);
 			} else {
-				rm.giveDefaultMilestone(player);
+				rm.giveHighestPriorityMilestone(playerName);
 			}
 			//if player is to only receive milestone, end
 			if(plugin.ONLY_MILESTONE_ON_COMPLETION) return;
 		}
 		//check if player should only receive a vote after meeting a threshold
 		if(plugin.REWARDS_ON_THRESHOLD) {
-			if(playerData.contains(playername)) {
-				int playerVoteCycleCount = playerData.getInt(playername + ".voteCycle");
-				//check the players current vote cycle, if it hasn't met the threshold, end
-				if(playerVoteCycleCount < plugin.VOTE_THRESHOLD) return;
-				playerData.set(playername + ".currentCycle", 0);
-				playerCfg.saveConfig();
-			}
+			//check the players current vote cycle, if it hasn't met the threshold, end
+			if(pm.getPlayerCurrentVoteCycle(playerName) < plugin.VOTE_THRESHOLD) return;
+			pm.setPlayerCurrentVoteCycle(playerName, 0);
+
 		}
 		//check if there is rewards the player is qualified to receive
-		if(rm.playerHasRewards(player)) {
+		if(rm.playerHasRewards(playerName)) {
 			//check if it should be random
 			if(plugin.GIVE_RANDOM_REWARD) {
-				rm.giveRandomReward(player);
+				rm.giveRandomReward(playerName);
 			} else {
-				rm.giveDefaultReward(player);
+				rm.giveDefaultReward(playerName);
 			}
 		}
 	}

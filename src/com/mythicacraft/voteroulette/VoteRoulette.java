@@ -1,20 +1,25 @@
 package com.mythicacraft.voteroulette;
 
 import java.io.File;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import com.mythicacraft.voteroulette.cmdexecutors.Commands;
+import com.mythicacraft.voteroulette.listeners.LoginListener;
 import com.mythicacraft.voteroulette.listeners.VoteHandler;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.Utils;
@@ -29,33 +34,42 @@ public class VoteRoulette extends JavaPlugin {
 	private static boolean hasPermPlugin = false;
 	private static boolean hasEconPlugin = false;
 
-	private static RewardManager rm = new RewardManager();
+	private static RewardManager rm;
+	private static PlayerManager pm;
+	private BukkitRunnable periodicReminder;
 
 	//config constants
 	public boolean REWARDS_ON_THRESHOLD;
+	public boolean USE_DATABASE;
 	public int VOTE_THRESHOLD;
 	public boolean MESSAGE_PLAYER;
 	public boolean BROADCAST_TO_SERVER;
+	public boolean LOG_TO_CONSOLE;
 	public boolean GIVE_RANDOM_REWARD;
 	public boolean GIVE_RANDOM_MILESTONE;
 	public boolean ONLY_MILESTONE_ON_COMPLETION;
 	public boolean BLACKLIST_AS_WHITELIST;
-	public Player[] BLACKLIST_PLAYERS;
+	public List<String> BLACKLIST_PLAYERS;
+	public boolean USE_PERIODIC_REMINDER;
+	public long REMINDER_INTERVAL;
+	public double CONFIG_VERSION;
 
-	//localizations constants
-	public String SERVER_VOTE_CONFIRMATION;
-	public String PLAYER_VOTE_CONFIRMATION;
-	public String REWARD_MESSAGE;
-	public String NO_PERMS_SELF_MESSAGE;
-	public String NO_PERMS_OTHERS_MESSAGE;
-
-
+	//messages constants
+	public String SERVER_BROADCAST_MESSAGE;
+	public String PLAYER_VOTE_MESSAGE;
+	public String PERIODIC_REMINDER;
+	public List<String> VOTE_WEBSITES;
 
 	public void onDisable() {
 		log.info("[VoteRoulette] Disabled!");
 	}
 
 	public void onEnable() {
+
+		rm = new RewardManager(this);
+		pm = new PlayerManager(this);
+
+		USE_DATABASE = false;
 
 		//check for votifier
 		if(!setupVotifier()) {
@@ -70,45 +84,47 @@ public class VoteRoulette extends JavaPlugin {
 
 		//register events and commands
 		getServer().getPluginManager().registerEvents(new VoteHandler(this), this);
-		getCommand("debugvote").setExecutor(new Commands(this));
+		getServer().getPluginManager().registerEvents(new LoginListener(), this);
+
 		getCommand("vr").setExecutor(new Commands(this));
 		getCommand("voteroulette").setExecutor(new Commands(this));
+		getCommand("vote").setExecutor(new Commands(this));
 
 		//load configs
 		reloadConfigs();
+
+		if(CONFIG_VERSION != 1.1) {
+			log.warning("[VoteRoulette] It appears that your config is out of date. There's new options! It's recommended that you take your old config out to let the new one save.");
+		}
 
 		log.info("[VoteRoulette] Enabled!");
 	}
 
 	private boolean setupVotifier() {
-		System.out.println("[VoteRoulette] Checking for Votifier...");
 		Plugin votifier =  getServer().getPluginManager().getPlugin("Votifier");
 		if (!(votifier != null && votifier instanceof com.vexsoftware.votifier.Votifier)) {
 			log.severe("[VoteRoulette] Votifier was not found! Voltifer is required for VoteRoulette to work!");
 			return false;
 		}
-		System.out.println("[VoteRoulette] ...found Votifier!");
+		System.out.println("[VoteRoulette] Hooked into Votifier!");
 		return true;
 	}
 
 	private boolean setupVault() {
-		System.out.println("[VoteRoulette] Checking for Vault...");
 		Plugin vault =  getServer().getPluginManager().getPlugin("Vault");
 		if (vault != null && vault instanceof net.milkbowl.vault.Vault) {
+			System.out.println("[VoteRoulette] Hooked into Vault!");
 			if(!setupEconomy()) {
 				log.warning("[VoteRoulette] No plugin to handle currency, cash rewards will not be given!");
-				return true;
 			}
 			if(!setupPermissions()) {
 				log.warning("[VoteRoulette] No plugin to handle permission groups, permission group reward settings will be ignored!");
-				return true;
 			}
+			return true;
 		} else {
 			log.warning("[VoteRoulette] Vault plugin not found. Currency and permission group reward settings will be ignored!");
 			return false;
 		}
-		System.out.println("[VoteRoulette] ...found Vault!");
-		return true;
 	}
 
 	private boolean setupEconomy() {
@@ -133,11 +149,24 @@ public class VoteRoulette extends JavaPlugin {
 		System.out.println("[VoteRoulette] Loading configs...");
 		loadConfig();
 		loadConfigOptions();
+		loadMessagesFile();
+		loadMessagesData();
 		loadPlayerData();
-		loadLocalizations();
 		loadRewards();
 		loadMilestones();
 		System.out.println("[VoteRoulette] ...finished loading configs!");
+		scheduleReminder();
+	}
+
+	void scheduleReminder() {
+
+		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+		scheduler.cancelTasks(this);
+
+		if(USE_PERIODIC_REMINDER) {
+			periodicReminder = new PeriodicReminder(PERIODIC_REMINDER.replaceAll("%server%", Bukkit.getServerName()));
+			scheduler.scheduleSyncRepeatingTask(this, periodicReminder,REMINDER_INTERVAL, REMINDER_INTERVAL);
+		}
 	}
 
 	private void loadConfig() {
@@ -157,6 +186,25 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
+	void loadMessagesFile() {
+		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		(new File(pluginFolder)).mkdirs();
+		File messagesFile = new File(pluginFolder, "messages.yml");
+		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
+
+		if(!messagesFile.exists()) {
+			saveResource("messages.yml", true);
+			return;
+		}
+		try {
+			messageData.reloadConfig();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception while loading VoteRoulette/messages.yml", e);
+			pm.disablePlugin(this);
+		}
+	}
+
 	void loadPlayerData() {
 		PluginManager pm = getServer().getPluginManager();
 		String pluginFolder = this.getDataFolder().getAbsolutePath();
@@ -164,7 +212,7 @@ public class VoteRoulette extends JavaPlugin {
 		String playerFolder = pluginFolder + File.separator + "data";
 		(new File(playerFolder)).mkdirs();
 		File playerDataFile = new File(playerFolder, "players.yml");
-		ConfigAccessor playerData = new ConfigAccessor("players.yml");
+		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "players.yml");
 
 		if (!playerDataFile.exists()) {
 			try {
@@ -186,30 +234,16 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
-	private void loadLocalizations() {
-		PluginManager pm = getServer().getPluginManager();
-		String pluginFolder = this.getDataFolder().getAbsolutePath();
-		(new File(pluginFolder)).mkdirs();
-		String playerFolder = pluginFolder + File.separator + "data";
-		(new File(playerFolder)).mkdirs();
-		File localizationsFile = new File(playerFolder, "localizations.yml");
-		ConfigAccessor localizations = new ConfigAccessor("localizations.yml");
+	void loadMessagesData() {
+		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
 
-		if(!localizationsFile.exists()) {
-			try {
-				localizations.saveDefaultConfig();
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/localizations.yml", e);
-				pm.disablePlugin(this);
-			}
-		} else {
-			try {
-				localizations.reloadConfig();
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/localizations.yml", e);
-				pm.disablePlugin(this);
-			}
-		}
+		SERVER_BROADCAST_MESSAGE = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("server-broadcast-message"));
+
+		PLAYER_VOTE_MESSAGE = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("player-reward-message"));
+
+		PERIODIC_REMINDER = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("periodic-reminder"));
+
+		VOTE_WEBSITES = messageData.getConfig().getStringList("vote-websites");
 	}
 
 	private void loadConfigOptions() {
@@ -221,6 +255,8 @@ public class VoteRoulette extends JavaPlugin {
 
 		BROADCAST_TO_SERVER = getConfig().getBoolean("broadcastToServer");
 
+		LOG_TO_CONSOLE = getConfig().getBoolean("logToConsole");
+
 		GIVE_RANDOM_REWARD = getConfig().getBoolean("giveRandomReward");
 
 		GIVE_RANDOM_MILESTONE = getConfig().getBoolean("giveRandomMilestone");
@@ -229,14 +265,19 @@ public class VoteRoulette extends JavaPlugin {
 
 		BLACKLIST_AS_WHITELIST = getConfig().getBoolean("useBlacklistAsWhitelist");
 
+		USE_PERIODIC_REMINDER = getConfig().getBoolean("usePeriodicReminder");
+
+		REMINDER_INTERVAL = getConfig().getLong("periodicReminderInterval")*1200;
+
 		BLACKLIST_PLAYERS = Utils.getBlacklistPlayers();
+
+		CONFIG_VERSION = getConfig().getDouble("configVersion", 1.0);
 	}
 
 	private void loadRewards() {
 		rm.clearRewards();
 		ConfigurationSection cs = getConfig().getConfigurationSection("Rewards");
 		if(cs != null) {
-			System.out.println("[VoteRoulette] Loading rewards...");
 			for(String rewardName : cs.getKeys(false)) {
 				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
 				if (rewardOptions != null) {
@@ -245,18 +286,17 @@ public class VoteRoulette extends JavaPlugin {
 					System.out.println("[VoteRoulette] Added Reward: " + rewardName);
 					if(rewardName.equals(getConfig().getString("defaultReward"))) {
 						rm.setDefaultReward(newReward);
-						System.out.println("[VoteRoulette] + \"" + rewardName + "\" saved as default reward.");
+						System.out.println("[VoteRoulette] \"" + rewardName + "\" saved as default reward.");
 					}
 					continue;
 				}
 				log.warning("[VoteRoulette] The reward \"" + rewardName + "\" is empty! Skipping reward.");
 			}
-			if(rm.hasDefaultReward() == false && getConfig().getBoolean("giveRandomReward") == false) {
+			if(!rm.hasDefaultReward() && !getConfig().getBoolean("giveRandomReward")) {
 				log.warning("[VoteRoulette] The deafult reward name could not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
 			}
-			System.out.println("[VoteRoulette] ...Finished loading rewards!");
 		} else {
-			log.severe("[VoteRoulette] Your reward section is empty, no rewards will be given!");
+			log.warning("[VoteRoulette] Your reward section is empty, no rewards will be given!");
 		}
 	}
 
@@ -264,13 +304,12 @@ public class VoteRoulette extends JavaPlugin {
 		rm.clearMilestones();
 		ConfigurationSection cs = getConfig().getConfigurationSection("Milestones");
 		if(cs != null) {
-			System.out.println("[VoteRoulette] Loading milestones...");
 			for (String milestoneName : cs.getKeys(false)) {
 				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
 				if (milestoneOptions != null) {
 					if(milestoneOptions.contains("votes")) {
 						rm.addMilestone(new Milestone(milestoneName, milestoneOptions));
-						System.out.println("[VR] Added Milestone: " + milestoneName);
+						System.out.println("[VoteRoulette] Added Milestone: " + milestoneName);
 						continue;
 					}
 					log.warning("[VoteRoulette] Milestone \"" + milestoneName + "\" doesn't have a vote number set! Ignoring Milestone...");
@@ -278,7 +317,6 @@ public class VoteRoulette extends JavaPlugin {
 				}
 				log.warning("[VoteRoulette] The reward \"" + milestoneName + "\" is empty! Skipping...");
 			}
-			System.out.println("[VoteRoulette] ... Finished loading milestones!");
 		} else {
 			log.warning("[VoteRoulette] Your milestone section is empty, no milestones will be given!");
 		}
@@ -298,5 +336,23 @@ public class VoteRoulette extends JavaPlugin {
 
 	public static RewardManager getRewardManager() {
 		return rm;
+	}
+
+	public static PlayerManager getPlayerManager() {
+		return pm;
+	}
+
+	private class PeriodicReminder extends BukkitRunnable {
+
+		private String message;
+
+		PeriodicReminder(String message) {
+			this.message = message;
+		}
+
+		@Override
+		public void run() {
+			Bukkit.broadcastMessage(message);
+		}
 	}
 }
