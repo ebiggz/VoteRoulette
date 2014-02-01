@@ -1,12 +1,17 @@
 package com.mythicacraft.voteroulette;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.bukkit.configuration.ConfigurationSection;
 
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
+import com.mythicacraft.voteroulette.utils.Utils;
 
 
 public class PlayerManager {
@@ -27,6 +32,80 @@ public class PlayerManager {
 			lifetimeVotes = playerCfg.getConfig().getInt(playerName + ".lifetimeVotes", 0);
 		}
 		return lifetimeVotes;
+	}
+
+	public boolean playerHasntVotedInADay(String playerName) {
+		String lastVoteTimeStamp;
+		if(plugin.USE_DATABASE) {
+			//place holder for db code
+			lastVoteTimeStamp = "";
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "players.yml");
+			lastVoteTimeStamp = playerCfg.getConfig().getString(playerName + ".lastVote", "");
+		}
+		if(lastVoteTimeStamp.equals("")) {
+			return false;
+		}
+
+		try {
+			int hours = getHoursSince(lastVoteTimeStamp);
+			if(hours >= 24) {
+				return true;
+			} else {
+				return false;
+			}
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public void savePlayerLastVoteTimeStamp(String playerName) {
+		String timeStamp = Utils.getTime();
+		if(plugin.USE_DATABASE) {
+			//place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "players.yml");
+			playerCfg.getConfig().set(playerName + ".lastVote", timeStamp);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public String getPlayerLastVoteTimeStamp(String playerName) {
+		String timeStamp = "";
+		if(plugin.USE_DATABASE) {
+			//place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "players.yml");
+			timeStamp = playerCfg.getConfig().getString(playerName + ".lastVote", "");
+		}
+		return timeStamp;
+	}
+	public boolean playerHasLastVoteTimeStamp(String playerName) {
+		if(plugin.USE_DATABASE) {
+			return false;
+			//place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "players.yml");
+			if(playerCfg.getConfig().contains(playerName + ".lastVote")) return true;
+			return false;
+		}
+	}
+
+	private static int getHoursSince(String time) throws ParseException {
+
+		String currentTime = Utils.getTime();
+
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a", Locale.ENGLISH);
+		Date date1 = sdf.parse(time);
+		Date date2 = sdf.parse(currentTime);
+
+		Long differnceInMills = date2.getTime() - date1.getTime();
+
+		long timeInMinutes = differnceInMills/60000;
+		int totalMinutes = (int) timeInMinutes;
+
+		return totalMinutes/60;
 	}
 
 	public int getPlayerCurrentVoteCycle(String playerName) {

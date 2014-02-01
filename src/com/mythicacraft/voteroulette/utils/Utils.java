@@ -1,11 +1,17 @@
 package com.mythicacraft.voteroulette.utils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
@@ -27,6 +33,139 @@ public class Utils {
 	public static boolean playerIsBlacklisted(String playerName) {
 		if(getBlacklistPlayers().contains(playerName)) return true;
 		return false;
+	}
+
+	public static boolean worldIsBlacklisted(String worldName) {
+		List<String> blacklistStr = plugin.getConfig().getStringList("blacklistedWorlds");
+		if(blacklistStr.contains(worldName)) return true;
+		return false;
+	}
+
+	public static boolean playerIsOnline(String playerName) {
+		Player[] onlinePlayers = Bukkit.getOnlinePlayers();
+		for(Player player : onlinePlayers) {
+			if(player.getName().equals(playerName)) return true;
+		}
+		return false;
+	}
+
+	public static String timeString(int totalMinutes) {
+
+		String timeStr = "";
+
+		int totalMins = totalMinutes;
+		int totalHours = totalMins/60;
+		int totalDays = totalHours/24;
+		int remainingMins = totalMins % 60;
+		int remainingHours = totalHours % 24;
+
+		if(totalDays > 0) {
+			timeStr += Integer.toString(totalDays) + " day";
+			if(totalDays > 1) {
+				timeStr += "s";
+			}
+		}
+		if(totalHours > 0) {
+			int hours = totalHours;
+			if(totalDays > 0) {
+				hours = remainingHours;
+				if(remainingHours > 0) {
+					if(remainingMins > 0) {
+						timeStr += ", ";
+					} else {
+						timeStr += " and ";
+					}
+					timeStr += Integer.toString(hours) + " hour";
+					if(hours > 1) {
+						timeStr += "s";
+					}
+				}
+			} else {
+				timeStr += Integer.toString(hours) + " hour";
+				if(hours > 1) {
+					timeStr += "s";
+				}
+			}
+		}
+		if(totalMins > 0) {
+			if(totalDays > 0) {
+				if(remainingMins > 0) {
+					if(remainingHours > 0) {
+						timeStr += ", and ";
+					} else {
+						timeStr += " and ";
+					}
+				}
+			} else {
+				if(totalHours > 0) {
+					if(remainingMins > 0) {
+						timeStr += " and ";
+					}
+				}
+			}
+			int mins = totalMins;
+			if(totalDays > 0 || totalHours > 0) {
+				mins = remainingMins;
+			}
+			if(mins > 0) {
+				timeStr += Integer.toString(mins) + " minute";
+				if(mins > 1) {
+					timeStr += "s";
+				}
+			}
+		}
+		if(totalMins < 1) {
+			timeStr = "less than a minute";
+		}
+		return timeStr;
+	}
+
+	public static int compareTimeToNow(String time) throws ParseException {
+
+		String currentTime = getTime();
+
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a", Locale.ENGLISH);
+		Date date1 = sdf.parse(time);
+		Date date2 = sdf.parse(currentTime);
+
+		Long differnceInMills = date2.getTime() - date1.getTime();
+
+		long timeInMinutes = differnceInMills/60000;
+		int totalMinutes = (int) timeInMinutes;
+
+		return totalMinutes;
+	}
+
+	public static String getTimeSinceString(String time) {
+		try {
+			int totalMins = compareTimeToNow(time);
+			return timeString(totalMins);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+
+	public static String getTime() {
+		Calendar cal = Calendar.getInstance();
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a", Locale.ENGLISH);
+		String time = sdf.format(cal.getTime());
+		return time;
+	}
+
+	public static String worldsString(List<String> worlds) {
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < worlds.size(); i++) {
+			sb.append(worlds.get(i));
+			int lastIndex = worlds.size()-1;
+			if(i < lastIndex-1) {
+				sb.append(", ");
+			}
+			if(i == lastIndex-1) {
+				sb.append(", and ");
+			}
+		}
+		return sb.toString();
 	}
 
 	public static int getPlayerOpenInvSlots(Player player) {
@@ -51,6 +190,9 @@ public class Utils {
 				String plural = "s";
 				if(itemName.endsWith("ch")) {
 					plural = "es";
+				}
+				if(itemName.endsWith("glass")) {
+					plural = "";
 				}
 				else if(itemName.contains("beef")) {
 					plural = "";
@@ -266,6 +408,47 @@ public class Utils {
 		return name;
 	}
 
+	public static Color getColorEnumFromName(String name) {
+		switch(name.toLowerCase()) {
+		case "aqua":
+			return Color.AQUA;
+		case "black":
+			return Color.BLACK;
+		case "blue":
+			return Color.BLUE;
+		case "fuchsia":
+			return Color.FUCHSIA;
+		case "gray":
+			return Color.GRAY;
+		case "green":
+			return Color.GREEN;
+		case "lime":
+			return Color.LIME;
+		case "maroon":
+			return Color.MAROON;
+		case "navy":
+			return Color.NAVY;
+		case "olive":
+			return Color.OLIVE;
+		case "orange":
+			return Color.ORANGE;
+		case "purple":
+			return Color.PURPLE;
+		case "red":
+			return Color.RED;
+		case "silver":
+			return Color.SILVER;
+		case "teal":
+			return Color.TEAL;
+		case "white":
+			return Color.WHITE;
+		case "YELLOW":
+			return Color.YELLOW;
+		default:
+			return null;
+		}
+	}
+
 	public static String completeName(String playername) {
 		Player[] onlinePlayers = Bukkit.getOnlinePlayers();
 		for(int i = 0; i < onlinePlayers.length; i++) {
@@ -285,11 +468,20 @@ public class Utils {
 	public static String helpMenu(CommandSender player) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(ChatColor.AQUA + "/vr ?" + ChatColor.GRAY + " - This help menu.\n");
+		if(player.hasPermission("voteroulette.votecommand")) {
+			sb.append(ChatColor.AQUA + "/vote" + ChatColor.GRAY + " - Get the links to vote on.\n");
+		}
 		if(player.hasPermission("voteroulette.viewrewards")) {
 			sb.append(ChatColor.AQUA + "/vr rewards" + ChatColor.GRAY + " - See rewards you are eligible to get.\n");
 		}
 		if(player.hasPermission("voteroulette.viewmilestones")) {
 			sb.append(ChatColor.AQUA + "/vr milestones" + ChatColor.GRAY + " - See milestones you are eligible to get.\n");
+		}
+		if(player.hasPermission("voteroulette.lastvote")) {
+			sb.append(ChatColor.AQUA + "/vr lastvote" + ChatColor.GRAY + " - Shows how long ago your last vote was.\n");
+		}
+		if(player.hasPermission("voteroulette.lastvoteothers")) {
+			sb.append(ChatColor.AQUA + "/vr lastvote [player]" + ChatColor.GRAY + " - Shows how long ago the given players last vote was.\n");
 		}
 		if(player.hasPermission("voteroulette.viewstats")) {
 			sb.append(ChatColor.AQUA + "/vr stats" + ChatColor.GRAY + " - See your voting stats.\n");

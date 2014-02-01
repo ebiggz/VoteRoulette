@@ -10,6 +10,10 @@ messagePlayer: true
 # Whether or not to broadcast to the server when a player votes
 broadcastToServer: true
 
+# If broadcastToServer is set to true, should VoteRoulette only broadcast the votes from
+# online players? (Helps cut down on spam on bigger servers)
+onlyBroadcastOnlinePlayerVotes: false
+
 # Whether or not to log to console when a player votes
 logToConsole: true
 
@@ -20,15 +24,13 @@ usePeriodicReminder: true
 # How often the reminder is broadcasted (in minutes), if enabled.
 periodicReminderInterval: 60
 
-# Set to true to save use a database rather than a flatfile.
-useDatabase: false
-#The following is your database credentials 
-  host: localhost
-  port: 3306
-  user: username
-  pass: password
-  dbase: database-name
+# Whether or not to have players notified when 24 hours has passed since their last vote
+# You can change this reminder in the messages.yml file.
+useTwentyFourHourReminder: true
 
+# Whether or not to only consider a players primary group when doing permission group checks for rewards/milestones
+# Turning this on helps with compatibility with GroupManager if you are using inheritance.
+onlyConsiderPlayersPrimaryGroup: false
 
 #################
 #Rewards Section#
@@ -41,6 +43,7 @@ useDatabase: false
 # - a list of item IDs. Each item can have amount, dataID, enchants, name, and lore sections to further customize item!
 # - an amount of money (if Vault is installed)
 # - an amount of xp levels that will be given
+# - worlds that players can claim the reward in
 # - a list of commands to be run by the console. %player% will be replaced by the players name.
 # - a list of permission groups the reward will be considered for (if Vault is installed)
 # You can leave out any of these options if you do not wish to use them
@@ -72,6 +75,7 @@ useDatabase: false
 #        permGroups: Members, Donators      # Only players in the Members or Donators permission groups are eligible for the reward
 #        message: "&eCongrats %player%! You have received some awesome stuff and got creative mode!"    # This message will display to the player instead of the default one.
 #                # Dont forget the quotes (" ") for the message section!
+#        worlds: main_survival, temp_survival, creative_world
 
 Rewards:
 # Each reward must have a different name
@@ -99,6 +103,10 @@ giveRewardsOnThreshold: false
 
 # If the above is set to true, this is the number of how many votes till a player will receive a reward
 voteThreshold: 5
+
+# If you set any required worlds for a specific rewards, the following setting will make VoteRoulette consider the rewards that qualify for the world the player is currently standing in first. For example, if you had rewards set for a Survival world and a PvP world, and the player was in the Survival world when they voted, rewards that qualify for the Survival world will be considered first. If there is no rewards available for the current world, they will receive a reward as normal and will have to claim it in the correct world.
+
+considerRewardsForPlayersCurrentWorld: true
 
 ##   Milestones List   ##
 #
@@ -137,6 +145,10 @@ giveRandomMilestone: false
 # Set the following to false if you want players to get a regular reward on top of a milestone reward when they reach a milestone.
 onlyRewardMilestoneUponCompletion: true
 
+# If you set any required worlds for a specific milestones, the following setting will make VoteRoulette consider the milestones that qualify for the world the player is currently standing in first. For example, if you had milestones set for a Survival world and a PvP world, and the player was in the Survival world when they voted, only milestones that qualify for the Survival world will be considered first. If there is no milestones available for the current world, they will receive a milestone as normal and will have to claim it in the correct world.
+
+considerMilestonesForPlayersCurrentWorld: false
+
 #####################
 #Blacklisted Players#
 #####################
@@ -149,7 +161,16 @@ blacklistedPlayers:
 # Set the following to true to switch the above blacklist to a whitelist, meaning only the players on that list will get rewards
 useBlacklistAsWhitelist: false
 
+#####################
+#Blacklisted Worlds#
+#####################
+
+# Players will not receive rewards/milestones in these worlds, ever!
+blacklistedWorlds:
+    - A_World
+    - Another_World
+
 # End of config
 #####################
 # No need to touch this
-configVersion: 1.2
+configVersion: 1.3

@@ -36,18 +36,22 @@ public class VoteHandler implements Listener {
 		Vote vote = event.getVote();
 		updatePlayerVoteTotals(vote.getUsername());
 		processVote(vote.getUsername());
+		pm.savePlayerLastVoteTimeStamp(vote.getUsername());
 
 		String voteMessage = plugin.SERVER_BROADCAST_MESSAGE;
 		voteMessage = voteMessage.replace("%player%", vote.getUsername()).replace("%server%", Bukkit.getServerName()).replace("%site%", vote.getServiceName());
+
+		if(plugin.LOG_TO_CONSOLE) {
+			System.out.println(voteMessage);
+		}
+
 		if(plugin.BROADCAST_TO_SERVER) {
+			if(plugin.ONLY_BROADCAST_ONLINE && !Utils.playerIsOnline(vote.getUsername())) return;
 			Player[] onlinePlayers = Bukkit.getOnlinePlayers();
 			for(Player player : onlinePlayers) {
 				if(player.getName().equals(vote.getUsername())) continue;
 				player.sendMessage(voteMessage);
 			}
-		}
-		if(plugin.LOG_TO_CONSOLE) {
-			System.out.println(voteMessage);
 		}
 	}
 
@@ -62,6 +66,38 @@ public class VoteHandler implements Listener {
 
 		//First check if player is blacklisted & check if the blacklist is being used as a white list
 		if((plugin.BLACKLIST_AS_WHITELIST == false && Utils.playerIsBlacklisted(playerName)) || (plugin.BLACKLIST_AS_WHITELIST && Utils.playerIsBlacklisted(playerName) == false)) return;
+		//now check if a player has reached a milestone
+		if(rm.playerReachedMilestone(playerName)) {
+			//if player has reached one, check if it should be a random
+			if(plugin.GIVE_RANDOM_MILESTONE) {
+				rm.giveRandomMilestone(playerName);
+			} else {
+				rm.giveHighestPriorityMilestone(playerName);
+			}
+			//if player is to only receive milestone, end
+			if(plugin.ONLY_MILESTONE_ON_COMPLETION) return;
+		}
+		//check if player should only receive a vote after meeting a threshold
+		if(plugin.REWARDS_ON_THRESHOLD) {
+			//check the players current vote cycle, if it hasn't met the threshold, end
+			if(pm.getPlayerCurrentVoteCycle(playerName) < plugin.VOTE_THRESHOLD) return;
+			pm.setPlayerCurrentVoteCycle(playerName, 0);
+
+		}
+		//check if there is rewards the player is qualified to receive
+		if(rm.playerHasRewards(playerName)) {
+			//check if it should be random
+			if(plugin.GIVE_RANDOM_REWARD) {
+				rm.giveRandomReward(playerName);
+			} else {
+				rm.giveDefaultReward(playerName);
+			}
+		}
+	}
+
+	//checks if the player is eligible to receive a reward
+	public static void processVoteIgnoreBlackList(String playerName) {
+
 		//now check if a player has reached a milestone
 		if(rm.playerReachedMilestone(playerName)) {
 			//if player has reached one, check if it should be a random

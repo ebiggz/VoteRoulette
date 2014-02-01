@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -23,12 +25,13 @@ public class RewardManager {
 	private ArrayList<Reward> rewards = new ArrayList<Reward>();
 	private ArrayList<Milestone> milestones = new ArrayList<Milestone>();
 	private Reward defaultReward = null;
-	private PlayerManager pm = VoteRoulette.getPlayerManager();
+	private PlayerManager pm;
 
 	private static VoteRoulette plugin;
 
 	RewardManager(VoteRoulette instance) {
 		plugin = instance;
+		pm = VoteRoulette.getPlayerManager();
 	}
 
 	//reward methods
@@ -69,7 +72,18 @@ public class RewardManager {
 				if(rewards.get(i).hasPermissionGroups()) {
 					String[] permGroups = rewards.get(i).getPermGroups();
 					for(int j = 0; j < permGroups.length; j++) {
-						if(VoteRoulette.permission.playerInGroup("",playerName, permGroups[j])) {
+						if(plugin.ONLY_PRIMARY_GROUP) {
+							String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
+							if(primaryGroup != null) {
+								if(primaryGroup.equals(permGroups[j])) {
+									qualifiedRewards.add(rewards.get(i));
+									break;
+								}
+							} else {
+								System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
+							}
+						}
+						else if(VoteRoulette.permission.playerInGroup("",playerName, permGroups[j])) {
 							qualifiedRewards.add(rewards.get(i));
 							break;
 						}
@@ -80,10 +94,30 @@ public class RewardManager {
 			}
 			rewardsArray = new Reward[qualifiedRewards.size()];
 			qualifiedRewards.toArray(rewardsArray);
-			return rewardsArray;
+		} else {
+			rewardsArray = new Reward[rewards.size()];
+			rewards.toArray(rewardsArray);
 		}
-		rewardsArray = new Reward[rewards.size()];
-		rewards.toArray(rewardsArray);
+		if(plugin.CONSIDER_REWARDS_FOR_CURRENT_WORLD) {
+			OfflinePlayer op = Bukkit.getOfflinePlayer(playerName);
+			ArrayList<Reward> worldFilteredRewards = new ArrayList<Reward>();
+			if(op.isOnline()) {
+				String worldName = op.getPlayer().getWorld().getName();
+				for(Reward reward : rewardsArray) {
+					if(reward.hasWorlds()) {
+						if(reward.getWorlds().contains(worldName)) {
+							worldFilteredRewards.add(reward);
+						}
+					} else {
+						worldFilteredRewards.add(reward);
+					}
+				}
+				if(!worldFilteredRewards.isEmpty()) {
+					rewardsArray = new Reward[worldFilteredRewards.size()];
+					worldFilteredRewards.toArray(rewardsArray);
+				}
+			}
+		}
 		return rewardsArray;
 	}
 
@@ -116,9 +150,23 @@ public class RewardManager {
 
 	public void administerRewardContents(Reward reward, Player player) {
 		String playerName = player.getName();
+		String worldName = player.getWorld().getName();
+		if(Utils.worldIsBlacklisted(worldName)) {
+			pm.saveUnclaimedReward(player.getName(), reward.getName());
+			player.sendMessage(ChatColor.RED + "You cannot claim rewards in this world!");
+			return;
+		}
+		if(reward.hasWorlds()) {
+			if(!reward.getWorlds().contains(worldName)) {
+				pm.saveUnclaimedReward(player.getName(), reward.getName());
+				player.sendMessage(ChatColor.RED + "You must claim the reward \"" + reward.getName()  + "\"  in the world(s): " + Utils.worldsString(reward.getWorlds()));
+				return;
+			}
+		}
 		if(reward.hasItems()) {
 			if(reward.getRequiredSlots() <= Utils.getPlayerOpenInvSlots(player)) {
 				Inventory inv = player.getInventory();
+				reward.updateLoreAndCustomNames(player.getName());
 				ItemStack[] items = reward.getItems();
 				for(int i = 0; i < items.length; i++) {
 					inv.addItem(items[i]);
@@ -193,9 +241,23 @@ public class RewardManager {
 
 	public void administerMilestoneContents(Milestone milestone, Player player) {
 		String playerName = player.getName();
+		String worldName = player.getWorld().getName();
+		if(Utils.worldIsBlacklisted(worldName)) {
+			pm.saveUnclaimedMilestone(player.getName(), milestone.getName());
+			player.sendMessage(ChatColor.RED + "You cannot claim milestones in this world!");
+			return;
+		}
+		if(milestone.hasWorlds()) {
+			if(!milestone.getWorlds().contains(worldName)) {
+				pm.saveUnclaimedMilestone(player.getName(), milestone.getName());
+				player.sendMessage(ChatColor.RED + "You must claim the milestone \"" + milestone.getName()  + "\" in the world(s): " + Utils.worldsString(milestone.getWorlds()));
+				return;
+			}
+		}
 		if(milestone.hasItems()) {
 			if(milestone.getRequiredSlots() <= Utils.getPlayerOpenInvSlots(player)) {
 				Inventory inv = player.getInventory();
+				milestone.updateLoreAndCustomNames(player.getName());
 				ItemStack[] items = milestone.getItems();
 				for(int i = 0; i < items.length; i++) {
 					inv.addItem(items[i]);
@@ -248,7 +310,15 @@ public class RewardManager {
 				if(milestones.get(i).hasPermissionGroups()) {
 					String[] permGroups = milestones.get(i).getPermGroups();
 					for(int j = 0; j < permGroups.length; j++) {
-						if(VoteRoulette.permission.playerInGroup("",playerName, permGroups[j])) {
+						if(plugin.ONLY_PRIMARY_GROUP) {
+							World w = null;
+							String primaryGroup = VoteRoulette.permission.getPrimaryGroup(w, playerName);
+							if(primaryGroup.equals(permGroups[j])) {
+								qualifiedMilestones.add(milestones.get(i));
+								break;
+							}
+						}
+						else if(VoteRoulette.permission.playerInGroup("",playerName, permGroups[j])) {
 							qualifiedMilestones.add(milestones.get(i));
 							break;
 						}
@@ -259,10 +329,30 @@ public class RewardManager {
 			}
 			milestonesArray = new Milestone[qualifiedMilestones.size()];
 			qualifiedMilestones.toArray(milestonesArray);
-			return milestonesArray;
+		} else {
+			milestonesArray = new Milestone[milestones.size()];
+			milestones.toArray(milestonesArray);
 		}
-		milestonesArray = new Milestone[milestones.size()];
-		milestones.toArray(milestonesArray);
+		if(plugin.CONSIDER_MILESTONES_FOR_CURRENT_WORLD) {
+			OfflinePlayer op = Bukkit.getOfflinePlayer(playerName);
+			ArrayList<Milestone> worldFilteredMilestones = new ArrayList<Milestone>();
+			if(op.isOnline()) {
+				String worldName = op.getPlayer().getWorld().getName();
+				for(Milestone milestone : milestonesArray) {
+					if(milestone.hasWorlds()) {
+						if(milestone.getWorlds().contains(worldName)) {
+							worldFilteredMilestones.add(milestone);
+						}
+					} else {
+						worldFilteredMilestones.add(milestone);
+					}
+				}
+				if(!worldFilteredMilestones.isEmpty()) {
+					milestonesArray = new Milestone[worldFilteredMilestones.size()];
+					worldFilteredMilestones.toArray(milestonesArray);
+				}
+			}
+		}
 		return milestonesArray;
 	}
 

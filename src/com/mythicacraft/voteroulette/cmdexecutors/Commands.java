@@ -42,7 +42,7 @@ public class Commands implements CommandExecutor {
 				sender.sendMessage(ChatColor.RED + "You don't have permission to use this command!");
 			}
 		}
-		else if(commandLabel.equalsIgnoreCase("vr") || commandLabel.equalsIgnoreCase("voteroulette")) {
+		else if(commandLabel.equalsIgnoreCase("vr") || commandLabel.equalsIgnoreCase("voteroulette") || commandLabel.equalsIgnoreCase("vtr")) {
 			if(args.length == 0) {
 				sender.sendMessage(ChatColor.RED + "[VoteRoulette] Type \"/vr ?\" for help.");
 			}
@@ -64,6 +64,37 @@ public class Commands implements CommandExecutor {
 						helpMenuPag.sendPage(1, sender);
 					}
 				}
+				else if(args[0].equalsIgnoreCase("lastvote")) {
+					if(args.length == 1) {
+						if(!sender.hasPermission("voteroulette.lastvote")) {
+							sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to view when your last vote was!");
+							return true;
+						}
+						if(pm.playerHasLastVoteTimeStamp(playername)) {
+							String timeSince = Utils.getTimeSinceString(pm.getPlayerLastVoteTimeStamp(playername));
+							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] Your last vote was " + timeSince + " ago.");
+						} else {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] A last vote time stamp for you has not been saved yet!");
+						}
+					}
+					else if(args.length == 2) {
+						if(!sender.hasPermission("voteroulette.lastvoteothers")) {
+							sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to view other player's last vote time!");
+							return true;
+						}
+						String otherPlayer = Utils.completeName(args[1]);
+						if(otherPlayer == null) {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] Couldn't find a player by the name: " + args[1]);
+							return true;
+						}
+						if(pm.playerHasLastVoteTimeStamp(otherPlayer)) {
+							String timeSince = Utils.getTimeSinceString(pm.getPlayerLastVoteTimeStamp(otherPlayer));
+							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] " + otherPlayer + "'s last vote was " + timeSince + " ago.");
+						} else {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] A last vote time stamp for " + otherPlayer + " has not been saved yet!");
+						}
+					}
+				}
 				else if(args[0].equalsIgnoreCase("forcevote")) {
 					if(!sender.hasPermission("voteroulette.forcevote")) {
 						sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to force a vote to a player!");
@@ -81,7 +112,7 @@ public class Commands implements CommandExecutor {
 						}
 						sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You forced a vote to " + ChatColor.YELLOW + otherPlayer + ChatColor.AQUA +  ". Player will receive a reward/milestone if applicable.");
 						VoteHandler.updatePlayerVoteTotals(otherPlayer);
-						VoteHandler.processVote(otherPlayer);
+						VoteHandler.processVoteIgnoreBlackList(otherPlayer);
 					}
 				}
 
@@ -193,6 +224,9 @@ public class Commands implements CommandExecutor {
 						if(milestones[i].hasItems()) {
 							message += ChatColor.GOLD + "Items: " + ChatColor.DARK_AQUA + Utils.getItemListString(milestones[i].getItems()) + "\n";
 						}
+						if(milestones[i].hasWorlds()) {
+							message += ChatColor.GOLD + "Worlds: " + ChatColor.DARK_AQUA + Utils.worldsString(milestones[i].getWorlds()) + "\n";
+						}
 					}
 					Paginate milestonePag = new Paginate(message, "Milestones", commandLabel + " milestones");
 
@@ -240,6 +274,9 @@ public class Commands implements CommandExecutor {
 						}
 						if(rewards[i].hasItems()) {
 							message += ChatColor.GOLD + "Items: " + ChatColor.DARK_AQUA + Utils.getItemListString(rewards[i].getItems()) + "\n";
+						}
+						if(rewards[i].hasWorlds()) {
+							message += ChatColor.GOLD + "Worlds: " + ChatColor.DARK_AQUA + Utils.worldsString(rewards[i].getWorlds()) + "\n";
 						}
 					}
 

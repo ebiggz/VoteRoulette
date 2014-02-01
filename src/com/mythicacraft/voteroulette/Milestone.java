@@ -5,11 +5,13 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 
 import com.mythicacraft.voteroulette.utils.Utils;
 
@@ -26,6 +28,7 @@ public class Milestone {
 	private String name;
 	private boolean recurring = false;
 	private List<String> commands = new ArrayList<String>();
+	private List<String> worlds = new ArrayList<String>();
 	private String message;
 
 	@SuppressWarnings("deprecation")
@@ -78,6 +81,17 @@ public class Milestone {
 				log.warning("[VoteRoulette] Error loading commands for reward:" + name + ", Skipping commands.");
 			}
 		}
+		if(cs.contains("worlds")) {
+			try {
+				String worldsStr = cs.getString("worlds");
+				String[] worldArray = worldsStr.split(",");
+				for(String worldName: worldArray) {
+					worlds.add(worldName.trim());
+				}
+			} catch (Exception e) {
+				log.warning("[VoteRoulette] Error loading worlds for reward:" + name + ", Skipping worlds.");
+			}
+		}
 		if(cs.contains("message")) {
 			try {
 				message = ChatColor.translateAlternateColorCodes('&', cs.getString("message"));
@@ -104,6 +118,44 @@ public class Milestone {
 							int amount = itemData.getInt("amount");
 							item.setAmount(amount);
 						}
+						if(itemData.contains("armorColor")) {
+							String colorStr = itemData.getString("armorColor").trim();
+							String testForInt = colorStr.substring(0, 1);
+							Color color = null;
+							if(testForInt.matches("[0-9]")) {
+								String[] colorValues = colorStr.split(",");
+								if(colorValues.length < 3 || colorValues.length > 3) {
+									System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid amount of numbers.");
+								} else {
+									int red, green, blue;
+									try {
+										red = Integer.parseInt(colorValues[0].trim());
+										green = Integer.parseInt(colorValues[1].trim());
+										blue = Integer.parseInt(colorValues[2].trim());
+										color = Color.fromRGB(red, green, blue);
+									} catch (Exception e) {
+										System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid number format.");
+									}
+								}
+							} else {
+								Color newColor = Utils.getColorEnumFromName(colorStr);
+								if(newColor != null) {
+									color = newColor;
+								} else {
+									System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid color name.");
+								}
+							}
+							if(color == null) {
+								System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid color format.");
+							}
+							else if(item.getType() == Material.LEATHER_BOOTS || item.getType() == Material.LEATHER_CHESTPLATE || item.getType() == Material.LEATHER_HELMET || item.getType() == Material.LEATHER_LEGGINGS) {
+								LeatherArmorMeta wim = (LeatherArmorMeta) itemMeta;
+								wim.setColor(color);
+								itemMeta = wim;
+							} else {
+								System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Item not leather armor.");
+							}
+						}
 						if(itemData.contains("enchants")) {
 							String[] tmp = itemData.getString("enchants").split(",");
 							for (String enchantName : tmp) {
@@ -129,7 +181,7 @@ public class Milestone {
 						}
 						if(itemData.contains("name")) {
 							String customName = itemData.getString("name");
-							itemMeta.setDisplayName(customName);
+							itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', customName));
 						}
 						if(itemData.contains("lore")) {
 							List<String> lore = new ArrayList<String>();
@@ -259,6 +311,15 @@ public class Milestone {
 		this.priority = priority;
 	}
 
+	public boolean hasWorlds() {
+		if(worlds == null || worlds.isEmpty()) return false;
+		return true;
+	}
+
+	public List<String> getWorlds() {
+		return worlds;
+	}
+
 	public ItemStack[] getItems() {
 		ItemStack[] itemStacks = new ItemStack[items.size()];
 		for(int i = 0; i < items.size();i++) {
@@ -306,5 +367,23 @@ public class Milestone {
 
 	public String getMessage() {
 		return message;
+	}
+
+	public void updateLoreAndCustomNames(String playerName) {
+		for(ItemStack item: items) {
+			ItemMeta im = item.getItemMeta();
+			if(im.hasLore()) {
+				List<String> oldLore = im.getLore();
+				List<String> newLore = new ArrayList<String>();
+				for(String line: oldLore) {
+					newLore.add(line.replace("%player%", playerName));
+				}
+				im.setLore(newLore);
+			}
+			if(im.hasDisplayName()) {
+				im.setDisplayName(im.getDisplayName().replace("%player%", playerName));
+			}
+			item.setItemMeta(im);
+		}
 	}
 }

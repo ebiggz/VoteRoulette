@@ -1,6 +1,7 @@
 package com.mythicacraft.voteroulette;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -11,6 +12,7 @@ import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -37,20 +39,27 @@ public class VoteRoulette extends JavaPlugin {
 	private static RewardManager rm;
 	private static PlayerManager pm;
 	private BukkitRunnable periodicReminder;
+	public static List<Player> notifiedPlayers = new ArrayList<Player>();
 
 	//config constants
 	public boolean REWARDS_ON_THRESHOLD;
-	public boolean USE_DATABASE;
+	public boolean USE_DATABASE = false;
 	public int VOTE_THRESHOLD;
 	public boolean MESSAGE_PLAYER;
 	public boolean BROADCAST_TO_SERVER;
+	public boolean ONLY_BROADCAST_ONLINE;
 	public boolean LOG_TO_CONSOLE;
+	public boolean ONLY_PRIMARY_GROUP;
 	public boolean GIVE_RANDOM_REWARD;
 	public boolean GIVE_RANDOM_MILESTONE;
 	public boolean ONLY_MILESTONE_ON_COMPLETION;
+	public boolean CONSIDER_REWARDS_FOR_CURRENT_WORLD = true;
+	public boolean CONSIDER_MILESTONES_FOR_CURRENT_WORLD = false;
 	public boolean BLACKLIST_AS_WHITELIST;
 	public List<String> BLACKLIST_PLAYERS;
+	public List<String> BLACKLIST_WORLDS;
 	public boolean USE_PERIODIC_REMINDER;
+	public boolean USE_TWENTYFOUR_REMINDER;
 	public long REMINDER_INTERVAL;
 	public double CONFIG_VERSION;
 
@@ -58,6 +67,7 @@ public class VoteRoulette extends JavaPlugin {
 	public String SERVER_BROADCAST_MESSAGE;
 	public String PLAYER_VOTE_MESSAGE;
 	public String PERIODIC_REMINDER;
+	public String TWENTYFOUR_REMINDER;
 	public List<String> VOTE_WEBSITES;
 
 	public void onDisable() {
@@ -66,10 +76,8 @@ public class VoteRoulette extends JavaPlugin {
 
 	public void onEnable() {
 
-		rm = new RewardManager(this);
 		pm = new PlayerManager(this);
-
-		USE_DATABASE = false;
+		rm = new RewardManager(this);
 
 		//check for votifier
 		if(!setupVotifier()) {
@@ -84,16 +92,17 @@ public class VoteRoulette extends JavaPlugin {
 
 		//register events and commands
 		getServer().getPluginManager().registerEvents(new VoteHandler(this), this);
-		getServer().getPluginManager().registerEvents(new LoginListener(), this);
+		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
 
 		getCommand("vr").setExecutor(new Commands(this));
+		getCommand("vtr").setExecutor(new Commands(this));
 		getCommand("voteroulette").setExecutor(new Commands(this));
 		getCommand("vote").setExecutor(new Commands(this));
 
 		//load configs
 		reloadConfigs();
 
-		if(CONFIG_VERSION != 1.1) {
+		if(CONFIG_VERSION != 1.3) {
 			log.warning("[VoteRoulette] It appears that your config is out of date. There's new options! It's recommended that you take your old config out to let the new one save.");
 		}
 
@@ -155,17 +164,21 @@ public class VoteRoulette extends JavaPlugin {
 		loadRewards();
 		loadMilestones();
 		System.out.println("[VoteRoulette] ...finished loading configs!");
-		scheduleReminder();
+		scheduleTasks();
 	}
 
-	void scheduleReminder() {
+	void scheduleTasks() {
 
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
 		scheduler.cancelTasks(this);
 
 		if(USE_PERIODIC_REMINDER) {
-			periodicReminder = new PeriodicReminder(PERIODIC_REMINDER.replaceAll("%server%", Bukkit.getServerName()));
+			periodicReminder = new PeriodicReminder(PERIODIC_REMINDER.replace("%server%", Bukkit.getServerName()));
 			scheduler.scheduleSyncRepeatingTask(this, periodicReminder,REMINDER_INTERVAL, REMINDER_INTERVAL);
+		}
+
+		if(USE_TWENTYFOUR_REMINDER) {
+			scheduler.scheduleSyncRepeatingTask(this, new TwentyFourHourCheck(TWENTYFOUR_REMINDER), 6000, 6000);
 		}
 	}
 
@@ -243,6 +256,8 @@ public class VoteRoulette extends JavaPlugin {
 
 		PERIODIC_REMINDER = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("periodic-reminder"));
 
+		TWENTYFOUR_REMINDER = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("twentyfour-hour-reminder", "&b24 hours have passed since your last vote!"));
+
 		VOTE_WEBSITES = messageData.getConfig().getStringList("vote-websites");
 	}
 
@@ -255,6 +270,8 @@ public class VoteRoulette extends JavaPlugin {
 
 		BROADCAST_TO_SERVER = getConfig().getBoolean("broadcastToServer");
 
+		ONLY_BROADCAST_ONLINE = getConfig().getBoolean("onlyBroadcastOnlinePlayerVotes", false);
+
 		LOG_TO_CONSOLE = getConfig().getBoolean("logToConsole");
 
 		GIVE_RANDOM_REWARD = getConfig().getBoolean("giveRandomReward");
@@ -265,11 +282,21 @@ public class VoteRoulette extends JavaPlugin {
 
 		BLACKLIST_AS_WHITELIST = getConfig().getBoolean("useBlacklistAsWhitelist");
 
+		USE_TWENTYFOUR_REMINDER = getConfig().getBoolean("useTwentyFourHourReminder", true);
+
 		USE_PERIODIC_REMINDER = getConfig().getBoolean("usePeriodicReminder");
 
 		REMINDER_INTERVAL = getConfig().getLong("periodicReminderInterval")*1200;
 
 		BLACKLIST_PLAYERS = Utils.getBlacklistPlayers();
+
+		BLACKLIST_WORLDS = getConfig().getStringList("blacklistedWorlds");
+
+		CONSIDER_REWARDS_FOR_CURRENT_WORLD = getConfig().getBoolean("considerRewardsForPlayersCurrentWorld");
+
+		CONSIDER_MILESTONES_FOR_CURRENT_WORLD = getConfig().getBoolean("considerMilestonesForPlayersCurrentWorld");
+
+		ONLY_PRIMARY_GROUP = getConfig().getBoolean("onlyConsiderPlayersPrimaryGroup", false);
 
 		CONFIG_VERSION = getConfig().getDouble("configVersion", 1.0);
 	}
@@ -353,6 +380,28 @@ public class VoteRoulette extends JavaPlugin {
 		@Override
 		public void run() {
 			Bukkit.broadcastMessage(message);
+		}
+	}
+
+	private class TwentyFourHourCheck extends BukkitRunnable {
+
+		private String message;
+
+		TwentyFourHourCheck(String message) {
+			this.message = message;
+		}
+
+		@Override
+		public void run() {
+			Player[] onlinePlayers = Bukkit.getOnlinePlayers();
+			for(Player player : onlinePlayers) {
+				if(VoteRoulette.getPlayerManager().playerHasntVotedInADay(player.getName())) {
+					if(!VoteRoulette.notifiedPlayers.contains(player)) {
+						player.sendMessage(ChatColor.AQUA + "[VoteRoulette] " + ChatColor.RESET + message.replace("%player%", player.getName()));
+						VoteRoulette.notifiedPlayers.add(player);
+					}
+				}
+			}
 		}
 	}
 }

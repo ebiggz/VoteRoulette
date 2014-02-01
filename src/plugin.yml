@@ -1,6 +1,6 @@
 main: com.mythicacraft.voteroulette.VoteRoulette
 name: VoteRoulette
-version: 1.3
+version: 1.7
 author: ebiggz
 description: A listener for Votifier
 softdepends: [Vault, Votifier]
@@ -9,6 +9,9 @@ commands:
         description: Access to VoteRoulette commands.
         usage: /<command> ?
     vr:
+        description: Access to VoteRoulette commands.
+        usage: /<command> ?
+    vtr:
         description: Access to VoteRoulette commands.
         usage: /<command> ?
     vote:
@@ -23,18 +26,23 @@ permissions:
         default: true
     voteroulette.votecommand:
         default: true
+    voteroulette.lastvote:
+        default: true
     voteroulette.viewotherstats:
         default: false
     voteroulette.editstats:
         default: false
     voteroulette.forcevote:
-        default: false    
+        default: false
+    voteroulette.lastvoteothers:
+        default: false   
     voteroulette.admin:
         default: false
         children:
             voteroulette.viewotherstats: true
             voteroulette.editstats: true
             voteroulette.forcevote: true
+            voteroulette.lastvoteothers: true
     voteroulette.*:
         default: op
         children:
