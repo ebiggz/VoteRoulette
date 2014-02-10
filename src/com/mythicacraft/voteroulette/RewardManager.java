@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
@@ -126,31 +125,20 @@ public class RewardManager {
 			log.warning("[VoteRoulette] Player earned the default reward but there's no default reward set to give!");
 			return;
 		}
-		Player player = Bukkit.getPlayerExact(playerName);
-		if(player != null) {
-			administerRewardContents(defaultReward, player);
-		} else {
-			//save as unclaimed
-			pm.saveUnclaimedReward(playerName, defaultReward.getName());
-		}
+		administerRewardContents(defaultReward, playerName);
 	}
 
-	public void giveRandomReward(String playerName) {
-		Reward[] qualRewards = this.getQualifiedRewards(playerName);
-		Random rand = new Random();
-		Reward reward = qualRewards[rand.nextInt(qualRewards.length)];
+	public void administerRewardContents(Reward reward, String playerName) {
+
 		Player player = Bukkit.getPlayerExact(playerName);
-		if(player != null) {
-			administerRewardContents(reward, player);
-		} else {
-			//save as unclaimed
+
+		if(player == null) {
 			pm.saveUnclaimedReward(playerName, reward.getName());
+			return;
 		}
-	}
 
-	public void administerRewardContents(Reward reward, Player player) {
-		String playerName = player.getName();
 		String worldName = player.getWorld().getName();
+
 		if(Utils.worldIsBlacklisted(worldName)) {
 			pm.saveUnclaimedReward(player.getName(), reward.getName());
 			player.sendMessage(ChatColor.RED + "You cannot claim rewards in this world!");
@@ -217,30 +205,14 @@ public class RewardManager {
 		milestones.clear();
 	}
 
-	public void giveHighestPriorityMilestone(String playerName) {
-		List<Milestone> reachedMils = getReachedMilestones(playerName);
-		Player player = Bukkit.getPlayerExact(playerName);
-		if(player != null) {
-			administerMilestoneContents(reachedMils.get(0), player);
-		} else {
-			pm.saveUnclaimedMilestone(playerName, reachedMils.get(0).getName());
-		}
-	}
+	public void administerMilestoneContents(Milestone milestone, String playerName) {
 
-	public void giveRandomMilestone(String playerName) {
-		List<Milestone> reachedMils = getReachedMilestones(playerName);
-		Random rand = new Random();
-		Milestone milestone = reachedMils.get(rand.nextInt(reachedMils.size()));
 		Player player = Bukkit.getPlayerExact(playerName);
-		if(player != null) {
-			administerMilestoneContents(milestone, player);
-		} else {
+		if(player == null) {
 			pm.saveUnclaimedMilestone(playerName, milestone.getName());
+			return;
 		}
-	}
 
-	public void administerMilestoneContents(Milestone milestone, Player player) {
-		String playerName = player.getName();
 		String worldName = player.getWorld().getName();
 		if(Utils.worldIsBlacklisted(worldName)) {
 			pm.saveUnclaimedMilestone(player.getName(), milestone.getName());
@@ -468,5 +440,19 @@ public class RewardManager {
 			sb.append(Utils.getItemListSentance(milestone.getItems()));
 		}
 		return sb.toString();
+	}
+
+	public boolean rewardsContainChance(Reward[] rewards) {
+		for(Reward reward : rewards) {
+			if(reward.hasChance()) return true;
+		}
+		return false;
+	}
+
+	public boolean milestonesContainChance(List<Milestone> reachedMils) {
+		for(Milestone milestone : reachedMils) {
+			if(milestone.hasChance()) return true;
+		}
+		return false;
 	}
 }

@@ -191,7 +191,7 @@ public class Utils {
 				if(itemName.endsWith("ch")) {
 					plural = "es";
 				}
-				if(itemName.endsWith("glass")) {
+				else if(itemName.contains("glass")) {
 					plural = "";
 				}
 				else if(itemName.contains("beef")) {
@@ -278,56 +278,79 @@ public class Utils {
 		return sb.toString();
 	}
 	public static Enchantment getEnchantEnumFromName(String name) {
-		switch(name.toLowerCase()) {
-		case "looting":
+		if(name.equalsIgnoreCase("looting")) {
 			return Enchantment.LOOT_BONUS_MOBS;
-		case "silk touch":
+		}
+		if(name.equalsIgnoreCase("silk touch")) {
 			return Enchantment.SILK_TOUCH;
-		case "sharpness":
+		}
+		if(name.equalsIgnoreCase("sharpness")) {
 			return Enchantment.DAMAGE_ALL;
-		case "bane of arthropods":
+		}
+		if(name.equalsIgnoreCase("bane of arthropods")) {
 			return Enchantment.DAMAGE_ARTHROPODS;
-		case "smite":
+		}
+		if(name.equalsIgnoreCase("smite")) {
 			return Enchantment.DAMAGE_UNDEAD;
-		case "knockback":
+		}
+		if(name.equalsIgnoreCase("knockback")) {
 			return Enchantment.KNOCKBACK;
-		case "protection":
+		}
+		if(name.equalsIgnoreCase("protection")) {
 			return Enchantment.PROTECTION_ENVIRONMENTAL;
-		case "fire protection":
+		}
+		if(name.equalsIgnoreCase("fire protection")) {
 			return Enchantment.PROTECTION_FIRE;
-		case "blast protection":
+		}
+		if(name.equalsIgnoreCase("blast protection")) {
 			return Enchantment.PROTECTION_EXPLOSIONS;
-		case "projectile protection":
+		}
+		if(name.equalsIgnoreCase("projectile protection")) {
 			return Enchantment.PROTECTION_PROJECTILE;
-		case "feather falling":
+		}
+		if(name.equalsIgnoreCase("feather falling")) {
 			return Enchantment.PROTECTION_FALL;
-		case "respiration":
+		}
+		if(name.equalsIgnoreCase("respiration")) {
 			return Enchantment.OXYGEN;
-		case "aqua affinity":
+		}
+		if(name.equalsIgnoreCase("aqua affinity")) {
 			return Enchantment.WATER_WORKER;
-		case "thorns":
+		}
+		if(name.equalsIgnoreCase("thorns")) {
 			return Enchantment.THORNS;
-		case "fire aspect":
+		}
+		if(name.equalsIgnoreCase("fire aspect")) {
 			return Enchantment.FIRE_ASPECT;
-		case "efficiency":
+		}
+		if(name.equalsIgnoreCase("efficiency")) {
 			return Enchantment.DIG_SPEED;
-		case "unbreaking":
+		}
+		if(name.equalsIgnoreCase("unbreaking")) {
 			return Enchantment.DURABILITY;
-		case "fortune":
+		}
+		if(name.equalsIgnoreCase("fortune")) {
 			return Enchantment.LOOT_BONUS_BLOCKS;
-		case "power":
+		}
+		if(name.equalsIgnoreCase("power")) {
 			return Enchantment.ARROW_DAMAGE;
-		case "punch":
+		}
+		if(name.equalsIgnoreCase("punch")) {
 			return Enchantment.ARROW_KNOCKBACK;
-		case "flame":
+		}
+		if(name.equalsIgnoreCase("flame")) {
 			return Enchantment.ARROW_FIRE;
-		case "infinity":
+		}
+		if(name.equalsIgnoreCase("infinity")) {
 			return Enchantment.ARROW_INFINITE;
-		case "luck of the sea":
+		}
+		if(name.equalsIgnoreCase("luck of the sea")) {
 			return Enchantment.LUCK;
-		case "lure":
+		}
+		if(name.equalsIgnoreCase("lure")) {
 			return Enchantment.LURE;
-		default:
+		}
+		else {
 			return null;
 		}
 	}
@@ -409,42 +432,58 @@ public class Utils {
 	}
 
 	public static Color getColorEnumFromName(String name) {
-		switch(name.toLowerCase()) {
-		case "aqua":
+		if(name.equalsIgnoreCase("aqua")) {
 			return Color.AQUA;
-		case "black":
+		}
+		if(name.equalsIgnoreCase("black")) {
 			return Color.BLACK;
-		case "blue":
+		}
+		if(name.equalsIgnoreCase("blue")) {
 			return Color.BLUE;
-		case "fuchsia":
+		}
+		if(name.equalsIgnoreCase("fuchsia")) {
 			return Color.FUCHSIA;
-		case "gray":
+		}
+		if(name.equalsIgnoreCase("gray")) {
 			return Color.GRAY;
-		case "green":
+		}
+		if(name.equalsIgnoreCase("green")) {
 			return Color.GREEN;
-		case "lime":
+		}
+		if(name.equalsIgnoreCase("lime")) {
 			return Color.LIME;
-		case "maroon":
+		}
+		if(name.equalsIgnoreCase("maroon")) {
 			return Color.MAROON;
-		case "navy":
+		}
+		if(name.equalsIgnoreCase("navy")) {
 			return Color.NAVY;
-		case "olive":
+		}
+		if(name.equalsIgnoreCase("olive")) {
 			return Color.OLIVE;
-		case "orange":
+		}
+		if(name.equalsIgnoreCase("orange")) {
 			return Color.ORANGE;
-		case "purple":
+		}
+		if(name.equalsIgnoreCase("purple")) {
 			return Color.PURPLE;
-		case "red":
+		}
+		if(name.equalsIgnoreCase("red")) {
 			return Color.RED;
-		case "silver":
+		}
+		if(name.equalsIgnoreCase("silver")) {
 			return Color.SILVER;
-		case "teal":
+		}
+		if(name.equalsIgnoreCase("teal")) {
 			return Color.TEAL;
-		case "white":
+		}
+		if(name.equalsIgnoreCase("white")) {
 			return Color.WHITE;
-		case "YELLOW":
+		}
+		if(name.equalsIgnoreCase("yellow")) {
 			return Color.YELLOW;
-		default:
+		}
+		else {
 			return null;
 		}
 	}

@@ -140,6 +140,11 @@ public class PlayerManager {
 		}
 	}
 
+	public void incrementPlayerVoteTotals(String playername) {
+		setPlayerLifetimeVotes(playername, getPlayerLifetimeVotes(playername) + 1);
+		setPlayerCurrentVoteCycle(playername, getPlayerCurrentVoteCycle(playername) + 1);
+	}
+
 	public void saveUnclaimedReward(String playerName, String rewardName) {
 		if(plugin.USE_DATABASE) {
 			//place holder for db code
@@ -188,6 +193,17 @@ public class PlayerManager {
 		}
 		return rewards;
 	}
+	public int getUnclaimedRewardCount(String playerName) {
+		List<String> rewardsList = new ArrayList<String>();
+
+		if(plugin.USE_DATABASE) {
+			//place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "players.yml");
+			rewardsList = playerCfg.getConfig().getStringList(playerName + ".unclaimedRewards");
+		}
+		return rewardsList.size();
+	}
 
 	public void saveUnclaimedMilestone(String playerName, String milestoneName) {
 		if(plugin.USE_DATABASE) {
@@ -211,6 +227,18 @@ public class PlayerManager {
 			playerCfg.getConfig().set(playerName + ".unclaimedMilestones", milestonesList);
 			playerCfg.saveConfig();
 		}
+	}
+
+	public int getUnclaimedMilestoneCount(String playerName) {
+		List<String> milestonesList = new ArrayList<String>();
+
+		if(plugin.USE_DATABASE) {
+			//place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "players.yml");
+			milestonesList = playerCfg.getConfig().getStringList(playerName + ".unclaimedMilestones");
+		}
+		return milestonesList.size();
 	}
 
 	public List<Milestone> getUnclaimedMilestones(String playerName) {

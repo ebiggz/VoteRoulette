@@ -29,7 +29,7 @@ periodicReminderInterval: 60
 useTwentyFourHourReminder: true
 
 # Whether or not to only consider a players primary group when doing permission group checks for rewards/milestones
-# Turning this on helps with compatibility with GroupManager if you are using inheritance.
+# Turning this on helps if you are using inheritance in your permissions plugin.
 onlyConsiderPlayersPrimaryGroup: false
 
 #################
@@ -61,7 +61,7 @@ onlyConsiderPlayersPrimaryGroup: false
 #                amount: 1
 #                enchants: sharpness(5), looting(3)
 #                name: Wrath of Herobrine
-#                lore: A Mighty Sword 
+#                lore: A Mighty Sword
 #            364:
 #                amount: 16
 #            35: 
@@ -76,6 +76,7 @@ onlyConsiderPlayersPrimaryGroup: false
 #        message: "&eCongrats %player%! You have received some awesome stuff and got creative mode!"    # This message will display to the player instead of the default one.
 #                # Dont forget the quotes (" ") for the message section!
 #        worlds: main_survival, temp_survival, creative_world
+#        chance: 10%  # This reward has a 10% chance of being given to a player.
 
 Rewards:
 # Each reward must have a different name

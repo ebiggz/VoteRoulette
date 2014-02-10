@@ -22,7 +22,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import com.mythicacraft.voteroulette.cmdexecutors.Commands;
 import com.mythicacraft.voteroulette.listeners.LoginListener;
-import com.mythicacraft.voteroulette.listeners.VoteHandler;
+import com.mythicacraft.voteroulette.listeners.VoteListener;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.Utils;
 
@@ -39,6 +39,7 @@ public class VoteRoulette extends JavaPlugin {
 	private static RewardManager rm;
 	private static PlayerManager pm;
 	private BukkitRunnable periodicReminder;
+	private BukkitRunnable twentyFourHourChecker;
 	public static List<Player> notifiedPlayers = new ArrayList<Player>();
 
 	//config constants
@@ -91,13 +92,11 @@ public class VoteRoulette extends JavaPlugin {
 		}
 
 		//register events and commands
-		getServer().getPluginManager().registerEvents(new VoteHandler(this), this);
+		getServer().getPluginManager().registerEvents(new VoteListener(this), this);
 		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
 
-		getCommand("vr").setExecutor(new Commands(this));
-		getCommand("vtr").setExecutor(new Commands(this));
 		getCommand("voteroulette").setExecutor(new Commands(this));
-		getCommand("vote").setExecutor(new Commands(this));
+		getCommand("votelinks").setExecutor(new Commands(this));
 
 		//load configs
 		reloadConfigs();
@@ -157,6 +156,7 @@ public class VoteRoulette extends JavaPlugin {
 	public void reloadConfigs() {
 		System.out.println("[VoteRoulette] Loading configs...");
 		loadConfig();
+		this.reloadConfig();
 		loadConfigOptions();
 		loadMessagesFile();
 		loadMessagesData();
@@ -178,7 +178,8 @@ public class VoteRoulette extends JavaPlugin {
 		}
 
 		if(USE_TWENTYFOUR_REMINDER) {
-			scheduler.scheduleSyncRepeatingTask(this, new TwentyFourHourCheck(TWENTYFOUR_REMINDER), 6000, 6000);
+			twentyFourHourChecker = new TwentyFourHourCheck(TWENTYFOUR_REMINDER);
+			scheduler.scheduleSyncRepeatingTask(this, twentyFourHourChecker, 12000, 12000);
 		}
 	}
 
@@ -189,7 +190,6 @@ public class VoteRoulette extends JavaPlugin {
 		File configFile = new File(pluginFolder, "config.yml");
 		if(!configFile.exists()) {
 			saveResource("config.yml", true);
-			return;
 		}
 		try {
 			reloadConfig();
@@ -320,7 +320,7 @@ public class VoteRoulette extends JavaPlugin {
 				log.warning("[VoteRoulette] The reward \"" + rewardName + "\" is empty! Skipping reward.");
 			}
 			if(!rm.hasDefaultReward() && !getConfig().getBoolean("giveRandomReward")) {
-				log.warning("[VoteRoulette] The deafult reward name could not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
+				log.warning("[VoteRoulette] The default reward name could not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
 			}
 		} else {
 			log.warning("[VoteRoulette] Your reward section is empty, no rewards will be given!");

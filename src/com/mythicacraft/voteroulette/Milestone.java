@@ -26,6 +26,7 @@ public class Milestone {
 	private String[] permGroups;
 	private int priority = 10;
 	private String name;
+	private int chance = 0;
 	private boolean recurring = false;
 	private List<String> commands = new ArrayList<String>();
 	private List<String> worlds = new ArrayList<String>();
@@ -64,6 +65,14 @@ public class Milestone {
 				this.xpLevels = Integer.parseInt(xp);
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Invalid xpLevel format for milestone: " + name + ", Skipping xpLevels...");
+			}
+		}
+		if(cs.contains("chance")) {
+			try {
+				String chanceStr = cs.getString("chance").replace("%", "");
+				this.setChance(Integer.parseInt(chanceStr));
+			} catch (Exception e) {
+				log.warning("[VoteRoulette] Invalid chance format for reward: " + name + ", Skipping chance.");
 			}
 		}
 		if(cs.contains("recurring")) {
@@ -386,4 +395,18 @@ public class Milestone {
 			item.setItemMeta(im);
 		}
 	}
+
+	public int getChance() {
+		return chance;
+	}
+
+	public void setChance(int chance) {
+		this.chance = chance;
+	}
+
+	public boolean hasChance() {
+		if(chance > 0) return true;
+		return false;
+	}
+
 }

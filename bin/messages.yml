@@ -31,7 +31,7 @@ player-reward-message: "&bYou have received the %type% &e%name% &bwhich gave you
 # Available variables:
 # %server%
 
-periodic-reminder: "&b*Have you voted for %server% today? Type /vote see where you can and get rewarded!"
+periodic-reminder: "&b*Have you voted for %server% today? Type &e/vote&b to see where you can and get rewarded!"
 
 # The following is the message that is sent to the player if useTwentyFourHourReminder is set to true
 # in the config.yml file.

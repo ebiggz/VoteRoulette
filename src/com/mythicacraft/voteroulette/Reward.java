@@ -20,6 +20,7 @@ public class Reward {
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private double currency = 0;
 	private int xpLevels = 0;
+	private int chance = 0;
 	private ArrayList<ItemStack> items = new ArrayList<ItemStack>();
 	private String[] permGroups;
 	private String name;
@@ -48,6 +49,14 @@ public class Reward {
 				this.xpLevels = Integer.parseInt(xp);
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Invalid xpLevel format for reward: " + name + ", Skipping xpLevels.");
+			}
+		}
+		if(cs.contains("chance")) {
+			try {
+				String chanceStr = cs.getString("chance").replace("%", "");
+				this.chance = Integer.parseInt(chanceStr);
+			} catch (Exception e) {
+				log.warning("[VoteRoulette] Invalid chance format for reward: " + name + ", Skipping chance.");
 			}
 		}
 		if(cs.contains("commands")) {
@@ -335,5 +344,18 @@ public class Reward {
 			}
 			item.setItemMeta(im);
 		}
+	}
+
+	public int getChance() {
+		return chance;
+	}
+
+	public void setChance(int chance) {
+		this.chance = chance;
+	}
+
+	public boolean hasChance() {
+		if(chance > 0) return true;
+		return false;
 	}
 }

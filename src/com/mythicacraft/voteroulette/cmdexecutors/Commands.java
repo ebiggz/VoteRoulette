@@ -13,7 +13,7 @@ import com.mythicacraft.voteroulette.PlayerManager;
 import com.mythicacraft.voteroulette.Reward;
 import com.mythicacraft.voteroulette.RewardManager;
 import com.mythicacraft.voteroulette.VoteRoulette;
-import com.mythicacraft.voteroulette.listeners.VoteHandler;
+import com.mythicacraft.voteroulette.listeners.VoteProcessor;
 import com.mythicacraft.voteroulette.utils.Paginate;
 import com.mythicacraft.voteroulette.utils.Utils;
 
@@ -32,7 +32,7 @@ public class Commands implements CommandExecutor {
 
 		String playername = sender.getName();
 
-		if(commandLabel.equalsIgnoreCase("vote")) {
+		if(commandLabel.equalsIgnoreCase("vote") || commandLabel.equalsIgnoreCase("votelinks") || commandLabel.equalsIgnoreCase("votesites")) {
 			if(sender.hasPermission("voteroulette.votecommand")) {
 				sender.sendMessage(ChatColor.AQUA + "Vote here:");
 				for(String website: plugin.VOTE_WEBSITES) {
@@ -111,8 +111,8 @@ public class Commands implements CommandExecutor {
 							return true;
 						}
 						sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You forced a vote to " + ChatColor.YELLOW + otherPlayer + ChatColor.AQUA +  ". Player will receive a reward/milestone if applicable.");
-						VoteHandler.updatePlayerVoteTotals(otherPlayer);
-						VoteHandler.processVoteIgnoreBlackList(otherPlayer);
+						pm.incrementPlayerVoteTotals(otherPlayer);
+						new Thread(new VoteProcessor(otherPlayer, plugin, true)).start();
 					}
 				}
 
@@ -182,11 +182,11 @@ public class Commands implements CommandExecutor {
 
 						if(args[2].equalsIgnoreCase("settotal")) {
 							pm.setPlayerLifetimeVotes(otherPlayer, voteNumber);
-							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You set " + ChatColor.YELLOW + otherPlayer + "'s " + ChatColor.GREEN +  "total votes to " + ChatColor.YELLOW + voteNumber + ChatColor.GREEN + " !");
+							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You set " + ChatColor.YELLOW + otherPlayer + "'s " + ChatColor.AQUA +  "total votes to " + ChatColor.YELLOW + voteNumber + ChatColor.AQUA + "!");
 						}
 						else if(args[2].equalsIgnoreCase("setcycle")) {
 							pm.setPlayerCurrentVoteCycle(otherPlayer, voteNumber);
-							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You set " + ChatColor.YELLOW + otherPlayer + "'s " + ChatColor.GREEN +  "current vote cycle to " + ChatColor.YELLOW + voteNumber + ChatColor.GREEN + " !");
+							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You set " + ChatColor.YELLOW + otherPlayer + "'s " + ChatColor.AQUA +  "current vote cycle to " + ChatColor.YELLOW + voteNumber + ChatColor.AQUA + "!");
 						}
 					}
 					else if(args.length > 4) {
@@ -226,6 +226,9 @@ public class Commands implements CommandExecutor {
 						}
 						if(milestones[i].hasWorlds()) {
 							message += ChatColor.GOLD + "Worlds: " + ChatColor.DARK_AQUA + Utils.worldsString(milestones[i].getWorlds()) + "\n";
+						}
+						if(milestones[i].hasChance()) {
+							message += ChatColor.GOLD + "Chance: "  + ChatColor.DARK_AQUA + milestones[i].getChance() + "%\n";
 						}
 					}
 					Paginate milestonePag = new Paginate(message, "Milestones", commandLabel + " milestones");
@@ -278,6 +281,9 @@ public class Commands implements CommandExecutor {
 						if(rewards[i].hasWorlds()) {
 							message += ChatColor.GOLD + "Worlds: " + ChatColor.DARK_AQUA + Utils.worldsString(rewards[i].getWorlds()) + "\n";
 						}
+						if(rewards[i].hasChance()) {
+							message += ChatColor.GOLD + "Chance: "  + ChatColor.DARK_AQUA + rewards[i].getChance() + "%\n";
+						}
 					}
 
 					Paginate rewardPag = new Paginate(message, "Rewards", commandLabel + " rewards");
@@ -312,26 +318,29 @@ public class Commands implements CommandExecutor {
 						sender.sendMessage("[VoteRoulette] This command can't be used in the console!");
 						return true;
 					}
-					List<Reward> unclaimedRewards = pm.getUnclaimedRewards(playername);
-					List<Milestone> unclaimedMilestones = pm.getUnclaimedMilestones(playername);
+
+					int unclaimedRewardsCount = pm.getUnclaimedRewardCount(playername);
+					int unclaimedMilestonesCount = pm.getUnclaimedMilestoneCount(playername);
 					if(args.length == 1) {
-						if(!unclaimedRewards.isEmpty()) {
-							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have " + ChatColor.GREEN + unclaimedRewards.size() + ChatColor.AQUA + " unclaimed rewards! Type " + ChatColor.YELLOW + "/vr claim rewards" + ChatColor.AQUA + " to see them.");
+						if(unclaimedRewardsCount > 0) {
+							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have " + ChatColor.YELLOW + unclaimedRewardsCount + ChatColor.AQUA + " unclaimed rewards! Type " + ChatColor.YELLOW + "/vr claim rewards" + ChatColor.AQUA + " to see them.");
 						} else {
 							sender.sendMessage(ChatColor.RED + "[VoteRoulette] You do not have unclaimed rewards!");
 						}
-						if(!unclaimedMilestones.isEmpty()) {
-							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have " + ChatColor.GREEN + unclaimedMilestones.size() + ChatColor.AQUA + " unclaimed milestones! Type " + ChatColor.YELLOW + "/vr claim milestones" + ChatColor.AQUA + " to see them.");
+						if(unclaimedMilestonesCount > 0) {
+							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have " + ChatColor.YELLOW + unclaimedMilestonesCount + ChatColor.AQUA + " unclaimed milestones! Type " + ChatColor.YELLOW + "/vr claim milestones" + ChatColor.AQUA + " to see them.");
 						} else {
 							sender.sendMessage(ChatColor.RED + "[VoteRoulette] You do not have unclaimed milestones!");
 						}
 					}
 					else if(args.length >= 2) {
 						if(args[1].equalsIgnoreCase("rewards")) {
-							if(unclaimedRewards.isEmpty()) {
+
+							if(unclaimedRewardsCount == 0) {
 								sender.sendMessage(ChatColor.RED + "[VoteRoulette] You do not have unclaimed rewards!");
 								return true;
 							}
+							List<Reward> unclaimedRewards = pm.getUnclaimedRewards(playername);
 							if(args.length == 2) {
 								String[] rewardMessages = new String[unclaimedRewards.size()];
 								int count = 0;
@@ -346,9 +355,13 @@ public class Commands implements CommandExecutor {
 							}
 							else if(args.length == 3) {
 								if(args[2].equalsIgnoreCase("all")) {
-									for(Reward reward : unclaimedRewards) {
-										pm.removeUnclaimedReward(playername, reward.getName());
-										rm.administerRewardContents(reward, (Player) sender);
+									if(sender.hasPermission("voteroulette.claimall")) {
+										for(Reward reward : unclaimedRewards) {
+											pm.removeUnclaimedReward(playername, reward.getName());
+											rm.administerRewardContents(reward, sender.getName());
+										}
+									} else {
+										sender.sendMessage(ChatColor.RED + "[VoteRoulette] You are not allowed to claim all rewards at once!");
 									}
 								} else {
 									try {
@@ -356,7 +369,7 @@ public class Commands implements CommandExecutor {
 										if(rewardNumber <= unclaimedRewards.size()) {
 											Reward reward = unclaimedRewards.get(rewardNumber-1);
 											pm.removeUnclaimedReward(playername, reward.getName());
-											rm.administerRewardContents(reward, (Player) sender);
+											rm.administerRewardContents(reward, sender.getName());
 										} else {
 											sender.sendMessage(ChatColor.RED + "[VoteRoulette] Not a valid reward number!");
 										}
@@ -367,10 +380,12 @@ public class Commands implements CommandExecutor {
 							}
 						}
 						else if(args[1].equalsIgnoreCase("milestones")) {
-							if(unclaimedMilestones.isEmpty()) {
+
+							if(unclaimedMilestonesCount == 0) {
 								sender.sendMessage(ChatColor.RED + "[VoteRoulette] You do not have unclaimed milestones!");
 								return true;
 							}
+							List<Milestone> unclaimedMilestones = pm.getUnclaimedMilestones(playername);
 							if(args.length == 2) {
 								String[] milestoneMessages = new String[unclaimedMilestones.size()];
 								int count = 0;
@@ -384,25 +399,28 @@ public class Commands implements CommandExecutor {
 
 							}
 							else if(args.length == 3) {
-								if(args[2].equalsIgnoreCase("all")) {
-									for(Milestone milestone : unclaimedMilestones) {
-										pm.removeUnclaimedMilestone(playername, milestone.getName());
-										rm.administerMilestoneContents(milestone, (Player) sender);
+								if(sender.hasPermission("voteroulette.claimall")) {
+									if(args[2].equalsIgnoreCase("all")) {
+										for(Milestone milestone : unclaimedMilestones) {
+											pm.removeUnclaimedMilestone(playername, milestone.getName());
+											rm.administerMilestoneContents(milestone, sender.getName());
+										}
+									} else {
+										sender.sendMessage(ChatColor.RED + "[VoteRoulette] You are not allowed to claim all milestones at once!");
 									}
 								} else {
 									try {
 										int rewardNumber = Integer.parseInt(args[2]);
-										if(rewardNumber <= unclaimedRewards.size()) {
+										if(rewardNumber <= unclaimedMilestones.size()) {
 											Milestone milestone = unclaimedMilestones.get(rewardNumber-1);
 											pm.removeUnclaimedMilestone(playername, milestone.getName());
-											rm.administerMilestoneContents(milestone, (Player) sender);
+											rm.administerMilestoneContents(milestone, sender.getName());
 										} else {
 											sender.sendMessage(ChatColor.RED + "[VoteRoulette] Not a valid milestone number!");
 										}
 									} catch (Exception e) {
 										sender.sendMessage(ChatColor.RED + "[VoteRoulette] Not a valid milestone number!");
 									}
-
 								}
 							}
 						} else {
