@@ -35,7 +35,9 @@ public class VoteListener implements Listener {
 
 		Vote vote = event.getVote();
 
-		new Thread(new VoteProcessor(vote.getUsername(), plugin, false)).start();
+		new Thread(new VoteProcessor(vote.getUsername(), plugin, false, vote.getServiceName())).start();
+
+		Utils.saveKnownWebsite(vote.getServiceName());
 
 		pm.savePlayerLastVoteTimeStamp(vote.getUsername());
 		pm.incrementPlayerVoteTotals(vote.getUsername());

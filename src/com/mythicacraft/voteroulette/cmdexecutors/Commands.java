@@ -2,6 +2,7 @@ package com.mythicacraft.voteroulette.cmdexecutors;
 
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -34,7 +35,6 @@ public class Commands implements CommandExecutor {
 
 		if(commandLabel.equalsIgnoreCase("vote") || commandLabel.equalsIgnoreCase("votelinks") || commandLabel.equalsIgnoreCase("votesites")) {
 			if(sender.hasPermission("voteroulette.votecommand")) {
-				sender.sendMessage(ChatColor.AQUA + "Vote here:");
 				for(String website: plugin.VOTE_WEBSITES) {
 					sender.sendMessage(website);
 				}
@@ -112,8 +112,16 @@ public class Commands implements CommandExecutor {
 						}
 						sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You forced a vote to " + ChatColor.YELLOW + otherPlayer + ChatColor.AQUA +  ". Player will receive a reward/milestone if applicable.");
 						pm.incrementPlayerVoteTotals(otherPlayer);
-						new Thread(new VoteProcessor(otherPlayer, plugin, true)).start();
+						new Thread(new VoteProcessor(otherPlayer, plugin, true, null)).start();
 					}
+				}
+
+				else if(args[0].equalsIgnoreCase("remind") || args[0].equalsIgnoreCase("reminder") || args[0].equalsIgnoreCase("broadcast")) {
+					if(!sender.hasPermission("voteroulette.remind")) {
+						sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to manually send the reminder!");
+						return true;
+					}
+					Bukkit.broadcastMessage(plugin.PERIODIC_REMINDER);
 				}
 
 				else if(args[0].equalsIgnoreCase("stats")) {
@@ -228,7 +236,7 @@ public class Commands implements CommandExecutor {
 							message += ChatColor.GOLD + "Worlds: " + ChatColor.DARK_AQUA + Utils.worldsString(milestones[i].getWorlds()) + "\n";
 						}
 						if(milestones[i].hasChance()) {
-							message += ChatColor.GOLD + "Chance: "  + ChatColor.DARK_AQUA + milestones[i].getChance() + "%\n";
+							message += ChatColor.GOLD + "Chance: "  + ChatColor.DARK_AQUA + milestones[i].getChanceMin() + " in " + milestones[i].getChanceMax() + "\n";
 						}
 					}
 					Paginate milestonePag = new Paginate(message, "Milestones", commandLabel + " milestones");
@@ -282,7 +290,7 @@ public class Commands implements CommandExecutor {
 							message += ChatColor.GOLD + "Worlds: " + ChatColor.DARK_AQUA + Utils.worldsString(rewards[i].getWorlds()) + "\n";
 						}
 						if(rewards[i].hasChance()) {
-							message += ChatColor.GOLD + "Chance: "  + ChatColor.DARK_AQUA + rewards[i].getChance() + "%\n";
+							message += ChatColor.GOLD + "Chance: "  + ChatColor.DARK_AQUA + rewards[i].getChanceMin() + " in " + rewards[i].getChanceMax() + "\n";
 						}
 					}
 

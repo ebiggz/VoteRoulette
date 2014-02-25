@@ -1,7 +1,9 @@
 package com.mythicacraft.voteroulette.utils;
 
+import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +22,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
+import com.mythicacraft.voteroulette.DelayedCommand;
+import com.mythicacraft.voteroulette.VoteRoulette;
+
 
 public class Utils {
 
@@ -30,9 +35,37 @@ public class Utils {
 		return blacklistStr;
 	}
 
+	public static void saveKnownWebsite(String website) {
+		ConfigAccessor websiteFile = new ConfigAccessor("data" + File.separator + "known websites.yml");
+		List<String> websites = websiteFile.getConfig().getStringList("known-websites");
+		if(websites != null) {
+			if(!websites.contains(website)) {
+				websites.add(website);
+				websiteFile.getConfig().set("known-websites", websites);
+				websiteFile.saveConfig();
+			}
+		}
+	}
+
 	public static boolean playerIsBlacklisted(String playerName) {
 		if(getBlacklistPlayers().contains(playerName)) return true;
 		return false;
+	}
+
+	public static String transcribeColorCodes(String message) {
+		message = message.replace("%black%", "&0").replace("%darkblue%", "&1").replace("%darkgreen%", "&2").replace("%darkaqua%", "&3").replace("%darkred%", "&4").replace("%purple%", "&5").replace("%gold%", "&6").replace("%grey%", "&7").replace("%darkgrey%", "&8").replace("%blue%", "&9").replace("%green%", "&a").replace("%aqua%", "&b").replace("%red%", "&c").replace("%pink%", "&d").replace("%yellow%", "&e").replace("%white%", "&f").replace("%bold%", "&l").replace("%strikethrough%", "&m").replace("%underline%", "&n").replace("%italic%", "&o").replace("%reset%", "&r").replace("%magic%", "&k");
+		message = ChatColor.translateAlternateColorCodes('&', message);
+		return message;
+	}
+
+	public static List<DelayedCommand> getPlayerDelayedCmds(String playerName) {
+		List<DelayedCommand> playerDCs = new ArrayList<DelayedCommand>();
+		for(DelayedCommand dCmd : VoteRoulette.delayedCommands) {
+			if(playerName.equals(dCmd.getPlayer())) {
+				playerDCs.add(dCmd);
+			}
+		}
+		return playerDCs;
 	}
 
 	public static boolean worldIsBlacklisted(String worldName) {

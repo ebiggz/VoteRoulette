@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -64,39 +63,76 @@ public class RewardManager {
 	}
 
 	public Reward[] getQualifiedRewards(String playerName) {
+
 		ArrayList<Reward> qualifiedRewards = new ArrayList<Reward>();
-		Reward[] rewardsArray;
-		if(VoteRoulette.hasPermPlugin()) {
-			for(int i = 0; i < rewards.size(); i++) {
-				if(rewards.get(i).hasPermissionGroups()) {
-					String[] permGroups = rewards.get(i).getPermGroups();
-					for(int j = 0; j < permGroups.length; j++) {
+
+		//iterate through all rewards
+		for(Reward reward: rewards) {
+
+			//check if reward has specific players set
+			if(reward.hasPlayers()) {
+				if(reward.containsPlayer(playerName)) {
+					qualifiedRewards.add(reward);
+					continue;
+				}
+				if(VoteRoulette.hasPermPlugin()) {
+					if(reward.hasPermissionGroups()) {
 						if(plugin.ONLY_PRIMARY_GROUP) {
 							String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
 							if(primaryGroup != null) {
-								if(primaryGroup.equals(permGroups[j])) {
-									qualifiedRewards.add(rewards.get(i));
-									break;
+								if(reward.containsPermGroup(primaryGroup)) {
+									qualifiedRewards.add(reward);
 								}
 							} else {
 								System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
 							}
-						}
-						else if(VoteRoulette.permission.playerInGroup("",playerName, permGroups[j])) {
-							qualifiedRewards.add(rewards.get(i));
-							break;
+						} else {
+							String[] groups = reward.getPermGroups();
+							for(String group: groups) {
+								if(VoteRoulette.permission.playerInGroup("",playerName, group)) {
+									qualifiedRewards.add(reward);
+									break;
+								}
+							}
 						}
 					}
-					continue;
 				}
-				qualifiedRewards.add(rewards.get(i));
 			}
-			rewardsArray = new Reward[qualifiedRewards.size()];
-			qualifiedRewards.toArray(rewardsArray);
-		} else {
-			rewardsArray = new Reward[rewards.size()];
-			rewards.toArray(rewardsArray);
+
+			//check if reward has specific perm groups set
+			else if(VoteRoulette.hasPermPlugin()) {
+				if(reward.hasPermissionGroups()) {
+					if(plugin.ONLY_PRIMARY_GROUP) {
+						String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
+						if(primaryGroup != null) {
+							if(reward.containsPermGroup(primaryGroup)) {
+								qualifiedRewards.add(reward);
+							}
+						} else {
+							System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
+						}
+					} else {
+						String[] groups = reward.getPermGroups();
+						for(String group: groups) {
+							if(VoteRoulette.permission.playerInGroup("",playerName, group)) {
+								qualifiedRewards.add(reward);
+								break;
+							}
+						}
+					}
+				} else {
+					qualifiedRewards.add(reward);
+				}
+			} else {
+				qualifiedRewards.add(reward);
+			}
 		}
+
+		Reward[] rewardsArray;
+		rewardsArray = new Reward[qualifiedRewards.size()];
+		qualifiedRewards.toArray(rewardsArray);
+
+		//filter out rewards not for the world player is standing in
 		if(plugin.CONSIDER_REWARDS_FOR_CURRENT_WORLD) {
 			OfflinePlayer op = Bukkit.getOfflinePlayer(playerName);
 			ArrayList<Reward> worldFilteredRewards = new ArrayList<Reward>();
@@ -176,12 +212,35 @@ public class RewardManager {
 				if(command.startsWith("/")) {
 					command = command.replaceFirst("/", "");
 				}
-				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", player.getName()));
+				if(command.startsWith("(")) {
+					command = command.replaceFirst("\\(", "");
+					String[] delayedCommandData = command.split("\\)");
+					String delayedCommand = delayedCommandData[1].trim();
+					if(delayedCommand.startsWith("/")) {
+						delayedCommand = delayedCommand.replaceFirst("/", "");
+					}
+					int delay;
+					boolean runOnLogOff = false;
+					if(delayedCommandData[0].contains("/")) {
+						String[] delayedCommandOptions = delayedCommandData[0].split("/");
+						delay = Integer.parseInt(delayedCommandOptions[0].trim());
+						if(delayedCommandOptions[1].trim().equalsIgnoreCase("logoff") || delayedCommandOptions[1].trim().equalsIgnoreCase("log off")) {
+							runOnLogOff = true;
+						}
+					} else {
+						delay = Integer.parseInt(delayedCommandData[0].trim());
+					}
+					DelayedCommand dc = new DelayedCommand(delayedCommand, playerName, runOnLogOff);
+					dc.runTaskLater(plugin, delay*20);
+					VoteRoulette.delayedCommands.add(dc);
+				} else {
+					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", player.getName()));
+				}
 			}
 		}
 		if(plugin.MESSAGE_PLAYER) {
 			if(reward.hasMessage()) {
-				player.sendMessage(ChatColor.translateAlternateColorCodes('&', reward.getMessage().replace("%player%", player.getName())));
+				player.sendMessage(Utils.transcribeColorCodes(reward.getMessage().replace("%player%", player.getName())));
 			} else {
 				player.sendMessage(getRewardMessage(player, reward));
 			}
@@ -251,12 +310,35 @@ public class RewardManager {
 				if(command.startsWith("/")) {
 					command = command.replaceFirst("/", "");
 				}
-				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", player.getName()));
+				if(command.startsWith("(")) {
+					command = command.replaceFirst("\\(", "");
+					String[] delayedCommandData = command.split("\\)");
+					String delayedCommand = delayedCommandData[1].trim();
+					if(delayedCommand.startsWith("/")) {
+						delayedCommand = delayedCommand.replaceFirst("/", "");
+					}
+					int delay;
+					boolean runOnLogOff = false;
+					if(delayedCommandData[0].contains("/")) {
+						String[] delayedCommandOptions = delayedCommandData[0].split("/");
+						delay = Integer.parseInt(delayedCommandOptions[0].trim());
+						if(delayedCommandOptions[1].trim().equalsIgnoreCase("logoff") || delayedCommandOptions[1].trim().equalsIgnoreCase("log off")) {
+							runOnLogOff = true;
+						}
+					} else {
+						delay = Integer.parseInt(delayedCommandData[0].trim());
+					}
+					DelayedCommand dc = new DelayedCommand(delayedCommand, playerName, runOnLogOff);
+					dc.runTaskLater(plugin, delay*20);
+					VoteRoulette.delayedCommands.add(dc);
+				} else {
+					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", player.getName()));
+				}
 			}
 		}
 		if(plugin.MESSAGE_PLAYER) {
 			if(milestone.hasMessage()) {
-				player.sendMessage(ChatColor.translateAlternateColorCodes('&', milestone.getMessage().replace("%player%", player.getName())));
+				player.sendMessage(Utils.transcribeColorCodes(milestone.getMessage().replace("%player%", player.getName())));
 			} else {
 				player.sendMessage(getMilestoneMessage(player, milestone));
 			}
@@ -275,36 +357,76 @@ public class RewardManager {
 	}
 
 	public Milestone[] getQualifiedMilestones(String playerName) {
+
 		ArrayList<Milestone> qualifiedMilestones = new ArrayList<Milestone>();
-		Milestone[] milestonesArray;
-		if(VoteRoulette.hasPermPlugin()) {
-			for(int i = 0; i < milestones.size(); i++) {
-				if(milestones.get(i).hasPermissionGroups()) {
-					String[] permGroups = milestones.get(i).getPermGroups();
-					for(int j = 0; j < permGroups.length; j++) {
+
+		//iterate through all rewards
+		for(Milestone milestone: milestones) {
+
+			//check if reward has specific players set
+			if(milestone.hasPlayers()) {
+				if(milestone.containsPlayer(playerName)) {
+					qualifiedMilestones.add(milestone);
+					continue;
+				}
+				if(VoteRoulette.hasPermPlugin()) {
+					if(milestone.hasPermissionGroups()) {
 						if(plugin.ONLY_PRIMARY_GROUP) {
-							World w = null;
-							String primaryGroup = VoteRoulette.permission.getPrimaryGroup(w, playerName);
-							if(primaryGroup.equals(permGroups[j])) {
-								qualifiedMilestones.add(milestones.get(i));
+							String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
+							if(primaryGroup != null) {
+								if(milestone.containsPermGroup(primaryGroup)) {
+									qualifiedMilestones.add(milestone);
+								}
+							} else {
+								System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
+							}
+						} else {
+							String[] groups = milestone.getPermGroups();
+							for(String group: groups) {
+								if(VoteRoulette.permission.playerInGroup("",playerName, group)) {
+									qualifiedMilestones.add(milestone);
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			//check if reward has specific perm groups set
+			else if(VoteRoulette.hasPermPlugin()) {
+				if(milestone.hasPermissionGroups()) {
+					if(plugin.ONLY_PRIMARY_GROUP) {
+						String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
+						if(primaryGroup != null) {
+							if(milestone.containsPermGroup(primaryGroup)) {
+								qualifiedMilestones.add(milestone);
+							}
+						} else {
+							System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
+						}
+					} else {
+						String[] groups = milestone.getPermGroups();
+						for(String group: groups) {
+							if(VoteRoulette.permission.playerInGroup("",playerName, group)) {
+								qualifiedMilestones.add(milestone);
 								break;
 							}
 						}
-						else if(VoteRoulette.permission.playerInGroup("",playerName, permGroups[j])) {
-							qualifiedMilestones.add(milestones.get(i));
-							break;
-						}
 					}
-					continue;
+				} else {
+					qualifiedMilestones.add(milestone);
 				}
-				qualifiedMilestones.add(milestones.get(i));
+			} else {
+				qualifiedMilestones.add(milestone);
 			}
-			milestonesArray = new Milestone[qualifiedMilestones.size()];
-			qualifiedMilestones.toArray(milestonesArray);
-		} else {
-			milestonesArray = new Milestone[milestones.size()];
-			milestones.toArray(milestonesArray);
 		}
+
+		Milestone[] milestonesArray;
+		milestonesArray = new Milestone[qualifiedMilestones.size()];
+		qualifiedMilestones.toArray(milestonesArray);
+
+		//filter out rewards not for the world player is standing in
 		if(plugin.CONSIDER_MILESTONES_FOR_CURRENT_WORLD) {
 			OfflinePlayer op = Bukkit.getOfflinePlayer(playerName);
 			ArrayList<Milestone> worldFilteredMilestones = new ArrayList<Milestone>();

@@ -6,7 +6,13 @@
 
 # All messages support color codes using the & symbol!
 # For example, &4 would make text red.
-# If you need to use quotes, don’t forget to escape(backslash) them like this: \"
+#
+# You can also use the following tags for colors:
+# %black% %darkblue% %darkgreen% %darkaqua% %darkred% %purple% %gold%
+# %grey% %darkgrey% %blue% %green% %aqua% %red% %pink% %yellow% %white%
+# %bold% %strikethrough% %underline% %italic% %reset% %magic%
+#
+# If you need to use quotes, dont forget to escape(backslash) them like this: \"
 
 # The following is the message that everyone sees when a player votes
 # Available variables:
@@ -36,12 +42,13 @@ periodic-reminder: "&b*Have you voted for %server% today? Type &e/vote&b to see 
 # The following is the message that is sent to the player if useTwentyFourHourReminder is set to true
 # in the config.yml file.
 # Available variables:
-# %player% - Name of player recieving vote
+# %player% - Name of player
 
 twentyfour-hour-reminder: "&b24 hours have passed since your last vote!"
 
-# The following is the websites players will see when they type /vote
-
+# The following is what the players will see when they type /vote
+# The lines must be in a list format!
 vote-websites:
-- www.your-server-list-here.com
-- www.another-server-list.com
+- "%blue%Vote List:"
+- "www.your-server-list-here.com"
+- "www.another-server-list.com"

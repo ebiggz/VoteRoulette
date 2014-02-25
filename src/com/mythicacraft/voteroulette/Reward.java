@@ -20,11 +20,14 @@ public class Reward {
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private double currency = 0;
 	private int xpLevels = 0;
-	private int chance = 0;
+	private int chanceMin = 0;
+	private int chanceMax = 100;
 	private ArrayList<ItemStack> items = new ArrayList<ItemStack>();
 	private String[] permGroups;
+	private String[] players;
 	private String name;
 	private List<String> commands = new ArrayList<String>();
+	private List<String> websites = new ArrayList<String>();
 	private List<String> worlds = new ArrayList<String>();
 	private String message;
 
@@ -54,7 +57,13 @@ public class Reward {
 		if(cs.contains("chance")) {
 			try {
 				String chanceStr = cs.getString("chance").replace("%", "");
-				this.chance = Integer.parseInt(chanceStr);
+				if(chanceStr.contains("/")) {
+					String[] chances = chanceStr.split("/");
+					this.chanceMin = Integer.parseInt(chances[0]);
+					this.chanceMax = Integer.parseInt(chances[1]);
+				} else {
+					this.chanceMin = Integer.parseInt(chanceStr);
+				}
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Invalid chance format for reward: " + name + ", Skipping chance.");
 			}
@@ -75,6 +84,17 @@ public class Reward {
 				}
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Error loading worlds for reward:" + name + ", Skipping worlds.");
+			}
+		}
+		if(cs.contains("websites")) {
+			try {
+				String websitesStr = cs.getString("websites");
+				String[] websitesArray = websitesStr.split(",");
+				for(String website : websitesArray) {
+					websites.add(website.trim());
+				}
+			} catch (Exception e) {
+				log.warning("[VoteRoulette] Error loading websites for reward:" + name + ", Skipping websites.");
 			}
 		}
 		if(cs.contains("message")) {
@@ -101,12 +121,12 @@ public class Reward {
 					if(itemData != null) {
 						if(itemData.contains("dataID")) {
 							String dataIDStr = itemData.getString("dataID");
-							byte dataID;
+							short dataID;
 							try {
-								dataID = Byte.parseByte(dataIDStr);
+								dataID = Short.parseShort(dataIDStr);
 							} catch (Exception e) {
 								dataID = 1;
-								System.out.println("[VoteRoulette] \"" + dataIDStr + "\" is not a valid dataID, Defaulting to 0!");
+								System.out.println("[VoteRoulette] \"" + dataIDStr + "\" is not a valid dataID, Defaulting to 1!");
 							}
 							item = new ItemStack(Material.getMaterial(id), 1, dataID);
 						} else {
@@ -216,6 +236,12 @@ public class Reward {
 				}
 			}
 		}
+		if(cs.contains("players")) {
+			players = cs.getString("players").split(",");
+			for(int i = 0; i < players.length; i++) {
+				players[i] = players[i].trim();
+			}
+		}
 	}
 
 	public double getCurrency() {
@@ -242,6 +268,26 @@ public class Reward {
 		this.permGroups = permGroups;
 	}
 
+	public String[] getPlayers() {
+		return players;
+	}
+
+	public void setPlayers(String[] players) {
+		this.players = players;
+	}
+
+	public boolean hasPlayers() {
+		if(players == null) return false;
+		return true;
+	}
+
+	public boolean containsPlayer(String playerName) {
+		for(String player: players) {
+			if(player.equals(playerName)) return true;
+		}
+		return false;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -253,6 +299,13 @@ public class Reward {
 	public boolean hasPermissionGroups() {
 		if(permGroups == null) return false;
 		return true;
+	}
+
+	public boolean containsPermGroup(String permGroup) {
+		for(String group: permGroups) {
+			if(group.equals(permGroup)) return true;
+		}
+		return false;
 	}
 
 	public boolean hasItems() {
@@ -319,6 +372,15 @@ public class Reward {
 		return worlds;
 	}
 
+	public boolean hasWebsites() {
+		if(websites == null || websites.isEmpty()) return false;
+		return true;
+	}
+
+	public List<String> getWebsites() {
+		return websites;
+	}
+
 	public boolean hasMessage() {
 		if(message == null || message.length() == 0) return false;
 		return true;
@@ -346,16 +408,24 @@ public class Reward {
 		}
 	}
 
-	public int getChance() {
-		return chance;
+	public int getChanceMin() {
+		return chanceMin;
 	}
 
-	public void setChance(int chance) {
-		this.chance = chance;
+	public int getChanceMax() {
+		return chanceMax;
+	}
+
+	public void setChanceMin(int chanceMin) {
+		this.chanceMin = chanceMin;
+	}
+
+	public void setChanceMax(int chanceMax) {
+		this.chanceMax = chanceMax;
 	}
 
 	public boolean hasChance() {
-		if(chance > 0) return true;
+		if(chanceMin > 0) return true;
 		return false;
 	}
 }

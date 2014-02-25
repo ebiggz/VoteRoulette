@@ -30,7 +30,12 @@ useTwentyFourHourReminder: true
 
 # Whether or not to only consider a players primary group when doing permission group checks for rewards/milestones
 # Turning this on helps if you are using inheritance in your permissions plugin.
-onlyConsiderPlayersPrimaryGroup: false
+onlyConsiderPlayersPrimaryGroup: true
+
+# Set the following to false if you do not want VoteRoulette to automatically check
+# for updates. (Anyone with "voteroulette.admin" permission will be notified of an
+# update on log in) 
+checkForUpdates: true
 
 #################
 #Rewards Section#
@@ -139,9 +144,13 @@ Milestones:
 #        votes: 25
 #        recurring: true
 #        currency: 100
+#        priority: 10
 
 # Set this to true to if you set multiple milestones with the same vote count and you want a random one to be chosen (if false, the one with the highest priority will be given!)    
 giveRandomMilestone: false
+
+# If multiple milestones happen at the same time and some or all tie for the highest priority, the following setting dictates if VoteRoulette will choose a random one. This is a good way to mix and max the functionality of random milestones but still having the control of priorities. 
+randomizeTiedHighestPriorityMilestones: false
 
 # Set the following to false if you want players to get a regular reward on top of a milestone reward when they reach a milestone.
 onlyRewardMilestoneUponCompletion: true
@@ -174,4 +183,4 @@ blacklistedWorlds:
 # End of config
 #####################
 # No need to touch this
-configVersion: 1.3
+configVersion: 1.5

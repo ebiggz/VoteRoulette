@@ -19,11 +19,13 @@ public class VoteProcessor implements Runnable {
 	private boolean ignoreBlackList;
 	private RewardManager rm;
 	PlayerManager pm;
+	private String website;
 
-	public VoteProcessor(String playerName, VoteRoulette plugin, boolean ignoreBlackList) {
+	public VoteProcessor(String playerName, VoteRoulette plugin, boolean ignoreBlackList, String website) {
 		this.playerName = playerName;
 		this.plugin = plugin;
 		this.ignoreBlackList = ignoreBlackList;
+		this.website = website;
 		rm = VoteRoulette.getRewardManager();
 		pm = VoteRoulette.getPlayerManager();
 	}
@@ -40,8 +42,18 @@ public class VoteProcessor implements Runnable {
 			if(plugin.GIVE_RANDOM_MILESTONE) {
 				giveRandomMilestone(playerName, reachedMils);
 			} else {
-				//give highest priority milestone
-				rm.administerMilestoneContents(reachedMils.get(0), playerName);
+				if(plugin.RANDOMIZE_SAME_PRIORITY) {
+					//randomize the highest priority rewards if there is more than one
+					List<Milestone> sameP = getSamePriorityMilestones(reachedMils);
+					if(sameP.size() > 1) {
+						giveRandomMilestone(playerName, sameP);
+					} else {
+						rm.administerMilestoneContents(reachedMils.get(0), playerName);
+					}
+				} else {
+					//give highest priority milestone
+					rm.administerMilestoneContents(reachedMils.get(0), playerName);
+				}
 			}
 			//if player is to only receive milestone, end
 			if(plugin.ONLY_MILESTONE_ON_COMPLETION) return;
@@ -55,6 +67,11 @@ public class VoteProcessor implements Runnable {
 		}
 		//check if there is rewards the player is qualified to receive
 		Reward[] qualRewards = rm.getQualifiedRewards(playerName);
+		//website filter
+		if(website != null) {
+			qualRewards = websiteFilteredRewards(qualRewards, website);
+		}
+
 		if(qualRewards.length > 0) {
 			//check if it should be random
 			if(plugin.GIVE_RANDOM_REWARD) {
@@ -78,8 +95,8 @@ public class VoteProcessor implements Runnable {
 				}
 			}
 			for(Reward reward: rewardsWithChance) {
-				int random = 1 + (int)(Math.random() * ((100 - 1) + 1));
-				if(random > reward.getChance()) continue;
+				int random = 1 + (int)(Math.random() * ((reward.getChanceMax() - 1) + 1));
+				if(random > reward.getChanceMin()) continue;
 				rm.administerRewardContents(reward, playerName);
 				return;
 			}
@@ -99,6 +116,17 @@ public class VoteProcessor implements Runnable {
 		}
 	}
 
+	public List<Milestone> getSamePriorityMilestones(List<Milestone> milestones) {
+		List<Milestone> samePriority = new ArrayList<Milestone>();
+		int firstPriority = milestones.get(0).getPriority();
+		for(Milestone milestone: milestones) {
+			if(milestone.getPriority() == firstPriority) {
+				samePriority .add(milestone);
+			}
+		}
+		return samePriority;
+	}
+
 	public void giveRandomMilestone(String playerName, List<Milestone> reachedMils) {
 		if(rm.milestonesContainChance(reachedMils)) {
 			List<Milestone> milestonesWithChance = new ArrayList<Milestone>();
@@ -111,8 +139,8 @@ public class VoteProcessor implements Runnable {
 				}
 			}
 			for(Milestone milestone: milestonesWithChance) {
-				int random = 1 + (int)(Math.random() * ((100 - 1) + 1));
-				if(random > milestone.getChance()) continue;
+				int random = 1 + (int)(Math.random() * ((milestone.getChanceMax() - 1) + 1));
+				if(random > milestone.getChanceMin()) continue;
 
 				rm.administerMilestoneContents(milestone, playerName);
 
@@ -132,5 +160,21 @@ public class VoteProcessor implements Runnable {
 			rm.administerMilestoneContents(milestone, playerName);
 
 		}
+	}
+
+	Reward[] websiteFilteredRewards(Reward[] rewards, String website) {
+		List<Reward> websiteRewards = new ArrayList<Reward>();
+		for(Reward reward : rewards) {
+			if(reward.hasWebsites()) {
+				if(reward.getWebsites().contains(website)) {
+					websiteRewards.add(reward);
+				}
+			} else {
+				websiteRewards.add(reward);
+			}
+		}
+		Reward[] websiteRewardsArray = new Reward[websiteRewards.size()];
+		websiteRewards.toArray(websiteRewardsArray);
+		return websiteRewardsArray;
 	}
 }

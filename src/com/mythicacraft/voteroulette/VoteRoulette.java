@@ -1,6 +1,12 @@
 package com.mythicacraft.voteroulette;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -12,13 +18,16 @@ import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitScheduler;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import com.mythicacraft.voteroulette.cmdexecutors.Commands;
 import com.mythicacraft.voteroulette.listeners.LoginListener;
@@ -35,12 +44,15 @@ public class VoteRoulette extends JavaPlugin {
 	private static boolean vaultEnabled = false;
 	private static boolean hasPermPlugin = false;
 	private static boolean hasEconPlugin = false;
+	private boolean hasUpdate = false;
 
 	private static RewardManager rm;
 	private static PlayerManager pm;
 	private BukkitRunnable periodicReminder;
 	private BukkitRunnable twentyFourHourChecker;
+	private BukkitRunnable updateChecker;
 	public static List<Player> notifiedPlayers = new ArrayList<Player>();
+	public static List<DelayedCommand> delayedCommands = new ArrayList<DelayedCommand>();
 
 	//config constants
 	public boolean REWARDS_ON_THRESHOLD;
@@ -61,7 +73,9 @@ public class VoteRoulette extends JavaPlugin {
 	public List<String> BLACKLIST_WORLDS;
 	public boolean USE_PERIODIC_REMINDER;
 	public boolean USE_TWENTYFOUR_REMINDER;
+	public boolean RANDOMIZE_SAME_PRIORITY;
 	public long REMINDER_INTERVAL;
+	public boolean CHECK_UPDATES;
 	public double CONFIG_VERSION;
 
 	//messages constants
@@ -72,6 +86,17 @@ public class VoteRoulette extends JavaPlugin {
 	public List<String> VOTE_WEBSITES;
 
 	public void onDisable() {
+
+		if(periodicReminder != null) {
+			periodicReminder.cancel();
+		}
+		if(twentyFourHourChecker != null) {
+			twentyFourHourChecker.cancel();
+		}
+		if(updateChecker != null) {
+			updateChecker.cancel();
+		}
+
 		log.info("[VoteRoulette] Disabled!");
 	}
 
@@ -101,9 +126,10 @@ public class VoteRoulette extends JavaPlugin {
 		//load configs
 		reloadConfigs();
 
-		if(CONFIG_VERSION != 1.3) {
+		if(CONFIG_VERSION != 1.5) {
 			log.warning("[VoteRoulette] It appears that your config is out of date. There's new options! It's recommended that you take your old config out to let the new one save.");
 		}
+
 
 		log.info("[VoteRoulette] Enabled!");
 	}
@@ -111,7 +137,7 @@ public class VoteRoulette extends JavaPlugin {
 	private boolean setupVotifier() {
 		Plugin votifier =  getServer().getPluginManager().getPlugin("Votifier");
 		if (!(votifier != null && votifier instanceof com.vexsoftware.votifier.Votifier)) {
-			log.severe("[VoteRoulette] Votifier was not found! Voltifer is required for VoteRoulette to work!");
+			log.severe("[VoteRoulette] Votifier was not found! Votifier is required for VoteRoulette to work!");
 			return false;
 		}
 		System.out.println("[VoteRoulette] Hooked into Votifier!");
@@ -163,23 +189,40 @@ public class VoteRoulette extends JavaPlugin {
 		loadPlayerData();
 		loadRewards();
 		loadMilestones();
+		loadKnownSitesFile();
 		System.out.println("[VoteRoulette] ...finished loading configs!");
 		scheduleTasks();
 	}
 
 	void scheduleTasks() {
 
-		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
-		scheduler.cancelTasks(this);
+		if(periodicReminder != null) {
+			periodicReminder.cancel();
+		}
+		if(twentyFourHourChecker != null) {
+			twentyFourHourChecker.cancel();
+		}
+		if(updateChecker != null) {
+			updateChecker.cancel();
+		}
 
 		if(USE_PERIODIC_REMINDER) {
-			periodicReminder = new PeriodicReminder(PERIODIC_REMINDER.replace("%server%", Bukkit.getServerName()));
-			scheduler.scheduleSyncRepeatingTask(this, periodicReminder,REMINDER_INTERVAL, REMINDER_INTERVAL);
+			periodicReminder = new PeriodicReminder(PERIODIC_REMINDER);
+			periodicReminder.runTaskTimer(this, REMINDER_INTERVAL, REMINDER_INTERVAL);
 		}
 
 		if(USE_TWENTYFOUR_REMINDER) {
 			twentyFourHourChecker = new TwentyFourHourCheck(TWENTYFOUR_REMINDER);
-			scheduler.scheduleSyncRepeatingTask(this, twentyFourHourChecker, 12000, 12000);
+			twentyFourHourChecker.runTaskTimer(this, 12000, 12000);
+		}
+
+		if (CHECK_UPDATES) {
+			if (getDescription().getVersion().contains("SNAPSHOT")) {
+				getLogger().info("This is not a release version. Automatic update checking will be disabled.");
+			} else {
+				updateChecker = new UpdateChecker(this);
+				updateChecker.runTaskTimerAsynchronously(this, 40, 432000);
+			}
 		}
 	}
 
@@ -247,18 +290,53 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
+	void loadKnownSitesFile() {
+		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		(new File(pluginFolder)).mkdirs();
+		String playerFolder = pluginFolder + File.separator + "data";
+		(new File(playerFolder)).mkdirs();
+		File playerDataFile = new File(playerFolder, "known websites.yml");
+		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "known websites.yml");
+
+		if (!playerDataFile.exists()) {
+			try {
+				playerData.saveDefaultConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
+				pm.disablePlugin(this);
+			}
+			return;
+		} else {
+			try {
+				playerData.getConfig().options().header("This file collects all the known voting websites that have been used on your server. Every time a vote comes through and if the website hasnt been saved before, the website is added here.");
+				playerData.getConfig().options().copyHeader();
+				playerData.reloadConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
+				pm.disablePlugin(this);
+			}
+		}
+	}
+
 	void loadMessagesData() {
 		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
 
-		SERVER_BROADCAST_MESSAGE = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("server-broadcast-message"));
+		SERVER_BROADCAST_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("server-broadcast-message"));
 
-		PLAYER_VOTE_MESSAGE = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("player-reward-message"));
+		PLAYER_VOTE_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("player-reward-message"));
 
-		PERIODIC_REMINDER = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("periodic-reminder"));
+		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("periodic-reminder").replace("%server%", Bukkit.getServerName()));
 
-		TWENTYFOUR_REMINDER = ChatColor.translateAlternateColorCodes('&', messageData.getConfig().getString("twentyfour-hour-reminder", "&b24 hours have passed since your last vote!"));
+		TWENTYFOUR_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("twentyfour-hour-reminder", "&b24 hours have passed since your last vote!"));
 
-		VOTE_WEBSITES = messageData.getConfig().getStringList("vote-websites");
+		List<String> voteSites = messageData.getConfig().getStringList("vote-websites");
+		for(int i = 0; i < voteSites.size(); i++) {
+			String website = voteSites.get(i);
+			website = Utils.transcribeColorCodes(website);
+			voteSites.set(i, website);
+		}
+		VOTE_WEBSITES = voteSites;
 	}
 
 	private void loadConfigOptions() {
@@ -278,6 +356,8 @@ public class VoteRoulette extends JavaPlugin {
 
 		GIVE_RANDOM_MILESTONE = getConfig().getBoolean("giveRandomMilestone");
 
+		RANDOMIZE_SAME_PRIORITY = getConfig().getBoolean("randomizeTiedHighestPriorityMilestones", false);
+
 		ONLY_MILESTONE_ON_COMPLETION = getConfig().getBoolean("onlyRewardMilestoneUponCompletion");
 
 		BLACKLIST_AS_WHITELIST = getConfig().getBoolean("useBlacklistAsWhitelist");
@@ -292,6 +372,8 @@ public class VoteRoulette extends JavaPlugin {
 
 		BLACKLIST_WORLDS = getConfig().getStringList("blacklistedWorlds");
 
+		CHECK_UPDATES = getConfig().getBoolean("checkForUpdates", true);
+
 		CONSIDER_REWARDS_FOR_CURRENT_WORLD = getConfig().getBoolean("considerRewardsForPlayersCurrentWorld");
 
 		CONSIDER_MILESTONES_FOR_CURRENT_WORLD = getConfig().getBoolean("considerMilestonesForPlayersCurrentWorld");
@@ -299,6 +381,8 @@ public class VoteRoulette extends JavaPlugin {
 		ONLY_PRIMARY_GROUP = getConfig().getBoolean("onlyConsiderPlayersPrimaryGroup", false);
 
 		CONFIG_VERSION = getConfig().getDouble("configVersion", 1.0);
+
+
 	}
 
 	private void loadRewards() {
@@ -361,6 +445,10 @@ public class VoteRoulette extends JavaPlugin {
 		return hasEconPlugin;
 	}
 
+	public boolean hasUpdate() {
+		return hasUpdate;
+	}
+
 	public static RewardManager getRewardManager() {
 		return rm;
 	}
@@ -401,6 +489,75 @@ public class VoteRoulette extends JavaPlugin {
 						VoteRoulette.notifiedPlayers.add(player);
 					}
 				}
+			}
+		}
+	}
+
+	private class UpdateChecker extends BukkitRunnable {
+
+		private String CURRENT_VERSION;
+
+		private final VoteRoulette plugin;
+
+		private UpdateChecker(VoteRoulette plugin) {
+			this.plugin = plugin;
+			CURRENT_VERSION = plugin.getDescription().getVersion();
+		}
+
+		@Override
+		public void run() {
+			final File pluginsFolder = this.plugin.getDataFolder().getParentFile();
+			final File updaterFolder = new File(pluginsFolder, "Updater");
+			final File updaterConfigFile = new File(updaterFolder, "config.yml");
+			String apiKey = null;
+			String latest = null;
+
+			if (updaterFolder.exists()) {
+				if (updaterConfigFile.exists()) {
+					final YamlConfiguration config = YamlConfiguration.loadConfiguration(updaterConfigFile);
+					apiKey = config.getString("api-key");
+				}
+			}
+
+			URL url;
+			try {
+				url = new URL("https://api.curseforge.com/servermods/files?projectIds=71726");
+			} catch (final MalformedURLException e) {
+				return;
+			}
+
+			URLConnection conn;
+			try {
+				conn = url.openConnection();
+
+				conn.setConnectTimeout(5000);
+				if (apiKey != null) {
+					conn.addRequestProperty("X-API-Key", apiKey);
+				}
+				conn.addRequestProperty("User-Agent", "VoteRoulette UpdateChecker");
+				conn.setDoOutput(true);
+
+				final BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+				final String response = reader.readLine();
+
+				final JSONArray array = (JSONArray) JSONValue.parse(response);
+				if (array.size() == 0) {
+					return;
+				}
+
+				latest = (String) ((JSONObject) array.get(array.size() - 1)).get("name");
+			} catch (final IOException e) {
+			}
+			if (latest != null) {
+				latest = latest.replace("VoteRoulette v", "");
+				if (!CURRENT_VERSION.equals(latest)) {
+					plugin.getLogger().info("There's a different version available: " + latest + " (Current version is: " + CURRENT_VERSION + ")");
+					plugin.getLogger().info("Visit http://dev.bukkit.org/bukkit-plugins/voteroulette/");
+					plugin.getLogger().info("You can disable automatic update checking in the config.");
+					plugin.hasUpdate = true;
+				}
+			} else {
+				this.plugin.getLogger().info("Couldn't check for plugin updates. Will try again later.");
 			}
 		}
 	}

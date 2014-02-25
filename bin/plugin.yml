@@ -1,6 +1,6 @@
 main: com.mythicacraft.voteroulette.VoteRoulette
 name: VoteRoulette
-version: 1.9.1
+version: 1.9.5
 author: ebiggz
 description: A listener for Votifier
 softdepends: [Vault, Votifier]
@@ -33,7 +33,9 @@ permissions:
     voteroulette.forcevote:
         default: false
     voteroulette.lastvoteothers:
-        default: false   
+        default: false
+    voteroulette.remind:
+        default: false
     voteroulette.admin:
         default: false
         children:
@@ -41,6 +43,7 @@ permissions:
             voteroulette.editstats: true
             voteroulette.forcevote: true
             voteroulette.lastvoteothers: true
+            voteroulette.remind: true
     voteroulette.*:
         default: op
         children:
