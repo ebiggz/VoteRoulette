@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -177,13 +177,13 @@ public class RewardManager {
 
 		if(Utils.worldIsBlacklisted(worldName)) {
 			pm.saveUnclaimedReward(player.getName(), reward.getName());
-			player.sendMessage(ChatColor.RED + "You cannot claim rewards in this world!");
+			player.sendMessage(plugin.BLACKLISTED_WORLD_NOTIFICATION.replace("%type%", "reward"));
 			return;
 		}
 		if(reward.hasWorlds()) {
 			if(!reward.getWorlds().contains(worldName)) {
 				pm.saveUnclaimedReward(player.getName(), reward.getName());
-				player.sendMessage(ChatColor.RED + "You must claim the reward \"" + reward.getName()  + "\"  in the world(s): " + Utils.worldsString(reward.getWorlds()));
+				player.sendMessage(plugin.WRONG_AWARD_WORLD_NOTIFICATION.replace("%type%", "reward").replace("%name%", reward.getName()).replace("%worlds%", Utils.worldsString(reward.getWorlds())));
 				return;
 			}
 		}
@@ -197,7 +197,7 @@ public class RewardManager {
 				}
 			} else {
 				pm.saveUnclaimedReward(player.getName(), reward.getName());
-				player.sendMessage(ChatColor.RED + "You don't have the required space in your inventory for this reward (" + reward.getRequiredSlots() + " slots). Please type \"/vr claim\" once you have cleared enough room in your inventory.");
+				player.sendMessage(plugin.INVENTORY_FULL_NOTIFICATION.replace("%type%", "reward").replace("%name%", reward.getName()).replace("%slots%", Integer.toString(reward.getRequiredSlots())));
 				return;
 			}
 		}
@@ -219,18 +219,30 @@ public class RewardManager {
 					if(delayedCommand.startsWith("/")) {
 						delayedCommand = delayedCommand.replaceFirst("/", "");
 					}
-					int delay;
+					int delay = 1;
 					boolean runOnLogOff = false;
+					boolean runOnShutdown = false;
 					if(delayedCommandData[0].contains("/")) {
 						String[] delayedCommandOptions = delayedCommandData[0].split("/");
-						delay = Integer.parseInt(delayedCommandOptions[0].trim());
-						if(delayedCommandOptions[1].trim().equalsIgnoreCase("logoff") || delayedCommandOptions[1].trim().equalsIgnoreCase("log off")) {
-							runOnLogOff = true;
+						for(String cmdOption: delayedCommandOptions) {
+							if(cmdOption.trim().equalsIgnoreCase("logoff") || cmdOption.trim().equalsIgnoreCase("log off")) {
+								runOnLogOff = true;
+							}
+							else if(cmdOption.trim().equalsIgnoreCase("shutdown")) {
+								runOnShutdown = true;
+							}
+							else {
+								try {
+									delay = Integer.parseInt(cmdOption.trim());
+								} catch (Exception e) {
+									log.warning("[VoteRoulette] Error parsing delay for command in reward: " + reward.getName());
+								}
+							}
 						}
 					} else {
 						delay = Integer.parseInt(delayedCommandData[0].trim());
 					}
-					DelayedCommand dc = new DelayedCommand(delayedCommand, playerName, runOnLogOff);
+					DelayedCommand dc = new DelayedCommand(delayedCommand, playerName, runOnLogOff, runOnShutdown);
 					dc.runTaskLater(plugin, delay*20);
 					VoteRoulette.delayedCommands.add(dc);
 				} else {
@@ -248,6 +260,76 @@ public class RewardManager {
 		if(plugin.LOG_TO_CONSOLE) {
 			System.out.println("[VoteRoulette] " + player.getName() + " just earned the reward: " + reward.getName());
 		}
+		if(reward.hasReroll()) {
+			player.sendMessage(plugin.REROLL_NOTIFICATION.replace("%type%", "reward").replace("%name%", reward.getName()));
+			if(!rerollReward(reward.getReroll(), player)) {
+				log.warning("[VoteRoulette] There was an error when doing the reroll settings in reward " + reward.getName() + " for the player " + player.getName() + ", was the reroll reward spelled correctly?");
+			}
+		}
+	}
+
+	boolean rerollReward(String reroll, Player player) {
+		int chanceMin = 0;
+		int chanceMax = 100;
+		boolean useCustomChance = false;
+		String name;
+		if(reroll.contains("(") && reroll.contains(")") && reroll.endsWith(")")) {
+			String[] rerollData = reroll.split("\\(");
+			name = rerollData[0].trim();
+			rerollData[1] = rerollData[1].replace("%", "").trim().replace(")", "");
+			if(rerollData[1].contains("/")) {
+				String[] chanceData = rerollData[1].split("/");
+				try {
+					chanceMin = Integer.parseInt(chanceData[0].trim());
+					chanceMax = Integer.parseInt(chanceData[1].trim());
+				} catch (Exception e) {
+					return false;
+				}
+			} else {
+				try {
+					chanceMin = Integer.parseInt(rerollData[1].trim());
+				} catch (Exception e) {
+					return false;
+				}
+			}
+			useCustomChance = true;
+		} else {
+			name = reroll;
+		}
+
+		Reward reward;
+		if(name.equals("ANY")) {
+			Random rand = new Random();
+			reward = rewards.get(rand.nextInt(rewards.size()));
+		} else {
+			reward = getRewardByName(name);
+		}
+
+		if(reward == null) return false;
+
+		if(!useCustomChance) {
+			if(reward.hasChance()) {
+				chanceMin = reward.getChanceMin();
+				chanceMax = reward.getChanceMax();
+			} else {
+				chanceMin = 100;
+			}
+		}
+
+		int random = 1 + (int)(Math.random() * ((chanceMax - 1) + 1));
+		if(random <= chanceMin) {
+			administerRewardContents(reward, player.getName());
+		} else {
+			player.sendMessage(plugin.REROLL_FAILED_NOTIFICATION);
+		}
+		return true;
+	}
+
+	Reward getRewardByName(String rewardName) {
+		for(Reward reward: rewards) {
+			if(reward.getName().equals(rewardName)) return reward;
+		}
+		return null;
 	}
 
 	/*
@@ -275,13 +357,13 @@ public class RewardManager {
 		String worldName = player.getWorld().getName();
 		if(Utils.worldIsBlacklisted(worldName)) {
 			pm.saveUnclaimedMilestone(player.getName(), milestone.getName());
-			player.sendMessage(ChatColor.RED + "You cannot claim milestones in this world!");
+			player.sendMessage(plugin.BLACKLISTED_WORLD_NOTIFICATION.replace("%type%", "milestone"));
 			return;
 		}
 		if(milestone.hasWorlds()) {
 			if(!milestone.getWorlds().contains(worldName)) {
 				pm.saveUnclaimedMilestone(player.getName(), milestone.getName());
-				player.sendMessage(ChatColor.RED + "You must claim the milestone \"" + milestone.getName()  + "\" in the world(s): " + Utils.worldsString(milestone.getWorlds()));
+				player.sendMessage(plugin.WRONG_AWARD_WORLD_NOTIFICATION.replace("%type%", "milestone").replace("%name%", milestone.getName()).replace("%worlds%", Utils.worldsString(milestone.getWorlds())));
 				return;
 			}
 		}
@@ -295,7 +377,7 @@ public class RewardManager {
 				}
 			} else {
 				pm.saveUnclaimedMilestone(player.getName(), milestone.getName());
-				player.sendMessage(ChatColor.RED + "You don't have the required space in your inventory for this milestone (" + milestone.getRequiredSlots() + " slots). Please type \"/vr claim\" once you have cleared enough room in your inventory.");
+				player.sendMessage(plugin.INVENTORY_FULL_NOTIFICATION.replace("%type%", "milestone").replace("%name%", milestone.getName()).replace("%slots%", Integer.toString(milestone.getRequiredSlots())));
 				return;
 			}
 		}
@@ -317,18 +399,31 @@ public class RewardManager {
 					if(delayedCommand.startsWith("/")) {
 						delayedCommand = delayedCommand.replaceFirst("/", "");
 					}
-					int delay;
+					int delay = 1;
 					boolean runOnLogOff = false;
+					boolean runOnShutdown = false;
 					if(delayedCommandData[0].contains("/")) {
 						String[] delayedCommandOptions = delayedCommandData[0].split("/");
-						delay = Integer.parseInt(delayedCommandOptions[0].trim());
-						if(delayedCommandOptions[1].trim().equalsIgnoreCase("logoff") || delayedCommandOptions[1].trim().equalsIgnoreCase("log off")) {
-							runOnLogOff = true;
+						for(String cmdOption: delayedCommandOptions) {
+							delay = Integer.parseInt(delayedCommandOptions[0].trim());
+							if(cmdOption.trim().equalsIgnoreCase("logoff") || cmdOption.trim().equalsIgnoreCase("log off")) {
+								runOnLogOff = true;
+							}
+							else if(cmdOption.trim().equalsIgnoreCase("shutdown")) {
+								runOnShutdown = true;
+							}
+							else {
+								try {
+									delay = Integer.parseInt(cmdOption.trim());
+								} catch (Exception e) {
+									log.warning("[VoteRoulette] Error parsing delay for command in milestone: " + milestone.getName());
+								}
+							}
 						}
 					} else {
 						delay = Integer.parseInt(delayedCommandData[0].trim());
 					}
-					DelayedCommand dc = new DelayedCommand(delayedCommand, playerName, runOnLogOff);
+					DelayedCommand dc = new DelayedCommand(delayedCommand, playerName, runOnLogOff, runOnShutdown);
 					dc.runTaskLater(plugin, delay*20);
 					VoteRoulette.delayedCommands.add(dc);
 				} else {
@@ -345,6 +440,12 @@ public class RewardManager {
 		}
 		if(plugin.LOG_TO_CONSOLE) {
 			System.out.println("[VoteRoulette] " + player.getName() + " just earned the milestone: " + milestone.getName());
+		}
+		if(milestone.hasReroll()) {
+			player.sendMessage(plugin.REROLL_NOTIFICATION.replace("%type%", "milestone").replace("%name%", milestone.getName()));
+			if(!rerollReward(milestone.getReroll(), player)) {
+				log.warning("[VoteRoulette] There was an error when running the reroll settings for Milestone " + milestone.getName() + " for the player " + player.getName());
+			}
 		}
 	}
 
@@ -516,20 +617,24 @@ public class RewardManager {
 
 	private String getRewardPrizes(Reward reward) {
 		StringBuilder sb = new StringBuilder();
-		if(reward.hasCurrency()) {
-			sb.append("$" + reward.getCurrency());
-		}
-		if(reward.hasXpLevels()) {
+		if(reward.hasDescription()) {
+			sb.append(reward.getDescription());
+		} else {
 			if(reward.hasCurrency()) {
-				sb.append(", ");
+				sb.append("$" + reward.getCurrency());
 			}
-			sb.append(reward.getXpLevels() + " xp levels");
-		}
-		if(reward.hasItems()) {
-			if(reward.hasCurrency() || reward.hasXpLevels()) {
-				sb.append(", ");
+			if(reward.hasXpLevels()) {
+				if(reward.hasCurrency()) {
+					sb.append(", ");
+				}
+				sb.append(reward.getXpLevels() + " xp levels");
 			}
-			sb.append(Utils.getItemListSentance(reward.getItems()));
+			if(reward.hasItems()) {
+				if(reward.hasCurrency() || reward.hasXpLevels()) {
+					sb.append(", ");
+				}
+				sb.append(Utils.getItemListSentance(reward.getItems()));
+			}
 		}
 		return sb.toString();
 	}
@@ -546,20 +651,24 @@ public class RewardManager {
 
 	private String getMilstonePrizes(Milestone milestone) {
 		StringBuilder sb = new StringBuilder();
-		if(milestone.hasCurrency()) {
-			sb.append("$" + milestone.getCurrency());
-		}
-		if(milestone.hasXpLevels()) {
+		if(milestone.hasDescription()) {
+			sb.append(milestone.getDescription());
+		} else {
 			if(milestone.hasCurrency()) {
-				sb.append(", ");
+				sb.append("$" + milestone.getCurrency());
 			}
-			sb.append(milestone.getXpLevels() + " xp levels");
-		}
-		if(milestone.hasItems()) {
-			if(milestone.hasCurrency() || milestone.hasXpLevels()) {
-				sb.append(", ");
+			if(milestone.hasXpLevels()) {
+				if(milestone.hasCurrency()) {
+					sb.append(", ");
+				}
+				sb.append(milestone.getXpLevels() + " xp levels");
 			}
-			sb.append(Utils.getItemListSentance(milestone.getItems()));
+			if(milestone.hasItems()) {
+				if(milestone.hasCurrency() || milestone.hasXpLevels()) {
+					sb.append(", ");
+				}
+				sb.append(Utils.getItemListSentance(milestone.getItems()));
+			}
 		}
 		return sb.toString();
 	}

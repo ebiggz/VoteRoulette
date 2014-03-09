@@ -44,7 +44,7 @@ public class Commands implements CommandExecutor {
 		}
 		else if(commandLabel.equalsIgnoreCase("vr") || commandLabel.equalsIgnoreCase("voteroulette") || commandLabel.equalsIgnoreCase("vtr")) {
 			if(args.length == 0) {
-				sender.sendMessage(ChatColor.RED + "[VoteRoulette] Type \"/vr ?\" for help.");
+				sender.sendMessage(plugin.BASE_CMD_NOTIFICATION);
 			}
 			else if(args.length >= 1) {
 				if(args[0].equalsIgnoreCase("?") || args[0].equalsIgnoreCase("help")) {
@@ -67,7 +67,7 @@ public class Commands implements CommandExecutor {
 				else if(args[0].equalsIgnoreCase("lastvote")) {
 					if(args.length == 1) {
 						if(!sender.hasPermission("voteroulette.lastvote")) {
-							sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to view when your last vote was!");
+							sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 							return true;
 						}
 						if(pm.playerHasLastVoteTimeStamp(playername)) {
@@ -79,7 +79,7 @@ public class Commands implements CommandExecutor {
 					}
 					else if(args.length == 2) {
 						if(!sender.hasPermission("voteroulette.lastvoteothers")) {
-							sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to view other player's last vote time!");
+							sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 							return true;
 						}
 						String otherPlayer = Utils.completeName(args[1]);
@@ -97,7 +97,7 @@ public class Commands implements CommandExecutor {
 				}
 				else if(args[0].equalsIgnoreCase("forcevote")) {
 					if(!sender.hasPermission("voteroulette.forcevote")) {
-						sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to force a vote to a player!");
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 						return true;
 					}
 					if(args.length == 1) {
@@ -118,7 +118,7 @@ public class Commands implements CommandExecutor {
 
 				else if(args[0].equalsIgnoreCase("remind") || args[0].equalsIgnoreCase("reminder") || args[0].equalsIgnoreCase("broadcast")) {
 					if(!sender.hasPermission("voteroulette.remind")) {
-						sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to manually send the reminder!");
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 						return true;
 					}
 					Bukkit.broadcastMessage(plugin.PERIODIC_REMINDER);
@@ -132,7 +132,7 @@ public class Commands implements CommandExecutor {
 							return true;
 						}
 						if(!sender.hasPermission("voteroulette.viewstats")) {
-							sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to view your stats!");
+							sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 							return true;
 						}
 
@@ -148,7 +148,7 @@ public class Commands implements CommandExecutor {
 					}
 					else if(args.length == 2) {
 						if(!sender.hasPermission("voteroulette.viewotherstats")) {
-							sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to view other player's stats!");
+							sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 							return true;
 						}
 
@@ -170,7 +170,7 @@ public class Commands implements CommandExecutor {
 					else if(args.length == 4) {
 						//  /vr stats player settotal ##
 						if(!sender.hasPermission("voteroulette.editstats")) {
-							sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to edit player vote stats!");
+							sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 							return true;
 						}
 
@@ -205,7 +205,7 @@ public class Commands implements CommandExecutor {
 				else if(args[0].equalsIgnoreCase("milestones")) {
 					//show qualifying milestones
 					if(!sender.hasPermission("voteroulette.viewmilestones")) {
-						sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to view milestones!");
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 						return true;
 					}
 
@@ -215,6 +215,9 @@ public class Commands implements CommandExecutor {
 						message += ChatColor.YELLOW + "Milestone #" + Integer.toString(i+1) + ": " + ChatColor.AQUA + milestones[i].getName() + "\n";
 						message += ChatColor.GOLD + "Votes: " + ChatColor.DARK_AQUA + milestones[i].getVotes() + "\n";
 						message += ChatColor.GOLD + "Recurring: " + ChatColor.DARK_AQUA +  milestones[i].isRecurring() + "\n";
+						if(milestones[i].hasDescription()) {
+							message += ChatColor.GOLD + "Description: " + ChatColor.DARK_AQUA + milestones[i].getDescription() + "\n";
+						}
 						if(milestones[i].hasCurrency()) {
 							String currency = Double.toString(milestones[i].getCurrency());
 							if(currency.length() < 4) {
@@ -238,6 +241,9 @@ public class Commands implements CommandExecutor {
 						if(milestones[i].hasChance()) {
 							message += ChatColor.GOLD + "Chance: "  + ChatColor.DARK_AQUA + milestones[i].getChanceMin() + " in " + milestones[i].getChanceMax() + "\n";
 						}
+						if(milestones[i].hasReroll()) {
+							message += ChatColor.GOLD + "Reroll For: "  + ChatColor.DARK_AQUA + milestones[i].getReroll().replace("ANY", "Any Reward") + "\n";
+						}
 					}
 					Paginate milestonePag = new Paginate(message, "Milestones", commandLabel + " milestones");
 
@@ -259,7 +265,7 @@ public class Commands implements CommandExecutor {
 				else if(args[0].equalsIgnoreCase("rewards")) {
 
 					if(!sender.hasPermission("voteroulette.viewrewards")) {
-						sender.sendMessage(ChatColor.RED + " [VoteRoulette] You don't have permission to view rewards!");
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 						return true;
 					}
 
@@ -269,6 +275,9 @@ public class Commands implements CommandExecutor {
 					for(int i = 0; i < rewards.length; i++) {
 						if(rewards[i].isEmpty()) continue;
 						message = message + ChatColor.YELLOW + "Reward #" + Integer.toString(i+1) + ": " + ChatColor.AQUA + rewards[i].getName() + "\n";
+						if(rewards[i].hasDescription()) {
+							message += ChatColor.GOLD + "Description: " + ChatColor.DARK_AQUA + rewards[i].getDescription() + "\n";
+						}
 						if(rewards[i].hasCurrency()) {
 							String currency = Double.toString(rewards[i].getCurrency());
 							if(currency.length() < 4) {
@@ -292,6 +301,9 @@ public class Commands implements CommandExecutor {
 						if(rewards[i].hasChance()) {
 							message += ChatColor.GOLD + "Chance: "  + ChatColor.DARK_AQUA + rewards[i].getChanceMin() + " in " + rewards[i].getChanceMax() + "\n";
 						}
+						if(rewards[i].hasReroll()) {
+							message += ChatColor.GOLD + "Reroll For: "  + ChatColor.DARK_AQUA + rewards[i].getReroll().replace("ANY", "Any Reward") + "\n";
+						}
 					}
 
 					Paginate rewardPag = new Paginate(message, "Rewards", commandLabel + " rewards");
@@ -314,7 +326,7 @@ public class Commands implements CommandExecutor {
 				}
 				else if(args[0].equalsIgnoreCase("reload")) {
 					if(!sender.hasPermission("voteroulette.admin")) {
-						sender.sendMessage(ChatColor.RED + "[VoteRoulette] You don't have permission to this command!");
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 						return true;
 					}
 					plugin.reloadConfigs();
@@ -331,21 +343,21 @@ public class Commands implements CommandExecutor {
 					int unclaimedMilestonesCount = pm.getUnclaimedMilestoneCount(playername);
 					if(args.length == 1) {
 						if(unclaimedRewardsCount > 0) {
-							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have " + ChatColor.YELLOW + unclaimedRewardsCount + ChatColor.AQUA + " unclaimed rewards! Type " + ChatColor.YELLOW + "/vr claim rewards" + ChatColor.AQUA + " to see them.");
+							sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", "reward").replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/vr claim rewards"));
 						} else {
-							sender.sendMessage(ChatColor.RED + "[VoteRoulette] You do not have unclaimed rewards!");
+							sender.sendMessage(plugin.NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", "reward"));
 						}
 						if(unclaimedMilestonesCount > 0) {
-							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have " + ChatColor.YELLOW + unclaimedMilestonesCount + ChatColor.AQUA + " unclaimed milestones! Type " + ChatColor.YELLOW + "/vr claim milestones" + ChatColor.AQUA + " to see them.");
+							sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", "milestone").replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/vr claim milestones"));
 						} else {
-							sender.sendMessage(ChatColor.RED + "[VoteRoulette] You do not have unclaimed milestones!");
+							sender.sendMessage(plugin.NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", "milestone"));
 						}
 					}
 					else if(args.length >= 2) {
 						if(args[1].equalsIgnoreCase("rewards")) {
 
 							if(unclaimedRewardsCount == 0) {
-								sender.sendMessage(ChatColor.RED + "[VoteRoulette] You do not have unclaimed rewards!");
+								sender.sendMessage(plugin.NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", "reward"));
 								return true;
 							}
 							List<Reward> unclaimedRewards = pm.getUnclaimedRewards(playername);
@@ -369,7 +381,7 @@ public class Commands implements CommandExecutor {
 											rm.administerRewardContents(reward, sender.getName());
 										}
 									} else {
-										sender.sendMessage(ChatColor.RED + "[VoteRoulette] You are not allowed to claim all rewards at once!");
+										sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 									}
 								} else {
 									try {
@@ -390,7 +402,7 @@ public class Commands implements CommandExecutor {
 						else if(args[1].equalsIgnoreCase("milestones")) {
 
 							if(unclaimedMilestonesCount == 0) {
-								sender.sendMessage(ChatColor.RED + "[VoteRoulette] You do not have unclaimed milestones!");
+								sender.sendMessage(plugin.NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", "milestone"));
 								return true;
 							}
 							List<Milestone> unclaimedMilestones = pm.getUnclaimedMilestones(playername);
@@ -414,7 +426,7 @@ public class Commands implements CommandExecutor {
 											rm.administerMilestoneContents(milestone, sender.getName());
 										}
 									} else {
-										sender.sendMessage(ChatColor.RED + "[VoteRoulette] You are not allowed to claim all milestones at once!");
+										sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 									}
 								} else {
 									try {
@@ -432,12 +444,12 @@ public class Commands implements CommandExecutor {
 								}
 							}
 						} else {
-							sender.sendMessage(ChatColor.RED + "[VoteRoulette] Type \"/vr ?\" for help.");
+							sender.sendMessage(plugin.BASE_CMD_NOTIFICATION);
 						}
 					}
 				}
 				else {
-					sender.sendMessage(ChatColor.RED + "[VoteRoulette] Type \"/vr ?\" for help.");
+					sender.sendMessage(plugin.BASE_CMD_NOTIFICATION);
 				}
 			}
 		}

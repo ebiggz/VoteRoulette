@@ -1,0 +1,68 @@
+#####################
+# Localization File #
+#####################
+
+# Here you can edit some of the notifications in VR, allowing you to alter the
+# language used.
+
+# All messages support color codes using the & symbol!
+# For example, &4 would make text red.
+#
+# You can also use the following tags for colors:
+# %black% %darkblue% %darkgreen% %darkaqua% %darkred% %purple% %gold%
+# %grey% %darkgrey% %blue% %green% %aqua% %red% %pink% %yellow% %white%
+# %bold% %strikethrough% %underline% %italic% %reset% %magic%
+#
+# If you need to use quotes, do not forget to escape(backslash) them like this: \"
+
+## This the message that is sent on log in when a player has unclaimed rewards/milestones. 
+# This also shows when they type /vr claim
+# Variables:
+# %amount% - The amount of unclaimed awards
+# %type% - The type of award (Reward or Milestone)
+# %command% - The command to see the unclaimed awards.
+unclaimed-awards: "%aqua%[VoteRoulette] You have %yellow%%amount% %aqua%unclaimed %type%(s)! Type %yellow%%command% %aqua%to see them."
+
+## This message is sent when a player types "/vr claim" and they have nothing unclaimed.
+# Variables:
+# %type% - The type of award (Reward or Milestone)
+no-unclaimed-awards: "%red%[VoteRoulette] You do not have unclaimed %type%s!"
+
+## This message is sent when a player receives an award but they are standing in a blacklisted world.
+# Variables:
+# %type% - The type of award (Reward or Milestone)
+blacklisted-world: "%red%[VoteRoulette] You cannot claim %type%s in this world!"
+
+## This message is sent when a player receives an award but they standing in a world other than the ones 
+# specified in the award.
+# Variables:
+# %type% - The type of award (Reward or Milestone)
+# %name% - Name of the award
+# %worlds% - The worlds the award can be claimed in.
+award-wrong-world: "%red%You must claim the %type% \"%name%\" in the world(s): %worlds%"
+
+## This message is sent when a player receives an award but their inventory is too full to receive the award.
+# Variables:
+# %type% - The type of award (Reward or Milestone)
+# %name% - Name of the award
+# %slots% - The number of open inventory slots required for this award.
+award-inventory-full: "%red%You don't have the required space in your inventory for this %type% (%slots% slots). Please type \"/vr claim\" once you have cleared enough room in your inventory."
+
+## This message is sent when a player receives an award that has reroll settings.
+# Variables:
+# %type% - The type of award (Reward or Milestone)
+# %name% - Name of the award
+rerolling: "%darkaqua%[VoteRoulette] This %type% contains a reroll of the dice for a chance to get another reward! Rerolling now..."
+
+## This message is sent to a player when a reroll fails.
+reroll-failed: "%aqua%[VoteRoulette] It seems the reroll for another reward came up empty. Better luck next time!"
+
+## This message is sent when a player attempts to run a command they don’t have permission for.
+no-permission: "%red%[VoteRoulette] You do not have permission to run this command!"
+
+## This message is sent when a player types the base VR command ("/voteroulette", "/vr", or "/vtr")
+base-command-text: "%red%[VoteRoulette] Type \"/vr ?\" for help."
+
+####################################################################################
+# No need to touch this.
+config-version: 1.0

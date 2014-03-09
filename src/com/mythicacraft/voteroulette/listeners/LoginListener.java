@@ -33,15 +33,15 @@ public class LoginListener implements Listener {
 		int unclaimedMilestones = pm.getUnclaimedMilestoneCount(player.getName());
 
 		if(unclaimedRewards > 0) {
-			player.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have " + ChatColor.YELLOW + unclaimedRewards + ChatColor.AQUA + " unclaimed reward(s)! Type " + ChatColor.YELLOW + "/vr claim rewards" + ChatColor.AQUA + " to see them.");
+			player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", "reward").replace("%amount%", Integer.toString(unclaimedRewards)).replace("%command%", "/vr claim rewards"));
 		}
 		if(unclaimedMilestones > 0) {
-			player.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have " + ChatColor.YELLOW + unclaimedMilestones + ChatColor.AQUA + " unclaimed milestone(s)! Type " + ChatColor.YELLOW + "/vr claim milestones" + ChatColor.AQUA + " to see them.");
+			player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", "milestone").replace("%amount%", Integer.toString(unclaimedMilestones)).replace("%command%", "/vr claim milestones"));
 		}
 
 		if(plugin.USE_TWENTYFOUR_REMINDER) {
 			if(pm.playerHasntVotedInADay(event.getPlayer().getName())) {
-				player.sendMessage(ChatColor.AQUA + "[VoteRoulette] " + ChatColor.RESET + plugin.TWENTYFOUR_REMINDER.replace("%player%", event.getPlayer().getName()));
+				player.sendMessage(plugin.TWENTYFOUR_REMINDER.replace("%player%", event.getPlayer().getName()));
 				if(!VoteRoulette.notifiedPlayers.contains(event.getPlayer())) {
 					VoteRoulette.notifiedPlayers.add(event.getPlayer());
 				}

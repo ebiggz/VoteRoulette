@@ -52,3 +52,7 @@ vote-websites:
 - "%blue%Vote List:"
 - "www.your-server-list-here.com"
 - "www.another-server-list.com"
+
+#########################################
+# No need to touch this
+config-version: 1.0

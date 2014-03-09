@@ -1,6 +1,6 @@
 main: com.mythicacraft.voteroulette.VoteRoulette
 name: VoteRoulette
-version: 1.9.5
+version: 1.9.7
 author: ebiggz
 description: A listener for Votifier
 softdepends: [Vault, Votifier]

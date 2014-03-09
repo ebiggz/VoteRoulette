@@ -10,11 +10,13 @@ public class DelayedCommand extends BukkitRunnable {
 	private String command;
 	private String player;
 	boolean runOnLogOff;
+	boolean runOnShutdown;
 
-	public DelayedCommand(String command, String playerName, boolean runOnLogOff) {
+	public DelayedCommand(String command, String playerName, boolean runOnLogOff, boolean runOnShutdown) {
 		this.command = command;
 		this.player = playerName;
 		this.runOnLogOff = runOnLogOff;
+		this.runOnShutdown = runOnShutdown;
 	}
 
 	@Override
@@ -35,5 +37,9 @@ public class DelayedCommand extends BukkitRunnable {
 
 	public boolean shouldRunOnLogOff() {
 		return runOnLogOff;
+	}
+
+	public boolean shouldRunOnShutdown() {
+		return runOnShutdown;
 	}
 }

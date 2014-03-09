@@ -20,7 +20,9 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.SpawnEgg;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.Potion;
 
 import com.mythicacraft.voteroulette.DelayedCommand;
 import com.mythicacraft.voteroulette.VoteRoulette;
@@ -218,25 +220,41 @@ public class Utils {
 			ItemStack is = items[i];
 			sb.append(is.getAmount() + " ");
 			String itemName = is.getType().toString().toLowerCase().replace("_", " ");
+			if(itemName.equals("monster egg")) {
+				SpawnEgg egg = (SpawnEgg) is.getData();
+				itemName = egg.getSpawnedType().toString().toLowerCase().replace("_", " ") + " egg";
+			}
+			if(itemName.equals("potion")) {
+				if(is.getAmount() > 1) {
+					itemName += "s";
+				}
+				Potion potion = Potion.fromItemStack(is);
+				itemName += " of " + potion.getType().toString().toLowerCase().replace("_", " ");
+				if(potion.getLevel() > 1) {
+					itemName += " II";
+				}
+				if(potion.hasExtendedDuration()) {
+					itemName += " (extended)";
+				}
+			}
 			sb.append(itemName);
-			if(is.getAmount() > 1) {
-				String plural = "s";
-				if(itemName.endsWith("ch")) {
-					plural = "es";
+			if(!itemName.startsWith("potion")) {
+				if(is.getAmount() > 1) {
+					String plural = "s";
+					if(itemName.endsWith("ch")) {
+						plural = "es";
+					}
+					else if(itemName.contains("beef")) {
+						plural = "";
+					}
+					else if(itemName.contains("lapiz")) {
+						plural = "";
+					}
+					else if(itemName.contains("potato")) {
+						plural = "es";
+					}
+					sb.append(plural);
 				}
-				else if(itemName.contains("glass")) {
-					plural = "";
-				}
-				else if(itemName.contains("beef")) {
-					plural = "";
-				}
-				else if(itemName.contains("lapiz")) {
-					plural = "";
-				}
-				else if(itemName.contains("potato")) {
-					plural = "es";
-				}
-				sb.append(plural);
 			}
 			if(is.getItemMeta().hasEnchants()) {
 				sb.append("(with ");
@@ -272,22 +290,41 @@ public class Utils {
 			ItemStack is = items[i];
 			sb.append(is.getAmount() + " ");
 			String itemName = is.getType().toString().toLowerCase().replace("_", " ");
+			if(itemName.equals("monster egg")) {
+				SpawnEgg egg = (SpawnEgg) is.getData();
+				itemName = egg.getSpawnedType().toString().toLowerCase().replace("_", " ") + " egg";
+			}
+			if(itemName.equals("potion")) {
+				if(is.getAmount() > 1) {
+					itemName += "s";
+				}
+				Potion potion = Potion.fromItemStack(is);
+				itemName += " of " + potion.getType().toString().toLowerCase().replace("_", " ");
+				if(potion.getLevel() > 1) {
+					itemName += " II";
+				}
+				if(potion.hasExtendedDuration()) {
+					itemName += " (extended)";
+				}
+			}
 			sb.append(itemName);
-			if(is.getAmount() > 1) {
-				String plural = "s";
-				if(itemName.endsWith("ch")) {
-					plural = "es";
+			if(!itemName.startsWith("potion")) {
+				if(is.getAmount() > 1) {
+					String plural = "s";
+					if(itemName.endsWith("ch")) {
+						plural = "es";
+					}
+					else if(itemName.contains("beef")) {
+						plural = "";
+					}
+					else if(itemName.contains("lapiz")) {
+						plural = "";
+					}
+					else if(itemName.contains("potato")) {
+						plural = "es";
+					}
+					sb.append(plural);
 				}
-				else if(itemName.contains("beef")) {
-					plural = "";
-				}
-				else if(itemName.contains("lapiz")) {
-					plural = "";
-				}
-				else if(itemName.contains("potato")) {
-					plural = "es";
-				}
-				sb.append(plural);
 			}
 			if(is.getItemMeta().hasEnchants()) {
 				sb.append("(with ");

@@ -2,9 +2,7 @@ package com.mythicacraft.voteroulette;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -84,6 +82,20 @@ public class VoteRoulette extends JavaPlugin {
 	public String PERIODIC_REMINDER;
 	public String TWENTYFOUR_REMINDER;
 	public List<String> VOTE_WEBSITES;
+	public double MESSAGES_VERSION;
+
+	//localizations constants
+	public String UNCLAIMED_AWARDS_NOTIFICATION;
+	public String NO_UNCLAIMED_AWARDS_NOTIFICATION;
+	public String BLACKLISTED_WORLD_NOTIFICATION;
+	public String WRONG_AWARD_WORLD_NOTIFICATION;
+	public String INVENTORY_FULL_NOTIFICATION;
+	public String NO_PERM_NOTIFICATION;
+	public String BASE_CMD_NOTIFICATION;
+	public String REROLL_NOTIFICATION;
+	public String REROLL_FAILED_NOTIFICATION;
+	public double LOCALIZATIONS_VERSION;
+
 
 	public void onDisable() {
 
@@ -95,6 +107,14 @@ public class VoteRoulette extends JavaPlugin {
 		}
 		if(updateChecker != null) {
 			updateChecker.cancel();
+		}
+
+		for(int i = 0; i < delayedCommands.size(); i++) {
+			DelayedCommand dCmd = delayedCommands.get(i);
+			if(dCmd.shouldRunOnShutdown()) {
+				dCmd.run();
+				dCmd.cancel();
+			}
 		}
 
 		log.info("[VoteRoulette] Disabled!");
@@ -126,10 +146,18 @@ public class VoteRoulette extends JavaPlugin {
 		//load configs
 		reloadConfigs();
 
+		//check file versions
 		if(CONFIG_VERSION != 1.5) {
-			log.warning("[VoteRoulette] It appears that your config is out of date. There's new options! It's recommended that you take your old config out to let the new one save.");
+			log.warning("[VoteRoulette] It appears that your config is out of date. There may be new options! It's recommended that you take your old config out to let the new one save.");
 		}
 
+		if(MESSAGES_VERSION != 1.0) {
+			log.warning("[VoteRoulette] It appears that your messages.yml file is out of date. There may be new options! It's recommended that you take your old messages file out to let the new one save.");
+		}
+
+		if(LOCALIZATIONS_VERSION != 1.0) {
+			log.warning("[VoteRoulette] It appears that your localizations.yml file is out of date. There may be new options! It's recommended that you take your old localizations file out to let the new one save.");
+		}
 
 		log.info("[VoteRoulette] Enabled!");
 	}
@@ -186,6 +214,8 @@ public class VoteRoulette extends JavaPlugin {
 		loadConfigOptions();
 		loadMessagesFile();
 		loadMessagesData();
+		loadLocalizationsFile();
+		loadLocalizationsData();
 		loadPlayerData();
 		loadRewards();
 		loadMilestones();
@@ -259,6 +289,51 @@ public class VoteRoulette extends JavaPlugin {
 			log.log(Level.SEVERE, "Exception while loading VoteRoulette/messages.yml", e);
 			pm.disablePlugin(this);
 		}
+	}
+
+	void loadLocalizationsFile() {
+		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath() + File.separator + "data";
+		(new File(pluginFolder)).mkdirs();
+		File localizationsFile = new File(pluginFolder, "localizations.yml");
+		ConfigAccessor localizationsData = new ConfigAccessor("data" + File.separator + "localizations.yml");
+
+		if(!localizationsFile.exists()) {
+			saveResource("data" + File.separator + "localizations.yml", true);
+			return;
+		}
+		try {
+			localizationsData.reloadConfig();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/localizations.yml", e);
+			pm.disablePlugin(this);
+		}
+	}
+
+	void loadLocalizationsData() {
+		ConfigAccessor localeData = new ConfigAccessor("data" + File.separator + "localizations.yml");
+
+		UNCLAIMED_AWARDS_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("unclaimed-awards"));
+
+		NO_UNCLAIMED_AWARDS_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("no-unclaimed-awards"));
+
+		BLACKLISTED_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("blacklisted-world"));
+
+		WRONG_AWARD_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("award-wrong-world"));
+
+		INVENTORY_FULL_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("award-inventory-full"));
+
+		NO_PERM_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("no-permission"));
+
+		BASE_CMD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("base-command-text"));
+
+		REROLL_FAILED_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("reroll-failed"));
+
+		REROLL_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("rerolling"));
+
+		LOCALIZATIONS_VERSION = localeData.getConfig().getDouble("config-version", 1.0);
+
+
 	}
 
 	void loadPlayerData() {
@@ -337,6 +412,8 @@ public class VoteRoulette extends JavaPlugin {
 			voteSites.set(i, website);
 		}
 		VOTE_WEBSITES = voteSites;
+
+		MESSAGES_VERSION = messageData.getConfig().getDouble("config-version", 1.0);
 	}
 
 	private void loadConfigOptions() {
@@ -522,7 +599,7 @@ public class VoteRoulette extends JavaPlugin {
 			URL url;
 			try {
 				url = new URL("https://api.curseforge.com/servermods/files?projectIds=71726");
-			} catch (final MalformedURLException e) {
+			} catch (final Exception e) {
 				return;
 			}
 
@@ -546,7 +623,7 @@ public class VoteRoulette extends JavaPlugin {
 				}
 
 				latest = (String) ((JSONObject) array.get(array.size() - 1)).get("name");
-			} catch (final IOException e) {
+			} catch (final Exception e) {
 			}
 			if (latest != null) {
 				latest = latest.replace("VoteRoulette v", "");
