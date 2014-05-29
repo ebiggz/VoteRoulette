@@ -1,4 +1,4 @@
-package com.mythicacraft.voteroulette;
+package com.mythicacraft.voteroulette.awards;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,12 +10,15 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 
+import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.utils.Utils;
 
-public class Reward {
+
+public class Award {
 
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private double currency = 0;
@@ -28,23 +31,26 @@ public class Reward {
 	private String[] players;
 	private String name;
 	private List<String> commands = new ArrayList<String>();
-	private List<String> websites = new ArrayList<String>();
 	private List<String> worlds = new ArrayList<String>();
 	private String message;
 	private String description;
 	private String reroll;
+	private AwardType type;
 
-	Reward(String name, ConfigurationSection cs) {
+
+	protected Award(String name, ConfigurationSection cs, AwardType type) {
 		this.setName(name);
+		this.setAwardType(type);
 		if(cs.contains("currency")) {
 			if(!VoteRoulette.hasEconPlugin()) {
 				log.warning("[VoteRoulette] Reward \"" + name + "\" contains currency settings but Vault is not installed or there is no economy plugin, Skipping currency.");
 			} else {
 				try {
 					String currency = cs.getString("currency");
+					currency = currency.replace("$", "");
 					this.currency = Double.parseDouble(currency);
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] Invalid currency format for reward: " + name + ", Skipping currency.");
+					log.warning("[VoteRoulette] Invalid currency format for " + type.toString().toLowerCase() + ": " + name + ", Skipping currency.");
 				}
 			}
 		}
@@ -88,17 +94,6 @@ public class Reward {
 				}
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Error loading worlds for reward:" + name + ", Skipping worlds.");
-			}
-		}
-		if(cs.contains("websites")) {
-			try {
-				String websitesStr = cs.getString("websites");
-				String[] websitesArray = websitesStr.split(",");
-				for(String website : websitesArray) {
-					websites.add(website.trim());
-				}
-			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading websites for reward:" + name + ", Skipping websites.");
 			}
 		}
 		if(cs.contains("message")) {
@@ -172,18 +167,37 @@ public class Reward {
 				players[i] = players[i].trim();
 			}
 		}
+		if(!this.hasCurrency() && !this.hasItems() && !this.hasXpLevels() && !this.hasCommands()) {
+			log.warning("[VoteRoulette] The Reward \"" + this.getName() + "\" appears to be empty. Check your config settings!");
+		}
 	}
 
+	protected Award(String name, AwardType type) {
+		this.name = name;
+		this.type = type;
+	}
+
+	public enum AwardType {
+		REWARD, MILESTONE, VOTESTREAK
+	}
 	public double getCurrency() {
 		return currency;
 	}
 
-	public void setCurrency(int currency) {
+	public void setCurrency(double currency) {
 		this.currency = currency;
 	}
 
 	public int getXpLevels() {
 		return xpLevels;
+	}
+
+	public void clearItems() {
+		items.clear();
+	}
+
+	public void addItem(ItemStack item) {
+		items.add(item);
 	}
 
 	public void setXpLevels(int xpLevels) {
@@ -253,10 +267,17 @@ public class Reward {
 		return true;
 	}
 
+	public boolean hasOptions() {
+		if(this.hasChance || this.hasWorlds() || this.hasPermissionGroups() || this.hasPlayers() || this.hasMessage() || this.hasDescription()) {
+			return true;
+		}
+		return false;
+	}
+
 	public ItemStack[] getItems() {
 		ItemStack[] itemStacks = new ItemStack[items.size()];
 		for(int i = 0; i < items.size();i++) {
-			itemStacks[i] = items.get(i);
+			itemStacks[i] = items.get(i).clone();
 		}
 		return itemStacks;
 	}
@@ -302,15 +323,6 @@ public class Reward {
 		return worlds;
 	}
 
-	public boolean hasWebsites() {
-		if(websites == null || websites.isEmpty()) return false;
-		return true;
-	}
-
-	public List<String> getWebsites() {
-		return websites;
-	}
-
 	public boolean hasMessage() {
 		if(message == null || message.length() == 0) return false;
 		return true;
@@ -338,24 +350,6 @@ public class Reward {
 		return reroll;
 	}
 
-	public void updateLoreAndCustomNames(String playerName) {
-		for(ItemStack item: items) {
-			ItemMeta im = item.getItemMeta();
-			if(im.hasLore()) {
-				List<String> oldLore = im.getLore();
-				List<String> newLore = new ArrayList<String>();
-				for(String line: oldLore) {
-					newLore.add(line.replace("%player%", playerName));
-				}
-				im.setLore(newLore);
-			}
-			if(im.hasDisplayName()) {
-				im.setDisplayName(im.getDisplayName().replace("%player%", playerName));
-			}
-			item.setItemMeta(im);
-		}
-	}
-
 	public int getChanceMin() {
 		return chanceMin;
 	}
@@ -366,6 +360,7 @@ public class Reward {
 
 	public void setChanceMin(int chanceMin) {
 		this.chanceMin = chanceMin;
+		this.hasChance = true;
 	}
 
 	public void setChanceMax(int chanceMax) {
@@ -388,11 +383,21 @@ public class Reward {
 					dataID = Short.parseShort(dataIDStr);
 				} catch (Exception e) {
 					dataID = 1;
-					System.out.println("[VoteRoulette] \"" + dataIDStr + "\" is not a valid dataID, Defaulting to 1!");
+					log.warning("[VoteRoulette] \"" + dataIDStr + "\" is not a valid dataID, Defaulting to 1!");
 				}
-				item = new ItemStack(Material.getMaterial(itemID), 1, dataID);
+				try {
+					item = new ItemStack(Material.getMaterial(itemID), 1, dataID);
+				} catch (Exception e) {
+					log.warning("[VoteRoulette] \"" + itemID + "\" is not a recognized itemID, skipping item!");
+					return null;
+				}
 			} else {
-				item = new ItemStack(Material.getMaterial(itemID), 1);
+				try {
+					item = new ItemStack(Material.getMaterial(itemID), 1);
+				} catch (Exception e) {
+					log.warning("[VoteRoulette] \"" + itemID + "\" is not a recognized itemID, skipping item!");
+					return null;
+				}
 			}
 			itemMeta = item.getItemMeta();
 			if(itemData.contains("amount")) {
@@ -438,6 +443,12 @@ public class Reward {
 				}
 			}
 			if(itemData.contains("enchants")) {
+				boolean useStorage = false;
+				EnchantmentStorageMeta esm = null;
+				if(item.getType() == Material.ENCHANTED_BOOK) {
+					esm = (EnchantmentStorageMeta) itemMeta;
+					useStorage = true;
+				}
 				String[] tmp = itemData.getString("enchants").split(",");
 				for (String enchantName : tmp) {
 					String level = "1";
@@ -454,9 +465,16 @@ public class Reward {
 							System.out.println("[VoteRoulette] Couldn't find enchant with the name \"" + enchantName + "\" for the item: " + itemID + "!");
 							continue;
 						}
-						itemMeta.addEnchant(enchant, iLevel, true);
+						if(useStorage) {
+							esm.addStoredEnchant(enchant, iLevel, true);
+						} else {
+							itemMeta.addEnchant(enchant, iLevel, true);
+						}
 					} catch(Exception e) {
 						System.out.println("[VoteRoulette] Invalid enchant level for \"" + enchantName + "\" for the item: " + itemID + "!");
+					}
+					if(useStorage) {
+						itemMeta = esm;
 					}
 				}
 			}
@@ -491,5 +509,23 @@ public class Reward {
 			item.setItemMeta(itemMeta);
 		}
 		return item;
+	}
+
+	public AwardType getAwardType() {
+		return type;
+	}
+
+	public void setAwardType(AwardType type) {
+		this.type = type;
+	}
+
+	public String typeString() {
+		if(type == AwardType.REWARD) {
+			return "Reward";
+		}
+		if(type == AwardType.MILESTONE) {
+			return "Milestone";
+		}
+		return "";
 	}
 }

@@ -1,7 +1,9 @@
-package com.mythicacraft.voteroulette;
+package com.mythicacraft.voteroulette.awards;
 
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
+
+import com.mythicacraft.voteroulette.VoteRoulette;
 
 
 public class DelayedCommand extends BukkitRunnable {

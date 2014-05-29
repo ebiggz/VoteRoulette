@@ -1,6 +1,6 @@
 main: com.mythicacraft.voteroulette.VoteRoulette
 name: VoteRoulette
-version: 1.9.7
+version: 2.2
 author: ebiggz
 description: A listener for Votifier
 softdepends: [Vault, Votifier]
@@ -14,10 +14,14 @@ commands:
         usage: /<command>
         aliases: [vote, votesites]
 permissions:
+    voteroulette.top10:
+        default: true
     voteroulette.viewstats:
         default: true
     voteroulette.viewrewards:
         default: true
+    voteroulette.viewallawards:
+        default: false
     voteroulette.viewmilestones:
         default: true
     voteroulette.votecommand:
@@ -32,18 +36,31 @@ permissions:
         default: false
     voteroulette.forcevote:
         default: false
+    voteroulette.forceawards:
+        default: false
     voteroulette.lastvoteothers:
         default: false
     voteroulette.remind:
         default: false
+    voteroulette.wipestats:
+        default: false
+    voteroulette.createawards:
+        default: false
+    voteroulette.deleteawards:
+        default: false
     voteroulette.admin:
         default: false
         children:
+            voteroulette.viewallawards: true
             voteroulette.viewotherstats: true
             voteroulette.editstats: true
             voteroulette.forcevote: true
             voteroulette.lastvoteothers: true
             voteroulette.remind: true
+            voteroulette.wipestats: true
+            voteroulette.forceawards: true
+            voteroulette.createawards: true
+            voteroulette.deleteawards: true
     voteroulette.*:
         default: op
         children:

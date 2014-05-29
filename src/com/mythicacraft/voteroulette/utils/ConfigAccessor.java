@@ -26,6 +26,7 @@ public class ConfigAccessor {
 		configFile = new File(folderPath + File.separator + fileName);
 	}
 
+	@SuppressWarnings("deprecation")
 	public void reloadConfig() {
 		fileConfiguration = YamlConfiguration.loadConfiguration(configFile);
 		// Look for defaults in the jar
