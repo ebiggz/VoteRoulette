@@ -8,6 +8,5 @@ Visit VoteRoulette's project page on BukkitDev!
 
 http://dev.bukkit.org/bukkit-plugins/voteroulette/
 
-
 ===========
 All Rights Reserved unless otherwise explicitly stated.
