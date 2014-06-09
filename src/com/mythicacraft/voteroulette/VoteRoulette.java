@@ -32,7 +32,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
 import com.mythicacraft.voteroulette.awardcreator.AwardCreator;
-import com.mythicacraft.voteroulette.awardcreator.CreatorListener;
+import com.mythicacraft.voteroulette.awardcreator.ACListener;
 import com.mythicacraft.voteroulette.awards.AwardManager;
 import com.mythicacraft.voteroulette.awards.DelayedCommand;
 import com.mythicacraft.voteroulette.awards.Milestone;
@@ -49,6 +49,14 @@ import com.mythicacraft.voteroulette.utils.Utils;
 
 public class VoteRoulette extends JavaPlugin {
 
+	/**
+	 * A Bukkit plugin for Minecraft servers that gives random
+	 * rewards to players who vote for the server.
+	 * 
+	 * @author Erik Bigler (ebiggz)
+	 */
+
+	//plugin variables
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 
 	public static Economy economy = null;
@@ -74,7 +82,10 @@ public class VoteRoulette extends JavaPlugin {
 	public static List<DelayedCommand> delayedCommands = new ArrayList<DelayedCommand>();
 	public static List<String> cooldownPlayers = new ArrayList<String>();
 
-	//config constants
+	/**
+	 * TODO: Create a class to hold all these constants
+	 */
+	//config.yml constants
 	public boolean REWARDS_ON_THRESHOLD;
 	public static boolean USE_DATABASE = false;
 	public int VOTE_THRESHOLD;
@@ -102,6 +113,7 @@ public class VoteRoulette extends JavaPlugin {
 	public boolean CHECK_UPDATES;
 	public boolean GUI_FOR_AWARDS;
 	public boolean SHOW_COMMANDS_IN_AWARD;
+	public boolean 	SHOW_PLAYER_AND_GROUPS;
 	public boolean USE_FANCY_LINKS;
 	public boolean USE_SCOREBOARD;
 	public boolean FIREWORK_ON_MILESTONE;
@@ -110,7 +122,7 @@ public class VoteRoulette extends JavaPlugin {
 	public static boolean DISABLE_INVENTORY_PROT;
 	public double CONFIG_VERSION;
 
-	//messages constants
+	//messages.yml constants
 	public String SERVER_BROADCAST_MESSAGE;
 	public String SERVER_BROADCAST_MESSAGE_NO_AWARD;
 	public String PLAYER_VOTE_MESSAGE;
@@ -119,7 +131,7 @@ public class VoteRoulette extends JavaPlugin {
 	public List<String> VOTE_WEBSITES;
 	public double MESSAGES_VERSION;
 
-	//localizations constants
+	//localizations.yml constants
 	public String UNCLAIMED_AWARDS_NOTIFICATION;
 	public String NO_UNCLAIMED_AWARDS_NOTIFICATION;
 	public String BLACKLISTED_WORLD_NOTIFICATION;
@@ -138,7 +150,6 @@ public class VoteRoulette extends JavaPlugin {
 	public double LOCALIZATIONS_VERSION;
 
 	//localization word definitions
-
 	public String REWARD_DEF;
 	public String REWARDS_PURAL_DEF;
 	public String MILESTONE_DEF;
@@ -186,47 +197,18 @@ public class VoteRoulette extends JavaPlugin {
 	public String FORCEREWARD_DEF;
 	public String FORCEMILESTONE_DEF;
 
-	public void onDisable() {
-
-		if(periodicReminder != null) {
-			periodicReminder.cancel();
-		}
-		if(twentyFourHourChecker != null) {
-			twentyFourHourChecker.cancel();
-		}
-		if(updateChecker != null) {
-			updateChecker.cancel();
-		}
-
-		for(int i = 0; i < delayedCommands.size(); i++) {
-			DelayedCommand dCmd = delayedCommands.get(i);
-			if(dCmd.shouldRunOnShutdown()) {
-				dCmd.run();
-				dCmd.cancel();
-			}
-		}
-
-		Set<Player> rewardKeys = lookingAtRewards.keySet();
-		for(Player key : rewardKeys) {
-			key.closeInventory();
-		}
-
-		Set<Player> milestoneKeys = lookingAtMilestones.keySet();
-		for(Player key : milestoneKeys) {
-			key.closeInventory();
-		}
-
-		log.info("[VoteRoulette] Disabled!");
-	}
-
+	//Called when the plugin is booting up.
 	public void onEnable() {
 
+		//instantiate the utils
 		new Utils(this);
 
+		//check for 1.7
 		if(Bukkit.getBukkitVersion().contains("1.7")) {
 			isOn1dot7 = true;
 		}
 
+		//instantiate managers
 		pm = new VoterManager(this);
 		rm = new AwardManager(this);
 		sm = StatManager.getInstance();
@@ -246,19 +228,20 @@ public class VoteRoulette extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new VoteListener(this), this);
 		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
 		getServer().getPluginManager().registerEvents(new AwardListener(this), this);
-		getServer().getPluginManager().registerEvents(new CreatorListener(this), this);
-
-		//load configs
-		reloadConfigs();
-		convertPlayerData();
-		covertPlayersToUUID();
+		getServer().getPluginManager().registerEvents(new ACListener(this), this);
 
 		getCommand("voteroulette").setExecutor(new Commands(this));
 		getCommand("votelinks").setExecutor(new Commands(this));
 
+		//load configs
+		loadAllFilesAndData();
+
+		//convert old data, if present
+		convertPlayersYmlToUUID();
+		covertPlayersFolderToUUID();
 
 		//check file versions
-		if(CONFIG_VERSION != 1.9) {
+		if(CONFIG_VERSION != 2.0) {
 			log.warning("[VoteRoulette] It appears that your config is out of date. There may be new options! It's recommended that you take your old config out to let the new one save.");
 		}
 
@@ -270,10 +253,10 @@ public class VoteRoulette extends JavaPlugin {
 			log.warning("[VoteRoulette] It appears that your localizations.yml file is out of date. There may be new options! It's recommended that you take your old localizations file out to let the new one save.");
 		}
 
-
-
+		//run a stat update
 		sm.updateStats();
 
+		//submit metrics
 		try {
 			Metrics metrics = new Metrics(this);
 			metrics.start();
@@ -283,6 +266,46 @@ public class VoteRoulette extends JavaPlugin {
 
 		log.info("[VoteRoulette] Enabled!");
 	}
+
+	//Called when the plugin is getting disabled.
+	public void onDisable() {
+
+		//cancel scheduled events
+		if(periodicReminder != null) {
+			periodicReminder.cancel();
+		}
+		if(twentyFourHourChecker != null) {
+			twentyFourHourChecker.cancel();
+		}
+		if(updateChecker != null) {
+			updateChecker.cancel();
+		}
+
+		//run delayed commands
+		for(int i = 0; i < delayedCommands.size(); i++) {
+			DelayedCommand dCmd = delayedCommands.get(i);
+			if(dCmd.shouldRunOnShutdown()) {
+				dCmd.run();
+				dCmd.cancel();
+			}
+		}
+
+		//close any open reward/milestone inventory views
+		Set<Player> rewardKeys = lookingAtRewards.keySet();
+		for(Player key : rewardKeys) {
+			key.closeInventory();
+		}
+		Set<Player> milestoneKeys = lookingAtMilestones.keySet();
+		for(Player key : milestoneKeys) {
+			key.closeInventory();
+		}
+
+		log.info("[VoteRoulette] Disabled!");
+	}
+
+	/*
+	 * Plugin hooks
+	 */
 
 	private boolean setupVotifier() {
 		Plugin votifier =  getServer().getPluginManager().getPlugin("Votifier");
@@ -329,59 +352,39 @@ public class VoteRoulette extends JavaPlugin {
 		return (permission != null);
 	}
 
-	public void reloadConfigs() {
-		System.out.println("[VoteRoulette] Loading configs...");
-		try {
-			loadConfig();
-			this.reloadConfig();
-			loadConfigOptions();
-			loadAwardsFile();
-			loadMessagesFile();
-			loadMessagesData();
-			loadLocalizationsFile();
-			loadLocalizationsData();
-			loadRewards();
-			loadMilestones();
-			loadKnownSitesFile();
-			loadStatsFile();
-		} catch (Exception e) {
-			this.getLogger().severe("There was an error attempting to load the configurations. VoteRoulette may not function has intended. Most of the time this is caused by unacceptable characters such as tabs. Try putting your config files through a online yaml validator.");
-		}
-		System.out.println("[VoteRoulette] ...finished loading configs!");
+	/*
+	 * File & data loading
+	 */
+
+	public void loadAllFilesAndData() {
+
+		this.getLogger().info("Loading all files and data...");
+
+		//load main config
+		loadConfig();
+		reloadConfig();
+		loadConfigOptions();
+		//load awards.yml
+		loadAwardsFile();
+		transferAwards();
+		loadRewards();
+		loadMilestones();
+		//load messages.yml
+		loadMessagesFile();
+		loadMessagesData();
+		//load localizations.yml
+		loadLocalizationsFile();
+		loadLocalizationsData();
+		//load known sites.yml
+		loadKnownSitesFile();
+		//load stats.yml
+		loadStatsFile();
+
+		this.getLogger().info("...finished loading files and data!");
+
+		//schedule reminders and update checker
 		scheduleTasks();
 
-	}
-
-	void scheduleTasks() {
-
-		if(periodicReminder != null) {
-			periodicReminder.cancel();
-		}
-		if(twentyFourHourChecker != null) {
-			twentyFourHourChecker.cancel();
-		}
-		if(updateChecker != null) {
-			updateChecker.cancel();
-		}
-
-		if(USE_PERIODIC_REMINDER) {
-			periodicReminder = new PeriodicReminder(PERIODIC_REMINDER);
-			periodicReminder.runTaskTimer(this, REMINDER_INTERVAL, REMINDER_INTERVAL);
-		}
-
-		if(USE_TWENTYFOUR_REMINDER) {
-			twentyFourHourChecker = new TwentyFourHourCheck(TWENTYFOUR_REMINDER);
-			twentyFourHourChecker.runTaskTimer(this, 12000, 12000);
-		}
-
-		if (CHECK_UPDATES) {
-			if (getDescription().getVersion().contains("SNAPSHOT")) {
-				getLogger().info("This is not a release version. Automatic update checking will be disabled.");
-			} else {
-				updateChecker = new UpdateChecker(this);
-				updateChecker.runTaskTimerAsynchronously(this, 40, 432000);
-			}
-		}
 	}
 
 	private void loadConfig() {
@@ -400,26 +403,101 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
-	void loadMessagesFile() {
-		PluginManager pm = getServer().getPluginManager();
-		String pluginFolder = this.getDataFolder().getAbsolutePath();
-		(new File(pluginFolder)).mkdirs();
-		File messagesFile = new File(pluginFolder, "messages.yml");
-		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
+	private void loadConfigOptions() {
+		REWARDS_ON_THRESHOLD = getConfig().getBoolean("giveRewardsOnThreshold");
 
-		if(!messagesFile.exists()) {
-			saveResource("messages.yml", true);
-			return;
+		VOTE_THRESHOLD = getConfig().getInt("voteThreshold");
+
+		MESSAGE_PLAYER = getConfig().getBoolean("messagePlayer");
+
+		DISABLE_UNCLAIMED = getConfig().getBoolean("disableUnclaimedAwards", false);
+
+		AUTO_CLAIM = getConfig().getBoolean("autoClaimAwards", false);
+
+		DISABLE_INVENTORY_PROT = getConfig().getBoolean("disableInventoryProtection", false);
+
+		String defaultAlias = getConfig().getString("defaultCommandAlias", "vr").trim();
+
+		if(defaultAlias.equalsIgnoreCase("vr") || defaultAlias.equalsIgnoreCase("vtr") || defaultAlias.equalsIgnoreCase("voteroulette")) {
+			DEFAULT_ALIAS = defaultAlias.toLowerCase().replace("/", "");
+			Plugin voxelSniper =  getServer().getPluginManager().getPlugin("VoxelSniper");
+			if (voxelSniper != null) {
+				if(DEFAULT_ALIAS.equalsIgnoreCase("vr")) {
+					getLogger().warning("VoxelSniper detected! Setting default alias to: \"/vtr\"");
+					DEFAULT_ALIAS = "vtr";
+				}
+			} else {
+				getLogger().info("Setting default command alias: " + DEFAULT_ALIAS);
+			}
+		} else {
+			getLogger().info("Default alias in config isn't one of the options, keeping it at: vr ");
 		}
-		try {
-			messageData.reloadConfig();
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception while loading VoteRoulette/messages.yml", e);
-			pm.disablePlugin(this);
+
+
+		BROADCAST_TO_SERVER = getConfig().getBoolean("broadcastToServer");
+
+		ONLY_BROADCAST_ONLINE = getConfig().getBoolean("onlyBroadcastOnlinePlayerVotes", false);
+
+		LOG_TO_CONSOLE = getConfig().getBoolean("logToConsole");
+
+		DEBUG = getConfig().getBoolean("debug", false);
+
+		BROADCAST_COOLDOWN = getConfig().getInt("broadcastCooldown", 0);
+
+		if(BROADCAST_COOLDOWN == 0) {
+			USE_BROADCAST_COOLDOWN = false;
+		} else {
+			USE_BROADCAST_COOLDOWN = true;
 		}
+
+		GUI_FOR_AWARDS = getConfig().getBoolean("GUI.awards.guiForAwards", true);
+
+		SHOW_COMMANDS_IN_AWARD = getConfig().getBoolean("GUI.awards.showCommands", false);
+
+		SHOW_PLAYER_AND_GROUPS = getConfig().getBoolean("GUI.awards.showPlayersAndGroups", false);
+
+		USE_FANCY_LINKS = getConfig().getBoolean("GUI.vote-command.useFancyLinks", false);
+
+		GIVE_RANDOM_REWARD = getConfig().getBoolean("giveRandomReward");
+
+		PRIORITIZE_VOTESTREAKS = getConfig().getBoolean("prioritizeVoteStreaks", true);
+
+		USE_SCOREBOARD = getConfig().getBoolean("GUI.stats.useScoreboard", true);
+
+		GIVE_RANDOM_MILESTONE = getConfig().getBoolean("giveRandomMilestone");
+
+		RANDOMIZE_SAME_PRIORITY = getConfig().getBoolean("randomizeTiedHighestPriorityMilestones", false);
+
+		ONLY_MILESTONE_ON_COMPLETION = getConfig().getBoolean("onlyGiveMilestoneUponCompletion", true);
+
+		BLACKLIST_AS_WHITELIST = getConfig().getBoolean("useBlacklistAsWhitelist");
+
+		USE_TWENTYFOUR_REMINDER = getConfig().getBoolean("useTwentyFourHourReminder", true);
+
+		USE_PERIODIC_REMINDER = getConfig().getBoolean("usePeriodicReminder");
+
+		REMINDER_INTERVAL = getConfig().getLong("periodicReminderInterval")*1200;
+
+		BLACKLIST_PLAYERS = getConfig().getStringList("blacklistedPlayers");
+
+		BLACKLIST_WORLDS = getConfig().getStringList("blacklistedWorlds");
+
+		CHECK_UPDATES = getConfig().getBoolean("checkForUpdates", true);
+
+		CONSIDER_REWARDS_FOR_CURRENT_WORLD = getConfig().getBoolean("considerRewardsForPlayersCurrentWorld");
+
+		CONSIDER_MILESTONES_FOR_CURRENT_WORLD = getConfig().getBoolean("considerMilestonesForPlayersCurrentWorld");
+
+		ONLY_PRIMARY_GROUP = getConfig().getBoolean("onlyConsiderPlayersPrimaryGroup", false);
+
+		FIREWORK_ON_MILESTONE = getConfig().getBoolean("randomFireworkOnMilestone", true);
+
+		CONFIG_VERSION = getConfig().getDouble("configVersion", 1.0);
+
+
 	}
 
-	void loadAwardsFile() {
+	private void loadAwardsFile() {
 		PluginManager pm = getServer().getPluginManager();
 		String pluginFolder = this.getDataFolder().getAbsolutePath();
 		(new File(pluginFolder)).mkdirs();
@@ -438,7 +516,135 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
-	void loadLocalizationsFile() {
+	private void transferAwards() {
+		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
+		if(this.getConfig().contains("Rewards")) {
+			ConfigurationSection cs = this.getConfig().getConfigurationSection("Rewards");
+			if(cs != null) {
+				for(String rewardName : cs.getKeys(false)) {
+					ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
+					if (rewardOptions != null) {
+						if(!awardsData.getConfig().contains("Rewards." + rewardName)) {
+							awardsData.getConfig().set("Rewards." + rewardName, rewardOptions);
+						}
+					}
+				}
+				awardsData.saveConfig();
+				getLogger().warning("Rewards have moved to the awards.yml, your current Rewards have been copied from config.yml to there! You can delete the old Rewards in your config.yml.");
+			}
+		}
+
+		if(this.getConfig().contains("Milestones")) {
+			ConfigurationSection cs1 = this.getConfig().getConfigurationSection("Milestones");
+			if(cs1 != null) {
+				for(String milestoneName : cs1.getKeys(false)) {
+					ConfigurationSection milestoneOptions = cs1.getConfigurationSection(milestoneName);
+					if (milestoneOptions != null) {
+						if(!awardsData.getConfig().contains("Milestones." + milestoneName)) {
+							awardsData.getConfig().set("Milestones." + milestoneName, milestoneOptions);
+						}
+					}
+				}
+				awardsData.saveConfig();
+				getLogger().warning("Milestones have moved to the awards.yml, your current Milestones have been copied from config.yml to there! You can delete the old Milestones in your config.yml.");
+			}
+		}
+	}
+
+	private void loadRewards() {
+		rm.clearRewards();
+		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
+		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Rewards");
+		if(cs != null) {
+			for(String rewardName : cs.getKeys(false)) {
+				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
+				if (rewardOptions != null) {
+					Reward newReward = new Reward(rewardName, rewardOptions);
+					rm.addReward(newReward);
+					System.out.println("[VoteRoulette] Added Reward: " + rewardName);
+					if(rewardName.equals(getConfig().getString("defaultReward"))) {
+						rm.setDefaultReward(newReward);
+						System.out.println("[VoteRoulette] \"" + rewardName + "\" saved as default reward.");
+					}
+					continue;
+				}
+				log.warning("[VoteRoulette] The reward \"" + rewardName + "\" is empty! Skipping reward.");
+			}
+			if(!rm.hasDefaultReward() && !getConfig().getBoolean("giveRandomReward")) {
+				log.warning("[VoteRoulette] The default reward name could not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
+			}
+		} else {
+			log.warning("[VoteRoulette] Your reward section is empty, no rewards will be given!");
+		}
+	}
+
+	private void loadMilestones() {
+		rm.clearMilestones();
+		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
+		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Milestones");
+		if(cs != null) {
+			for (String milestoneName : cs.getKeys(false)) {
+				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
+				if (milestoneOptions != null) {
+					if(milestoneOptions.contains("votes")) {
+						rm.addMilestone(new Milestone(milestoneName, milestoneOptions));
+						System.out.println("[VoteRoulette] Added Milestone: " + milestoneName);
+						continue;
+					}
+					log.warning("[VoteRoulette] Milestone \"" + milestoneName + "\" doesn't have a vote number set! Ignoring Milestone...");
+					continue;
+				}
+				log.warning("[VoteRoulette] The reward \"" + milestoneName + "\" is empty! Skipping...");
+			}
+		} else {
+			log.warning("[VoteRoulette] Your Milestone section is empty, no milestones will be given!");
+		}
+	}
+
+	private void loadMessagesFile() {
+		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		(new File(pluginFolder)).mkdirs();
+		File messagesFile = new File(pluginFolder, "messages.yml");
+		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
+
+		if(!messagesFile.exists()) {
+			saveResource("messages.yml", true);
+			return;
+		}
+		try {
+			messageData.reloadConfig();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception while loading VoteRoulette/messages.yml", e);
+			pm.disablePlugin(this);
+		}
+	}
+
+	private void loadMessagesData() {
+		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
+
+		SERVER_BROADCAST_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("server-broadcast-message"));
+
+		SERVER_BROADCAST_MESSAGE_NO_AWARD = Utils.transcribeColorCodes(messageData.getConfig().getString("server-broadcast-message-no-award", "&b[&e%player%&b just voted for %server% on &e%site%&b!]"));
+
+		PLAYER_VOTE_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("player-reward-message"));
+
+		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("periodic-reminder").replace("%server%", Bukkit.getServerName()));
+
+		TWENTYFOUR_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("twentyfour-hour-reminder", "&b24 hours have passed since your last vote!"));
+
+		List<String> voteSites = messageData.getConfig().getStringList("vote-websites");
+		for(int i = 0; i < voteSites.size(); i++) {
+			String website = voteSites.get(i);
+			website = Utils.transcribeColorCodes(website);
+			voteSites.set(i, website);
+		}
+		VOTE_WEBSITES = voteSites;
+
+		MESSAGES_VERSION = messageData.getConfig().getDouble("config-version", 1.0);
+	}
+
+	private void loadLocalizationsFile() {
 		PluginManager pm = getServer().getPluginManager();
 		String pluginFolder = this.getDataFolder().getAbsolutePath() + File.separator + "data";
 		(new File(pluginFolder)).mkdirs();
@@ -457,7 +663,7 @@ public class VoteRoulette extends JavaPlugin {
 		}
 	}
 
-	void loadLocalizationsData() {
+	private void loadLocalizationsData() {
 		ConfigAccessor localeData = new ConfigAccessor("data" + File.separator + "localizations.yml");
 
 		UNCLAIMED_AWARDS_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("unclaimed-awards"));
@@ -542,8 +748,65 @@ public class VoteRoulette extends JavaPlugin {
 
 	}
 
-	void covertPlayersToUUID() {
+	private void loadKnownSitesFile() {
+		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		(new File(pluginFolder)).mkdirs();
+		String playerFolder = pluginFolder + File.separator + "data";
+		(new File(playerFolder)).mkdirs();
+		File playerDataFile = new File(playerFolder, "known websites.yml");
+		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "known websites.yml");
 
+		if (!playerDataFile.exists()) {
+			try {
+				playerData.saveDefaultConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
+				pm.disablePlugin(this);
+			}
+			return;
+		} else {
+			try {
+				playerData.getConfig().options().header("This file collects all the known voting websites that have been used on your server. Every time a vote comes through and if the website hasnt been saved before, the website is added here.");
+				playerData.getConfig().options().copyHeader();
+				playerData.reloadConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
+				pm.disablePlugin(this);
+			}
+		}
+	}
+
+	private void loadStatsFile() {
+		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		(new File(pluginFolder)).mkdirs();
+		String playerFolder = pluginFolder + File.separator + "data";
+		(new File(playerFolder)).mkdirs();
+		File playerDataFile = new File(playerFolder, "stats.yml");
+		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "stats.yml");
+
+		if (!playerDataFile.exists()) {
+			try {
+				playerData.saveDefaultConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/stats.yml", e);
+				pm.disablePlugin(this);
+			}
+			return;
+		} else {
+			try {
+				playerData.getConfig().options().header("This file keeps track of the stats of VR. Theres no need to edit anything here.");
+				playerData.getConfig().options().copyHeader();
+				playerData.reloadConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/stats.yml", e);
+				pm.disablePlugin(this);
+			}
+		}
+	}
+
+	private void covertPlayersFolderToUUID() {
 
 		String oldPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "players";
 		String newPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata";
@@ -567,7 +830,7 @@ public class VoteRoulette extends JavaPlugin {
 
 		if(oldPlayersNames.length > 0) {
 
-			getLogger().info("Detected old player files, attempting to convert to UUID...");
+			getLogger().info("Detected old player folder, attempting to convert files to UUID...");
 
 			UUIDFetcher fetcher = new UUIDFetcher(Arrays.asList(oldPlayersNames));
 
@@ -575,7 +838,8 @@ public class VoteRoulette extends JavaPlugin {
 			try {
 				response = fetcher.call();
 			} catch (Exception e) {
-				e.printStackTrace();
+				this.getLogger().severe("There was an issue getting UUIDs while attempting to convert data in the old players folder to the new format. The conversion will not happen. The error was: " + e.toString());
+				return;
 			}
 
 			if(response == null) {
@@ -633,15 +897,14 @@ public class VoteRoulette extends JavaPlugin {
 						oldPlayerFile.delete();
 					}
 				} else {
-					getLogger().warning("Could not convert name \"" + oldPlayer + "\" to a UUID as the name is not an actual minecraft player. Was it a mispelled name?");
+					getLogger().warning("Could not convert name \"" + oldPlayer + "\" to a UUID as the name is not an actual minecraft player. Was it a mistyped name or is there connectivity issues with Mojangs UUID server?");
 				}
 			}
 		}
 	}
 
-	void convertPlayerData() {
+	private void convertPlayersYmlToUUID() {
 
-		PluginManager pm = getServer().getPluginManager();
 		String pluginFolder = this.getDataFolder().getAbsolutePath();
 		(new File(pluginFolder)).mkdirs();
 		String playerFolder = pluginFolder + File.separator + "data";
@@ -655,6 +918,7 @@ public class VoteRoulette extends JavaPlugin {
 				String oldPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata";
 				Set<String> players = playersCfg.getConfig().getKeys(false);
 				int count = 0;
+				int failCount = 0;
 				for(String playerName : players) {
 					ConfigurationSection playerData = playersCfg.getConfig().getConfigurationSection(playerName);
 					if(playerName.equals("currentCycle") || playerName.equals("lifetimeVotes") || playerName.equals("lastVote") || playerName.equals("unclaimedRewards") || playerName.equals("currentMilestones")) continue;
@@ -666,10 +930,17 @@ public class VoteRoulette extends JavaPlugin {
 					try {
 						response = fetcher.call();
 					} catch (Exception e) {
-						e.printStackTrace();
+						this.getLogger().severe("There was an issue getting UUIDs while attempting to convert \"" + playerName + "\" in the old players.yml to the new format. The conversion will not happen. The error was: " + e.toString());
+						failCount++;
+						continue;
 					}
 					if(response != null) {
 						UUID id = response.get(playerName);
+						if(id == null) {
+							this.getLogger().severe("Could not get a UUID for \"" + playerName + "\" while attempting to convert to new format. Perhaps this is a mistyped name?");
+							failCount++;
+							continue;
+						}
 						String newPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata";
 						(new File(newPlayerFilePath)).mkdirs();
 						File playerFile = new File(newPlayerFilePath + File.separator + id.toString() + ".yml");
@@ -707,241 +978,56 @@ public class VoteRoulette extends JavaPlugin {
 						}
 					}
 				}
-				if(count == 0) {
-					getLogger().info("All players appear to have already been transfered.");
-				} else {
-					getLogger().info("Successfully transfered " + count + " players to new format.");
+				if(count == 0 && failCount == 0) {
+					getLogger().info("All players appear to have already been transfered. You can now delete the players.yml file.");
+				} else if(count > 0) {
+					getLogger().info("Successfully transfered " + count + " player(s) to new format.");
+				}
+				else if(failCount > 0) {
+					getLogger().info("Failed to transfer " + failCount + " player(s) to new format.");
 				}
 			} catch (Exception e) {
 				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/players.yml", e);
-				pm.disablePlugin(this);
 			}
 		}
 	}
 
-	void loadKnownSitesFile() {
-		PluginManager pm = getServer().getPluginManager();
-		String pluginFolder = this.getDataFolder().getAbsolutePath();
-		(new File(pluginFolder)).mkdirs();
-		String playerFolder = pluginFolder + File.separator + "data";
-		(new File(playerFolder)).mkdirs();
-		File playerDataFile = new File(playerFolder, "known websites.yml");
-		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "known websites.yml");
-
-		if (!playerDataFile.exists()) {
-			try {
-				playerData.saveDefaultConfig();
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
-				pm.disablePlugin(this);
-			}
-			return;
-		} else {
-			try {
-				playerData.getConfig().options().header("This file collects all the known voting websites that have been used on your server. Every time a vote comes through and if the website hasnt been saved before, the website is added here.");
-				playerData.getConfig().options().copyHeader();
-				playerData.reloadConfig();
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
-				pm.disablePlugin(this);
-			}
+	private void scheduleTasks() {
+		//cancel any previously set tasks
+		if(periodicReminder != null) {
+			periodicReminder.cancel();
 		}
-	}
-
-	void loadStatsFile() {
-		PluginManager pm = getServer().getPluginManager();
-		String pluginFolder = this.getDataFolder().getAbsolutePath();
-		(new File(pluginFolder)).mkdirs();
-		String playerFolder = pluginFolder + File.separator + "data";
-		(new File(playerFolder)).mkdirs();
-		File playerDataFile = new File(playerFolder, "stats.yml");
-		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "stats.yml");
-
-		if (!playerDataFile.exists()) {
-			try {
-				playerData.saveDefaultConfig();
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/stats.yml", e);
-				pm.disablePlugin(this);
-			}
-			return;
-		} else {
-			try {
-				playerData.getConfig().options().header("This file keeps track of the stats of VR. Theres no need to edit anything here.");
-				playerData.getConfig().options().copyHeader();
-				playerData.reloadConfig();
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/stats.yml", e);
-				pm.disablePlugin(this);
-			}
+		if(twentyFourHourChecker != null) {
+			twentyFourHourChecker.cancel();
 		}
-	}
-
-	void loadMessagesData() {
-		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
-
-		SERVER_BROADCAST_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("server-broadcast-message"));
-
-		SERVER_BROADCAST_MESSAGE_NO_AWARD = Utils.transcribeColorCodes(messageData.getConfig().getString("server-broadcast-message-no-award", "&b[&e%player%&b just voted for %server% on &e%site%&b!]"));
-
-		PLAYER_VOTE_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("player-reward-message"));
-
-		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("periodic-reminder").replace("%server%", Bukkit.getServerName()));
-
-		TWENTYFOUR_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("twentyfour-hour-reminder", "&b24 hours have passed since your last vote!"));
-
-		List<String> voteSites = messageData.getConfig().getStringList("vote-websites");
-		for(int i = 0; i < voteSites.size(); i++) {
-			String website = voteSites.get(i);
-			website = Utils.transcribeColorCodes(website);
-			voteSites.set(i, website);
+		if(updateChecker != null) {
+			updateChecker.cancel();
 		}
-		VOTE_WEBSITES = voteSites;
 
-		MESSAGES_VERSION = messageData.getConfig().getDouble("config-version", 1.0);
-	}
+		//schedule new ones
+		if(USE_PERIODIC_REMINDER) {
+			periodicReminder = new PeriodicReminder(PERIODIC_REMINDER);
+			periodicReminder.runTaskTimer(this, REMINDER_INTERVAL, REMINDER_INTERVAL);
+		}
 
-	private void loadConfigOptions() {
-		REWARDS_ON_THRESHOLD = getConfig().getBoolean("giveRewardsOnThreshold");
+		if(USE_TWENTYFOUR_REMINDER) {
+			twentyFourHourChecker = new TwentyFourHourCheck(TWENTYFOUR_REMINDER);
+			twentyFourHourChecker.runTaskTimer(this, 12000, 12000);
+		}
 
-		VOTE_THRESHOLD = getConfig().getInt("voteThreshold");
-
-		MESSAGE_PLAYER = getConfig().getBoolean("messagePlayer");
-
-		DISABLE_UNCLAIMED = getConfig().getBoolean("disableUnclaimedAwards", false);
-
-		AUTO_CLAIM = getConfig().getBoolean("autoClaimAwards", false);
-
-		DISABLE_INVENTORY_PROT = getConfig().getBoolean("autoClaimAwards", false);
-
-		String defaultAlias = getConfig().getString("defaultCommandAlias", "vr").trim();
-
-		if(defaultAlias.equalsIgnoreCase("vr") || defaultAlias.equalsIgnoreCase("vtr") || defaultAlias.equalsIgnoreCase("voteroulette")) {
-			DEFAULT_ALIAS = defaultAlias.toLowerCase().replace("/", "");
-			Plugin voxelSniper =  getServer().getPluginManager().getPlugin("VoxelSniper");
-			if (voxelSniper != null) {
-				if(DEFAULT_ALIAS.equalsIgnoreCase("vr")) {
-					getLogger().warning("VoxelSniper detected! Setting default alias to: \"/vtr\"");
-					DEFAULT_ALIAS = "vtr";
-				}
+		if (CHECK_UPDATES) {
+			if (getDescription().getVersion().toLowerCase().contains("snapshot")) {
+				getLogger().info("This is not a release version. Automatic update checking will be disabled.");
 			} else {
-				getLogger().info("Setting default command alias: " + DEFAULT_ALIAS);
+				updateChecker = new UpdateChecker(this);
+				updateChecker.runTaskTimerAsynchronously(this, 40, 432000);
 			}
-		} else {
-			getLogger().info("Default alias in config isn't one of the options, keeping it at: vr ");
-		}
-
-
-		BROADCAST_TO_SERVER = getConfig().getBoolean("broadcastToServer");
-
-		ONLY_BROADCAST_ONLINE = getConfig().getBoolean("onlyBroadcastOnlinePlayerVotes", false);
-
-		LOG_TO_CONSOLE = getConfig().getBoolean("logToConsole");
-
-		DEBUG = getConfig().getBoolean("debug", false);
-
-		BROADCAST_COOLDOWN = getConfig().getInt("broadcastCooldown", 0);
-
-		if(BROADCAST_COOLDOWN == 0) {
-			USE_BROADCAST_COOLDOWN = false;
-		} else {
-			USE_BROADCAST_COOLDOWN = true;
-		}
-
-		GUI_FOR_AWARDS = getConfig().getBoolean("GUI.awards.guiForAwards", true);
-
-		SHOW_COMMANDS_IN_AWARD = getConfig().getBoolean("GUI.awards.showCommands", true);
-
-		USE_FANCY_LINKS = getConfig().getBoolean("GUI.vote-command.useFancyLinks", false);
-
-		GIVE_RANDOM_REWARD = getConfig().getBoolean("giveRandomReward");
-
-		PRIORITIZE_VOTESTREAKS = getConfig().getBoolean("prioritizeVoteStreaks", true);
-
-		USE_SCOREBOARD = getConfig().getBoolean("GUI.stats.useScoreboard", true);
-
-		GIVE_RANDOM_MILESTONE = getConfig().getBoolean("giveRandomMilestone");
-
-		RANDOMIZE_SAME_PRIORITY = getConfig().getBoolean("randomizeTiedHighestPriorityMilestones", false);
-
-		ONLY_MILESTONE_ON_COMPLETION = getConfig().getBoolean("onlyRewardMilestoneUponCompletion");
-
-		BLACKLIST_AS_WHITELIST = getConfig().getBoolean("useBlacklistAsWhitelist");
-
-		USE_TWENTYFOUR_REMINDER = getConfig().getBoolean("useTwentyFourHourReminder", true);
-
-		USE_PERIODIC_REMINDER = getConfig().getBoolean("usePeriodicReminder");
-
-		REMINDER_INTERVAL = getConfig().getLong("periodicReminderInterval")*1200;
-
-		BLACKLIST_PLAYERS = getConfig().getStringList("blacklistedPlayers");
-
-		BLACKLIST_WORLDS = getConfig().getStringList("blacklistedWorlds");
-
-		CHECK_UPDATES = getConfig().getBoolean("checkForUpdates", true);
-
-		CONSIDER_REWARDS_FOR_CURRENT_WORLD = getConfig().getBoolean("considerRewardsForPlayersCurrentWorld");
-
-		CONSIDER_MILESTONES_FOR_CURRENT_WORLD = getConfig().getBoolean("considerMilestonesForPlayersCurrentWorld");
-
-		ONLY_PRIMARY_GROUP = getConfig().getBoolean("onlyConsiderPlayersPrimaryGroup", false);
-
-		FIREWORK_ON_MILESTONE = getConfig().getBoolean("randomFireworkOnMilestone", true);
-
-		CONFIG_VERSION = getConfig().getDouble("configVersion", 1.0);
-
-
-	}
-
-	private void loadRewards() {
-		rm.clearRewards();
-		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Rewards");
-		if(cs != null) {
-			for(String rewardName : cs.getKeys(false)) {
-				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
-				if (rewardOptions != null) {
-					Reward newReward = new Reward(rewardName, rewardOptions);
-					rm.addReward(newReward);
-					System.out.println("[VoteRoulette] Added Reward: " + rewardName);
-					if(rewardName.equals(getConfig().getString("defaultReward"))) {
-						rm.setDefaultReward(newReward);
-						System.out.println("[VoteRoulette] \"" + rewardName + "\" saved as default reward.");
-					}
-					continue;
-				}
-				log.warning("[VoteRoulette] The reward \"" + rewardName + "\" is empty! Skipping reward.");
-			}
-			if(!rm.hasDefaultReward() && !getConfig().getBoolean("giveRandomReward")) {
-				log.warning("[VoteRoulette] The default reward name could not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
-			}
-		} else {
-			log.warning("[VoteRoulette] Your reward section is empty, no rewards will be given!");
 		}
 	}
 
-	private void loadMilestones() {
-		rm.clearMilestones();
-		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Milestones");
-		if(cs != null) {
-			for (String milestoneName : cs.getKeys(false)) {
-				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
-				if (milestoneOptions != null) {
-					if(milestoneOptions.contains("votes")) {
-						rm.addMilestone(new Milestone(milestoneName, milestoneOptions));
-						System.out.println("[VoteRoulette] Added Milestone: " + milestoneName);
-						continue;
-					}
-					log.warning("[VoteRoulette] Milestone \"" + milestoneName + "\" doesn't have a vote number set! Ignoring Milestone...");
-					continue;
-				}
-				log.warning("[VoteRoulette] The reward \"" + milestoneName + "\" is empty! Skipping...");
-			}
-		} else {
-			log.warning("[VoteRoulette] Your Milestone section is empty, no milestones will be given!");
-		}
-	}
+	/*
+	 * Getters and such
+	 */
 
 	public static boolean vaultIsEnabled() {
 		return vaultEnabled;
@@ -971,6 +1057,11 @@ public class VoteRoulette extends JavaPlugin {
 		return sm;
 	}
 
+	/*
+	 * 
+	 * Runnable Tasks
+	 *
+	 */
 
 	private class PeriodicReminder extends BukkitRunnable {
 
@@ -1064,5 +1155,4 @@ public class VoteRoulette extends JavaPlugin {
 			}
 		}
 	}
-
 }

@@ -2,15 +2,19 @@ package com.mythicacraft.voteroulette.cmdexecutors;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.Voter;
@@ -32,6 +36,10 @@ import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
 
 public class Commands implements CommandExecutor {
+
+	/**
+	 * TODO: Clean this guy up... split into separate classes?
+	 */
 
 	private static VoteRoulette plugin;
 
@@ -103,7 +111,80 @@ public class Commands implements CommandExecutor {
 				sender.sendMessage(plugin.BASE_CMD_NOTIFICATION);
 			}
 			else if(args.length >= 1) {
-				if(args[0].equalsIgnoreCase("create")) {
+				if(args[0].equalsIgnoreCase("setname")) {
+					if(sender.hasPermission("voteroulette.edititems")) {
+
+						Player p = (Player) sender;
+						ItemStack itemInHand = p.getItemInHand();
+						ItemMeta im = itemInHand.getItemMeta();
+
+						if(itemInHand != null && itemInHand.getType() != Material.AIR) {
+							if(args.length == 1) {
+								im.setDisplayName(null);
+								sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have cleared the custom name of this " + ChatColor.YELLOW + itemInHand.getType().toString().toLowerCase().replace("_", " ") + ChatColor.BLUE + ".");
+							} else {
+								//combine args
+								StringBuilder sb = new StringBuilder();
+								for(int i = 1; i < args.length; i++) {
+									sb.append(args[i] + " ");
+								}
+								sb.delete(sb.length()-1, sb.length());
+								//set name
+								String name = sb.toString();
+								im.setDisplayName(Utils.transcribeColorCodes(name));
+								sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have set the custom name of this " + ChatColor.YELLOW + itemInHand.getType().toString().toLowerCase().replace("_", "") + ChatColor.BLUE + ".");
+							}
+							itemInHand.setItemMeta(im);
+						} else {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] You must be holding an item to set it's name!");
+						}
+					} else {
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
+					}
+					return true;
+				}
+				else if(args[0].equalsIgnoreCase("setlore")) {
+					if(sender.hasPermission("voteroulette.edititems")) {
+						Player p = (Player) sender;
+						ItemStack itemInHand = p.getItemInHand();
+
+						if(itemInHand != null && itemInHand.getType() != Material.AIR) {
+							ItemMeta im = itemInHand.getItemMeta();
+							if(args.length == 1) {
+								im.setLore(null);
+								sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have cleared the custom lore of this " + ChatColor.YELLOW + itemInHand.getType().toString().toLowerCase().replace("_", "") + ChatColor.BLUE + ".");
+							} else {
+								//combine args
+								StringBuilder sb = new StringBuilder();
+								for(int i = 1; i < args.length; i++) {
+									sb.append(args[i] + " ");
+								}
+								sb.delete(sb.length()-1, sb.length());
+								//set name
+								String loreStr = Utils.transcribeColorCodes(sb.toString());
+								String[] loreArray = loreStr.split("/");
+								im.setLore(Arrays.asList(loreArray));
+								sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You have set the custom lore of this " + ChatColor.YELLOW + itemInHand.getType().toString().toLowerCase().replace("_", " ") + ChatColor.BLUE + ".");
+							}
+							itemInHand.setItemMeta(im);
+						} else {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] You must be holding an item to set it's lore!");
+						}
+					} else {
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
+					}
+					return true;
+				}
+				else if(args[0].equalsIgnoreCase("colors")) {
+					if(sender.hasPermission("voteroulette.colors")) {
+						sender.sendMessage(ChatColor.WHITE + "Colors:" + ChatColor.BLACK + " &0"  + ChatColor.DARK_BLUE + " &1" + ChatColor.DARK_GREEN + " &2" + ChatColor.DARK_AQUA + " &3" + ChatColor.DARK_RED + " &4" + ChatColor.DARK_PURPLE + " &5" + ChatColor.GOLD + " &6" + ChatColor.GRAY + " &7" + ChatColor.DARK_GRAY + " &8" + ChatColor.BLUE + " &9" + ChatColor.GREEN + " &a" + ChatColor.AQUA + " &b" + ChatColor.RED + " &c" + ChatColor.LIGHT_PURPLE + " &d" + ChatColor.YELLOW + " &e" + ChatColor.WHITE + " &f");
+						sender.sendMessage(ChatColor.WHITE + "Formats:" + ChatColor.BOLD + " &l" + ChatColor.RESET + " " + ChatColor.STRIKETHROUGH + "&m" + ChatColor.RESET + " " + ChatColor.UNDERLINE + "&n" + ChatColor.RESET + " " + ChatColor.ITALIC + "&o"  + ChatColor.RESET + " &r(reset)");
+					} else {
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
+					}
+					return true;
+				}
+				else if(args[0].equalsIgnoreCase("create")) {
 					if(sender.hasPermission("voteroulette.createawards")) {
 						Player player = (Player) sender;
 						if(VoteRoulette.inAwardCreator.containsKey(player)) {
@@ -127,6 +208,39 @@ public class Commands implements CommandExecutor {
 					}
 					return true;
 				}
+				if(args[0].equalsIgnoreCase("editreward")) {
+					if(sender.hasPermission("voteroulette.createawards")) {
+						if(args.length >= 2) {
+							int rewardIndex;
+							try {
+								Player player = (Player) sender;
+								rewardIndex = Integer.parseInt(args[1])-1;
+								Reward reward = rm.getRewards().get(rewardIndex);
+								if(VoteRoulette.inAwardCreator.containsKey(player)) {
+									sender.sendMessage(ChatColor.RED + "You are already in the Award Creator. Type cancel to quit or current to see your current step.");
+									return true;
+								}
+								AwardCreator ac = new AwardCreator(player);
+								ac.setAward(reward);
+								ac.setAwardType(AwardType.REWARD);
+								ac.setOrigAward(reward, rewardIndex);
+								VoteRoulette.inAwardCreator.put(player, ac);
+
+								sender.sendMessage(ChatColor.YELLOW + "[VoteRoulette] " + ChatColor.AQUA + "Entered the Award Creator!");
+								sender.sendMessage(ChatColor.GRAY + "(You are editting a previous reward)");
+								ac.goToStage(AwardCreationStage.CHOOSE_PRIZE);
+
+							} catch (Exception e) {
+								sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
+							}
+						} else {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] /vr editreward [#]. Get # from \"/vr rewards -a\"");
+						}
+					} else {
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
+					}
+					return true;
+				}
 				if(args[0].equalsIgnoreCase("deletereward")) {
 					if(sender.hasPermission("voteroulette.deleteawards")) {
 						if(args.length >= 2) {
@@ -142,6 +256,38 @@ public class Commands implements CommandExecutor {
 							}
 						} else {
 							sender.sendMessage(ChatColor.RED + "[VoteRoulette] /vr deletereward [#]. Get # from \"/vr rewards -a\"");
+						}
+					} else {
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
+					}
+					return true;
+				}
+				if(args[0].equalsIgnoreCase("editmilestone")) {
+					if(sender.hasPermission("voteroulette.createawards")) {
+						if(args.length >= 2) {
+							int milestoneIndex;
+							try {
+								Player player = (Player) sender;
+								milestoneIndex = Integer.parseInt(args[1])-1;
+								Milestone milestone = rm.getMilestones().get(milestoneIndex);
+								if(VoteRoulette.inAwardCreator.containsKey(player)) {
+									sender.sendMessage(ChatColor.RED + "You are already in the Award Creator. Type cancel to quit or current to see your current step.");
+									return true;
+								}
+								AwardCreator ac = new AwardCreator(player);
+								ac.setAward(milestone);
+								ac.setAwardType(AwardType.MILESTONE);
+								ac.setOrigAward(milestone, milestoneIndex);
+								VoteRoulette.inAwardCreator.put(player, ac);
+								sender.sendMessage(ChatColor.YELLOW + "[VoteRoulette] " + ChatColor.AQUA + "Entered the Award Creator!");
+								sender.sendMessage(ChatColor.GRAY + "(You are editting a previous milestone)");
+								ac.goToStage(AwardCreationStage.CHOOSE_PRIZE);
+
+							} catch (Exception e) {
+								sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
+							}
+						} else {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] /vr editmilestone [#]. Get # from \"/vr rewards -a\"");
 						}
 					} else {
 						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
@@ -458,6 +604,12 @@ public class Commands implements CommandExecutor {
 
 					Milestone[] milestones = rm.getQualifiedMilestones(sender.getName());
 
+					if(!(sender instanceof Player)) {
+						milestones = new Milestone[rm.getMilestones().size()];
+						rm.getMilestones().toArray(milestones);
+						seeingAll = true;
+					}
+
 					if(args.length > 1) {
 						if(args[args.length-1].equalsIgnoreCase("-a")) {
 							if(sender.hasPermission("voteroulette.viewallawards")) {
@@ -522,9 +674,6 @@ public class Commands implements CommandExecutor {
 						}
 					}
 					Paginate milestonePag = new Paginate(message, plugin.MILESTONE_PURAL_DEF, commandLabel + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase());
-
-
-
 					if(args.length >= 2) {
 						if(plugin.GUI_FOR_AWARDS  && sender instanceof Player) {
 							if(args[1].equalsIgnoreCase("see")) {
@@ -557,20 +706,21 @@ public class Commands implements CommandExecutor {
 									}
 								}
 							}
-						}
-						try {
-							int pageNumber = Integer.parseInt(args[1]);
-							if(plugin.isOn1dot7 && args.length >= 2 && plugin.GUI_FOR_AWARDS) {
-								showClickableAwardList(sender, AwardType.MILESTONE, milestones, pageNumber, seeingAll);
-								return true;
-							}
-							if(pageNumber <= milestonePag.pageTotal()) {
-								milestonePag.sendPage(pageNumber, sender);
-							} else {
+						} else {
+							try {
+								int pageNumber = Integer.parseInt(args[1]);
+								if(plugin.isOn1dot7 && args.length >= 2 && plugin.GUI_FOR_AWARDS && (sender instanceof Player)) {
+									showClickableAwardList(sender, AwardType.MILESTONE, milestones, pageNumber, seeingAll);
+									return true;
+								}
+								if(pageNumber <= milestonePag.pageTotal()) {
+									milestonePag.sendPage(pageNumber, sender);
+								} else {
+									sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
+								}
+							} catch (Exception e) {
 								sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
 							}
-						} catch (Exception e) {
-							sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
 						}
 					} else {
 						milestonePag.sendPage(1, sender);
@@ -586,6 +736,13 @@ public class Commands implements CommandExecutor {
 					boolean seeingAll = false;
 
 					Reward[] rewards = rm.getQualifiedRewards(sender.getName(), true);
+
+					if(!(sender instanceof Player)) {
+						rewards = new Reward[rm.getRewards().size()];
+						rm.getRewards().toArray(rewards);
+						seeingAll = true;
+					}
+
 					if(args.length > 1) {
 						if(args[args.length-1].equalsIgnoreCase("-a")) {
 							if(sender.hasPermission("voteroulette.viewallawards")) {
@@ -700,7 +857,7 @@ public class Commands implements CommandExecutor {
 						}
 						try {
 							int pageNumber = Integer.parseInt(args[1]);
-							if(plugin.isOn1dot7 && args.length >= 2 && plugin.GUI_FOR_AWARDS) {
+							if(plugin.isOn1dot7 && args.length >= 2 && plugin.GUI_FOR_AWARDS && (sender instanceof Player)) {
 								showClickableAwardList(sender, AwardType.REWARD, rewards, pageNumber, seeingAll);
 								return true;
 							}
@@ -733,7 +890,7 @@ public class Commands implements CommandExecutor {
 						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 						return true;
 					}
-					plugin.reloadConfigs();
+					plugin.loadAllFilesAndData();
 					sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] Reload complete!");
 					//reload configs
 				}

@@ -124,7 +124,7 @@ top-10: "%aqua%[VoteRoulette] Showing top 10 players for %yellow%%stat%"
 cant-find-player: "%red%[VoteRoulette] Could not find player: %player%"
 
 ## This message is sent when a player attempts to run a command that uses a number
-# for one of the arguments, but the number provided isn’t accepted.
+# for one of the arguments, but the number provided isnt accepted.
 # For example, when they type /vr rewards 3, but there isnt a page 3 of rewards.
 invalid-number: "%red%[VoteRoulette] Invalid number!"
 
@@ -137,7 +137,7 @@ rerolling: "%darkaqua%[VoteRoulette] This %type% contains a reroll of the dice f
 ## This message is sent to a player when a reroll fails.
 reroll-failed: "%aqua%[VoteRoulette] It seems the reroll for another reward came up empty. Better luck next time!"
 
-## This message is sent when a player attempts to run a command they don’t have permission for.
+## This message is sent when a player attempts to run a command they dont have permission for.
 no-permission: "%red%[VoteRoulette] You do not have permission to run this command!"
 
 ## This message is sent when a player types the base VR command ("/voteroulette", "/vr", or "/vtr")

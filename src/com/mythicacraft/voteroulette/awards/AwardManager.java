@@ -238,6 +238,14 @@ public class AwardManager {
 		rewards.add(reward);
 	}
 
+	public void removeAward(Award award) {
+		if(award.getAwardType() == AwardType.REWARD) {
+			rewards.remove((Reward) award);
+		} else {
+			milestones.remove((Milestone) award);
+		}
+	}
+
 	public ArrayList<Reward> getRewards() {
 		return rewards;
 	}

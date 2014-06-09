@@ -1,8 +1,8 @@
 main: com.mythicacraft.voteroulette.VoteRoulette
 name: VoteRoulette
-version: 2.2
+version: 2.2.1
 author: ebiggz
-description: A listener for Votifier
+description: A listener for Votifier that gives randomized rewards
 softdepends: [Vault, Votifier]
 commands:
     voteroulette:
@@ -44,10 +44,16 @@ permissions:
         default: false
     voteroulette.wipestats:
         default: false
+    voteroulette.colors:
+        default: false
     voteroulette.createawards:
         default: false
     voteroulette.deleteawards:
         default: false
+    voteroulette.edititems:
+        default: false
+        children:
+            voteroulette.colors: true
     voteroulette.admin:
         default: false
         children:
@@ -61,6 +67,7 @@ permissions:
             voteroulette.forceawards: true
             voteroulette.createawards: true
             voteroulette.deleteawards: true
+            voteroulette.edititems: true
     voteroulette.*:
         default: op
         children:

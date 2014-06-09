@@ -57,6 +57,10 @@ import com.mythicacraft.voteroulette.stats.VoterStat;
 
 public class Utils {
 
+	/**
+	 * TODO: Tame this beast
+	 */
+
 	private static VoteRoulette plugin;
 
 	public Utils(VoteRoulette instance) {
@@ -294,6 +298,16 @@ public class Utils {
 		}
 	}
 
+	public static String getKnownWebsites() {
+		ConfigAccessor websiteFile = new ConfigAccessor("data" + File.separator + "known websites.yml");
+		List<String> websites = websiteFile.getConfig().getStringList("known-websites");
+		if(websites != null && !websites.isEmpty()) {
+			return Utils.concatListToString(websites);
+		} else {
+			return "none";
+		}
+	}
+
 	public static boolean playerIsBlacklisted(String playerName) {
 		if(getBlacklistPlayers().contains(playerName)) return true;
 		return false;
@@ -429,14 +443,13 @@ public class Utils {
 			int totalMins = compareTimeToNow(time);
 			return timeString(totalMins);
 		} catch (ParseException e) {
-			e.printStackTrace();
 		}
 		return "";
 	}
 
 	public static String getTime() {
 		Calendar cal = Calendar.getInstance();
-		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a", Locale.ENGLISH);
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a");
 		String time = sdf.format(cal.getTime());
 		return time;
 	}
@@ -873,6 +886,21 @@ public class Utils {
 		if(player.hasPermission("voteroulette.votecommand")) {
 			sb.append(ChatColor.AQUA + "/vote" + ChatColor.GRAY + " - Get the links to vote on.\n");
 		}
+		if(player.hasPermission("voteroulette.createawards")) {
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "create" + ChatColor.GRAY + " - Create a new award.\n");
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "edit" + ChatColor.GRAY + " - Edit a current award.\n");
+		}
+		if(player.hasPermission("voteroulette.deleteawards")) {
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "deletereward [#]" + ChatColor.GRAY + " - Delete a reward.\n");
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "deletemilestone [#]" + ChatColor.GRAY + " - Delete a milestone.\n");
+		}
+		if(player.hasPermission("voteroulette.edititems")) {
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "setname [text]" + ChatColor.GRAY + " - Set a custom name for item in hand.\n");
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "setlore [text]" + ChatColor.GRAY + " - Set lore for item in hand.\n");
+		}
+		if(player.hasPermission("voteroulette.colors")) {
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "colors" + ChatColor.GRAY + " - See the colorcodes.\n");
+		}
 		if(player.hasPermission("voteroulette.viewrewards")) {
 			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + ChatColor.GRAY + " - See rewards you are eligible to get.\n");
 		}
@@ -923,7 +951,13 @@ public class Utils {
 		}
 		return sb.toString().toLowerCase();
 	}
+
 	public static void showAwardGUI(Award award, Player p, int awardNumber) {
+		Utils.showAwardGUI(award, p, awardNumber, false);
+	}
+
+
+	public static void showAwardGUI(Award award, Player p, int awardNumber, boolean showPlayers) {
 		Reward reward = null;
 		Milestone milestone = null;
 		String awardType = "";
@@ -950,7 +984,7 @@ public class Utils {
 		if(award.hasXpLevels()) {
 			req++;
 		}
-		if((award.getAwardType() == AwardType.REWARD && (reward.hasWebsites() || reward.hasVoteStreak())) || award.hasChance() || award.hasWorlds() || award.hasReroll() || award.getAwardType() == AwardType.MILESTONE) {
+		if((award.getAwardType() == AwardType.REWARD && (reward.hasWebsites() || reward.hasVoteStreak())) || award.hasChance() || award.hasWorlds() || award.hasReroll() || award.hasDescription() || ((plugin.SHOW_COMMANDS_IN_AWARD || showPlayers) && (award.hasPlayers() || award.hasPermissionGroups())) || award.getAwardType() == AwardType.MILESTONE) {
 			req++;
 		}
 		while(req > multOf9) {
@@ -980,9 +1014,6 @@ public class Utils {
 			ItemMeta itemMeta = paper.getItemMeta();
 			itemMeta.setDisplayName(ChatColor.YELLOW + "Runs commands.");
 			List<String> lore = new ArrayList<String>();
-			if(award.hasDescription()) {
-				lore.add(award.getDescription());
-			}
 			if(plugin.SHOW_COMMANDS_IN_AWARD) {
 				List<String> commands = award.getCommands();
 				for(String command: commands) {
@@ -1003,7 +1034,7 @@ public class Utils {
 			paper.setItemMeta(itemMeta);
 			i.addItem(paper);
 		}
-		if((award.getAwardType() == AwardType.REWARD && (reward.hasWebsites() || reward.hasVoteStreak())) || award.hasChance() || award.hasWorlds() || award.hasReroll() || award.getAwardType() == AwardType.MILESTONE) {
+		if((award.getAwardType() == AwardType.REWARD && (reward.hasWebsites() || reward.hasVoteStreak())) || award.hasChance() || award.hasWorlds() || award.hasReroll() || award.hasDescription() || ((plugin.SHOW_COMMANDS_IN_AWARD || showPlayers) && (award.hasPlayers() || award.hasPermissionGroups())) || award.getAwardType() == AwardType.MILESTONE) {
 			ItemStack sign = new ItemStack(Material.SIGN);
 			ItemMeta itemMeta = sign.getItemMeta();
 			itemMeta.setDisplayName(ChatColor.YELLOW + "" + ChatColor.UNDERLINE + "Details");
@@ -1060,6 +1091,46 @@ public class Utils {
 				}
 				lore.add(tempStr);
 			}
+			if(plugin.SHOW_PLAYER_AND_GROUPS || showPlayers) {
+				if(award.hasPermissionGroups()) {
+					StringBuilder sb = new StringBuilder();
+					sb.append(ChatColor.GOLD + "PermGroups: " + ChatColor.DARK_AQUA);
+					for(String website : award.getPermGroups()) {
+						sb.append(website + ", ");
+					}
+					sb.delete(sb.length()-2, sb.length()-1);
+					String worldStr = sb.toString();
+					String[] words = worldStr.split(" ");
+					String tempStr = "";
+					for(String word : words) {
+						tempStr += ChatColor.DARK_AQUA + word + " ";
+						if(tempStr.length() > 25) {
+							lore.add(tempStr);
+							tempStr = "";
+						}
+					}
+					lore.add(tempStr);
+				}
+				if(award.hasPlayers()) {
+					StringBuilder sb = new StringBuilder();
+					sb.append(ChatColor.GOLD + "Players: " + ChatColor.DARK_AQUA);
+					for(String website : award.getPlayers()) {
+						sb.append(website + ", ");
+					}
+					sb.delete(sb.length()-2, sb.length()-1);
+					String worldStr = sb.toString();
+					String[] words = worldStr.split(" ");
+					String tempStr = "";
+					for(String word : words) {
+						tempStr += ChatColor.DARK_AQUA + word + " ";
+						if(tempStr.length() > 25) {
+							lore.add(tempStr);
+							tempStr = "";
+						}
+					}
+					lore.add(tempStr);
+				}
+			}
 			if((award.getAwardType() == AwardType.REWARD && reward.hasWebsites())) {
 				StringBuilder sb = new StringBuilder();
 				sb.append(ChatColor.GOLD + plugin.WEBSITES_DEF + ": " + ChatColor.DARK_AQUA);
@@ -1069,6 +1140,20 @@ public class Utils {
 				sb.delete(sb.length()-2, sb.length()-1);
 				String worldStr = sb.toString();
 				String[] words = worldStr.split(" ");
+				String tempStr = "";
+				for(String word : words) {
+					tempStr += ChatColor.DARK_AQUA + word + " ";
+					if(tempStr.length() > 25) {
+						lore.add(tempStr);
+						tempStr = "";
+					}
+				}
+				lore.add(tempStr);
+			}
+			if(award.hasDescription()) {
+				StringBuilder sb = new StringBuilder();
+				sb.append(ChatColor.GOLD + "Description: " + ChatColor.DARK_AQUA + award.getDescription());
+				String[] words = sb.toString().split(" ");
 				String tempStr = "";
 				for(String word : words) {
 					tempStr += ChatColor.DARK_AQUA + word + " ";
@@ -1223,5 +1308,26 @@ public class Utils {
 			return m.group();
 		}
 		return "";
+	}
+
+	public static boolean awardHasOptions(Award award) {
+		if(award.getAwardType() == AwardType.REWARD){
+			Reward reward = (Reward) award;
+			if(reward.hasOptions()) return true;
+			return false;
+		} else {
+			Milestone milestone = (Milestone) award;
+			if(milestone.hasOptions()) return true;
+			return false;
+		}
+	}
+
+	public static String concatListToString(List<String> strings) {
+		StringBuilder sb = new StringBuilder();
+		for(String string : strings) {
+			sb.append(string + ", ");
+		}
+		sb.delete(sb.length()-2, sb.length());
+		return sb.toString();
 	}
 }

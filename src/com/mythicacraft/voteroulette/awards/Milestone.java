@@ -63,6 +63,10 @@ public class Milestone extends Award {
 		this.votes = votes;
 	}
 
+	public boolean hasOptions() {
+		if(this.hasAwardOptions() || this.getPriority() != 10) return true;
+		return false;
+	}
 
 	public boolean isRecurring() {
 		return recurring;

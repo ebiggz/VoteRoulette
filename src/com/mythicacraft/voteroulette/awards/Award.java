@@ -232,6 +232,10 @@ public class Award {
 		return false;
 	}
 
+	public void setWorlds(List<String> worlds) {
+		this.worlds = worlds;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -267,8 +271,8 @@ public class Award {
 		return true;
 	}
 
-	public boolean hasOptions() {
-		if(this.hasChance || this.hasWorlds() || this.hasPermissionGroups() || this.hasPlayers() || this.hasMessage() || this.hasDescription()) {
+	public boolean hasAwardOptions() {
+		if(this.hasChance || this.hasWorlds() || this.hasPermissionGroups() || this.hasReroll() || this.hasPlayers() || this.hasMessage() || this.hasDescription()) {
 			return true;
 		}
 		return false;
@@ -299,6 +303,10 @@ public class Award {
 			return true;
 		}
 		return false;
+	}
+
+	public void setReroll(String reroll) {
+		this.reroll = reroll;
 	}
 
 	public List<String> getCommands() {
@@ -332,6 +340,10 @@ public class Award {
 		return message;
 	}
 
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
 	public boolean hasDescription() {
 		if(description == null || description.length() == 0) return false;
 		return true;
@@ -339,6 +351,10 @@ public class Award {
 
 	public String getDescription() {
 		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	public boolean hasReroll() {
@@ -369,6 +385,10 @@ public class Award {
 
 	public boolean hasChance() {
 		return hasChance;
+	}
+
+	public void setHasChance(boolean hasChance) {
+		this.hasChance = hasChance;
 	}
 
 	@SuppressWarnings("deprecation")

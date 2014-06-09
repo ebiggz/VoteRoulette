@@ -44,7 +44,7 @@ public class Reward extends Award{
 					else if(voteStringInfo.contains("or less")) {
 						vsModifier = VoteStreakModifier.OR_LESS;
 					}
-				} catch (Exception e){
+				} catch (Exception e) {
 					log.warning("[VoteRoulette] Error loading vote streak settings for reward:" + name + ", Skipping vote streak.");
 				}
 			}
@@ -53,7 +53,6 @@ public class Reward extends Award{
 
 	public Reward(String name) {
 		super(name, AwardType.REWARD);
-		// TODO Auto-generated constructor stub
 	}
 
 	public enum VoteStreakModifier {
@@ -69,12 +68,21 @@ public class Reward extends Award{
 		return websites;
 	}
 
+	public void setWebsites(List<String> websites) {
+		this.websites = websites;
+	}
+
 	public void setVoteStreak(int streak) {
 		voteStreak = streak;
 	}
 
 	public int getVoteStreak() {
 		return voteStreak;
+	}
+
+	public boolean hasOptions() {
+		if(this.hasAwardOptions() || this.hasVoteStreak() || this.hasWebsites()) return true;
+		return false;
 	}
 
 	public boolean hasVoteStreakModifier() {

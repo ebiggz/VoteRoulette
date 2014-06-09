@@ -76,11 +76,15 @@ GUI:
         ## Turn on or off the visual representation of rewards/milestone.
         guiForAwards: true
         
-
         ## If "guiForAwards" is true, this is
         # whether or not to show the commands that will be ran when the player hovers
         # their cursor over the command block
         showCommands: false
+
+        ## If "guiForAwards" is true, this is
+        # whether or not to show the eligible players and perm groups for an award
+        # when a player hovers their cursor over the details sign
+        showPlayersAndGroups: false
 
     vote-command:
         ## Turn on or off the use of fancy links for the vote command

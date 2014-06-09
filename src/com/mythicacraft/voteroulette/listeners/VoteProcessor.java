@@ -41,16 +41,14 @@ public class VoteProcessor implements Runnable {
 	public void run()
 	{
 		if(!voter.isReal()) {
-			plugin.getLogger().warning("A vote was recieved from the username \"" + playerName + "\" but this is not a real minecraft player name! Rewards will not be given. Maybe the name was typed incorrectly?");
+			plugin.getLogger().warning("A vote was recieved from the username \"" + playerName + "\" but VoteRoulette could not find a UUID for this name! Rewards will not be given and stats will not update. Maybe the name was typed incorrectly or there is a connectivity issue with Mojang's UUID server?");
 			return;
 		}
 
 		Utils.debugMessage("Incrementing " + playerName + " vote totals");
 
-		if(website != null && !website.equals("forcevote")) {
-			voter.incrementVoteTotals();
-			voter.saveLastVoteTimeStamp();
-		}
+		voter.incrementVoteTotals();
+		voter.saveLastVoteTimeStamp();
 
 		Utils.debugMessage("Beginning award processing for: " + playerName);
 

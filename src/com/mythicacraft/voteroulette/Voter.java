@@ -2,10 +2,10 @@ package com.mythicacraft.voteroulette;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -35,7 +35,8 @@ public class Voter {
 		try {
 			response = fetcher.call();
 		} catch (Exception e) {
-			e.printStackTrace();
+			isReal = false;
+			return;
 		}
 		if(response != null) {
 			UUID id = response.get(playerName);
@@ -235,16 +236,18 @@ public class Voter {
 
 	private static int getHoursSince(String time) {
 
-		String currentTime = Utils.getTime();
+		Calendar cal = Calendar.getInstance();
 
 		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a", Locale.ENGLISH);
+
+		String currentTime = sdf.format(cal.getTime());
+
 		Date date1 = null;
 		Date date2 = null;
 		try {
 			date1 = sdf.parse(time);
 			date2 = sdf.parse(currentTime);
-		} catch (ParseException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
 			return 0;
 		}
 
@@ -296,6 +299,7 @@ public class Voter {
 
 		setLifetimeVotes(newLifetime);
 		setCurrentVoteCycle(getCurrentVoteCycle() + 1);
+
 
 		int hoursSince = getHoursSince(getLastVoteTimeStamp());
 
@@ -365,7 +369,8 @@ public class Voter {
 		}
 
 		List<Reward> rewards = new ArrayList<Reward>();
-		ConfigurationSection cs = plugin.getConfig().getConfigurationSection("Rewards");
+		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
+		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Rewards");
 		if(cs != null) {
 			for(String rewardName : rewardsList) {
 				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
@@ -395,7 +400,8 @@ public class Voter {
 			//place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
-			List<String> milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
+			ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
+			List<String> milestonesList = awardsData.getConfig().getStringList("unclaimedMilestones");
 			milestonesList.add(milestoneName);
 			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
 			playerCfg.saveConfig();

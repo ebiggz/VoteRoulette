@@ -7,8 +7,13 @@ import org.bukkit.scoreboard.Scoreboard;
 
 public class BoardReset implements Runnable{
 
-	Player user;
-	Scoreboard board;
+	/**
+	 * Used to reset the players Scoreboard after x amount of time.
+	 */
+
+	private Player user;
+	private Scoreboard board;
+
 	public BoardReset(Player user, Scoreboard board) {
 		this.user = user;
 		this.board = board;
