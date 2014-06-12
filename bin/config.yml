@@ -193,5 +193,7 @@ blacklistedWorlds:
 
 ## End of config
 ##########################################################################################
+## Only disable the following if you know what you are doing.
+useUUIDs: true
 ## No need to touch this
-configVersion: 2.0
+configVersion: 2.1

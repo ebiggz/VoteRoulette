@@ -4,12 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -28,27 +26,32 @@ public class Voter {
 	private Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("VoteRoulette");
 	private UUID uuid;
 	private boolean isReal;
+	private String filePath;
 
 	public Voter(String playerName) {
-		UUIDFetcher fetcher = new UUIDFetcher(Arrays.asList(playerName));
-		Map<String, UUID> response = null;
-		try {
-			response = fetcher.call();
-		} catch (Exception e) {
-			isReal = false;
-			return;
-		}
-		if(response != null) {
-			UUID id = response.get(playerName);
+		if(VoteRoulette.USE_UUIDS) {
+			UUID id;
+			try {
+				id = UUIDFetcher.getUUIDOf(playerName);
+			} catch (Exception e) {
+				isReal = false;
+				return;
+			}
 			if(id != null) {
 				this.uuid = id;
 				isReal = true;
+				filePath = "data" + File.separator + "playerdata" + File.separator + id.toString() + ".yml";
 				createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata", id.toString() + ".yml");
 				this.setPlayerName(playerName);
 				return;
 			}
+			isReal = false;
+		} else {
+			filePath = "data" + File.separator + "players" + File.separator + playerName + ".yml";
+			createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "players", playerName + ".yml");
+			this.setPlayerName(playerName);
+			isReal = true;
 		}
-		isReal = false;
 	}
 
 
@@ -107,7 +110,7 @@ public class Voter {
 			//place holder for db code
 			lifetimeVotes = 0;
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			lifetimeVotes = playerCfg.getConfig().getInt("lifetimeVotes", 0);
 		}
 		return lifetimeVotes;
@@ -117,7 +120,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("currentVoteStreak", voteStreak);
 			playerCfg.saveConfig();
 		}
@@ -129,7 +132,7 @@ public class Voter {
 			//place holder for db code
 			voteStreak = 0;
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			voteStreak = playerCfg.getConfig().getInt("currentVoteStreak", 0);
 		}
 		return voteStreak;
@@ -139,7 +142,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("longestVoteStreak", voteStreak);
 			playerCfg.saveConfig();
 		}
@@ -151,7 +154,7 @@ public class Voter {
 			//place holder for db code
 			voteStreak = 0;
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			voteStreak = playerCfg.getConfig().getInt("longestVoteStreak", 0);
 		}
 		return voteStreak;
@@ -175,7 +178,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("lastVote", timeStamp);
 			playerCfg.saveConfig();
 		}
@@ -185,7 +188,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("lastVote", timeStamp);
 			playerCfg.saveConfig();
 		}
@@ -195,7 +198,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("name", name);
 			playerCfg.saveConfig();
 		}
@@ -206,7 +209,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			name = playerCfg.getConfig().getString("name", "");
 		}
 		return name;
@@ -217,7 +220,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			timeStamp = playerCfg.getConfig().getString("lastVote", "");
 		}
 		return timeStamp;
@@ -228,7 +231,7 @@ public class Voter {
 			return false;
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			if(playerCfg.getConfig().contains("lastVote")) return true;
 			return false;
 		}
@@ -265,7 +268,7 @@ public class Voter {
 			//place holder for db code
 			voteCycle = 0;
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			voteCycle = playerCfg.getConfig().getInt("currentCycle", 0);
 		}
 		return voteCycle;
@@ -275,7 +278,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("lifetimeVotes", lifetimeVotes);
 			playerCfg.saveConfig();
 		}
@@ -285,7 +288,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("currentCycle", currentCycle);
 			playerCfg.saveConfig();
 		}
@@ -325,7 +328,7 @@ public class Voter {
 			if(VoteRoulette.USE_DATABASE) {
 				//place holder for db code
 			} else {
-				ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+				ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 				List<String> rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
 				rewardsList.add(rewardName);
 				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
@@ -339,7 +342,7 @@ public class Voter {
 			if(VoteRoulette.USE_DATABASE) {
 				//place holder for db code
 			} else {
-				ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+				ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 				List<String> rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
 				rewardsList.remove(rewardName);
 				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
@@ -352,7 +355,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("unclaimedRewards", null);
 			playerCfg.saveConfig();
 		}
@@ -364,7 +367,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
 		}
 
@@ -389,7 +392,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
 		}
 		return rewardsList.size();
@@ -399,7 +402,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
 			List<String> milestonesList = awardsData.getConfig().getStringList("unclaimedMilestones");
 			milestonesList.add(milestoneName);
@@ -412,7 +415,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			List<String> milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
 			milestonesList.remove(milestoneName);
 			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
@@ -424,7 +427,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("unclaimedMilestones", null);
 			playerCfg.saveConfig();
 		}
@@ -436,7 +439,7 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
 		}
 		return milestonesList.size();
@@ -448,12 +451,14 @@ public class Voter {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
 		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml");
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
 		}
 
 		List<Milestone> milestones = new ArrayList<Milestone>();
-		ConfigurationSection cs = plugin.getConfig().getConfigurationSection("Milestones");
+		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
+		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Milestones");
+
 		if(cs != null) {
 			for(String milestoneName : milestonesList) {
 				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
@@ -474,7 +479,7 @@ public class Voter {
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
-				System.out.println("[VoteRoulette] Created new player file: \"VoteRoulette/data/playerdata/" + fileName + "\".");
+				plugin.getLogger().info("Created new player file: \"" + fileName + "\".");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

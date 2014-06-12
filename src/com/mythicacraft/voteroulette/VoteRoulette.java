@@ -31,8 +31,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import com.mythicacraft.voteroulette.awardcreator.AwardCreator;
 import com.mythicacraft.voteroulette.awardcreator.ACListener;
+import com.mythicacraft.voteroulette.awardcreator.AwardCreator;
 import com.mythicacraft.voteroulette.awards.AwardManager;
 import com.mythicacraft.voteroulette.awards.DelayedCommand;
 import com.mythicacraft.voteroulette.awards.Milestone;
@@ -85,9 +85,11 @@ public class VoteRoulette extends JavaPlugin {
 	/**
 	 * TODO: Create a class to hold all these constants
 	 */
+
 	//config.yml constants
 	public boolean REWARDS_ON_THRESHOLD;
 	public static boolean USE_DATABASE = false;
+	public static boolean USE_UUIDS;
 	public int VOTE_THRESHOLD;
 	public boolean MESSAGE_PLAYER;
 	public boolean BROADCAST_TO_SERVER;
@@ -237,11 +239,17 @@ public class VoteRoulette extends JavaPlugin {
 		loadAllFilesAndData();
 
 		//convert old data, if present
-		convertPlayersYmlToUUID();
-		covertPlayersFolderToUUID();
+		if(VoteRoulette.USE_UUIDS) {
+			convertPlayersYmlToUUID();
+			covertPlayersFolderToUUID();
+		}
+
+		if(getServer().getOnlineMode() == false && VoteRoulette.USE_UUIDS){
+			getLogger().warning("Your server is in offline mode and VoteRoulette is tracking UUIDs. Players with illegitimate copies of Minecraft will not get their stats tracked. Consider setting \"useUUIDs\" to false in the config.yml.");
+		}
 
 		//check file versions
-		if(CONFIG_VERSION != 2.0) {
+		if(CONFIG_VERSION != 2.1) {
 			log.warning("[VoteRoulette] It appears that your config is out of date. There may be new options! It's recommended that you take your old config out to let the new one save.");
 		}
 
@@ -413,6 +421,8 @@ public class VoteRoulette extends JavaPlugin {
 		DISABLE_UNCLAIMED = getConfig().getBoolean("disableUnclaimedAwards", false);
 
 		AUTO_CLAIM = getConfig().getBoolean("autoClaimAwards", false);
+
+		USE_UUIDS = getConfig().getBoolean("useUUIDs", true);
 
 		DISABLE_INVENTORY_PROT = getConfig().getBoolean("disableInventoryProtection", false);
 

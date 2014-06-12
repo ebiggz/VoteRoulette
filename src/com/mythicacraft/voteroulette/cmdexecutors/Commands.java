@@ -185,6 +185,10 @@ public class Commands implements CommandExecutor {
 					return true;
 				}
 				else if(args[0].equalsIgnoreCase("create")) {
+					if(!(sender instanceof Player)) {
+						sender.sendMessage(ChatColor.RED + "[VoteRoulette] You must be in-game to run this command!");
+						return true;
+					}
 					if(sender.hasPermission("voteroulette.createawards")) {
 						Player player = (Player) sender;
 						if(VoteRoulette.inAwardCreator.containsKey(player)) {
