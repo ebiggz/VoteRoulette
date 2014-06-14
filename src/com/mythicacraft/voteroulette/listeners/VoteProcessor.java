@@ -158,23 +158,34 @@ public class VoteProcessor implements Runnable {
 			Utils.debugMessage("Running chance checks for rewards with chance...");
 			Collections.shuffle(rewardsWithChance);
 			Utils.debugMessage("Shuffling rewards with chance");
+			Random rand = new Random();
+			Reward rarestReward = null;
 			for(Reward reward: rewardsWithChance) {
-				Utils.debugMessage("Checking \"" + reward.getName() + "\" at " + reward.getChanceMin() + " in " + reward.getChanceMax());
-				int random = 1 + (int)(Math.random() * ((reward.getChanceMax() - 1) + 1));
-				if(random > reward.getChanceMin()) {
-					Utils.debugMessage("Failed. (" + random + ")");
-					continue;
+				if(reward.isRarer(rarestReward)) {
+					Utils.debugMessage("Checking \"" + reward.getName() + "\" at " + reward.getChanceMin() + " in " + reward.getChanceMax());
+					int random = rand.nextInt(reward.getChanceMax()) + 1;
+					
+					if(random <= reward.getChanceMin()) {
+						Utils.debugMessage("Passed. (" + random + ") \"" + reward.getName() + "\" is now rarest");
+						rarestReward = reward;
+					} else {
+						Utils.debugMessage("Failed. (" + random + ")");
+					}
+				} else {
+					Utils.debugMessage("Skipping \"" + reward.getName() + "\" at " + reward.getChanceMin() + " in " + reward.getChanceMax() + " (not as rare)");
 				}
-				Utils.debugMessage("Passed. Administering \"" + reward.getName() + "\" to " + playerName);
-				playerEarnAward(playerName, reward);
-				return;
 			}
 
-			Utils.debugMessage("All reward chance checks failed for " + playerName);
+			if(rarestReward != null) {
+				Utils.debugMessage("Administering \"" + rarestReward.getName() + "\" to " + playerName);
+				playerEarnAward(playerName, rarestReward);
+				return;
+			} else {
+				Utils.debugMessage("All reward chance checks failed for " + playerName);
+			}
 
 			if(rewardsNoChance.size() > 0) {
 				Utils.debugMessage("Getting random reward from rewards with no chance...");
-				Random rand = new Random();
 				Reward reward = rewardsNoChance.get(rand.nextInt(rewardsNoChance.size()));
 				Utils.debugMessage("Administering \"" + reward.getName() + "\" to " + playerName);
 				playerEarnAward(playerName, reward);

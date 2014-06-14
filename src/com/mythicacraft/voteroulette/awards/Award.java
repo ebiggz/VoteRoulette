@@ -382,6 +382,18 @@ public class Award {
 	public void setChanceMax(int chanceMax) {
 		this.chanceMax = chanceMax;
 	}
+	
+	public boolean isRarer(Award otherReward) {
+		if(otherReward == null || !otherReward.hasChance()) {
+			return true;
+		}
+		
+		if( ((float)this.chanceMin / this.chanceMax) < ((float)otherReward.chanceMin / otherReward.chanceMax) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	public boolean hasChance() {
 		return hasChance;
