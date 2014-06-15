@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.utils.Utils;
@@ -382,6 +383,18 @@ public class Award {
 	public void setChanceMax(int chanceMax) {
 		this.chanceMax = chanceMax;
 	}
+	
+	public boolean isRarer(Award otherReward) {
+		if(otherReward == null || !otherReward.hasChance()) {
+			return true;
+		}
+		
+		if( ((float)this.chanceMin / this.chanceMax) < ((float)otherReward.chanceMin / otherReward.chanceMax) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	public boolean hasChance() {
 		return hasChance;
@@ -460,6 +473,16 @@ public class Award {
 					itemMeta = wim;
 				} else {
 					System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Item not leather armor.");
+				}
+			}
+			if(itemData.contains("skullOwner")) {
+				String skullOwner = itemData.getString("skullOwner");
+				if(item.getType() == Material.SKULL_ITEM && item.getDurability() == 3 /*playerhead*/) {
+					SkullMeta sim = (SkullMeta) itemMeta;
+					sim.setOwner(skullOwner);
+					itemMeta = sim;
+				} else {
+					System.out.println("[VoteRoulette] Couldn't add skullOwner for the item: " + itemID + ":" + item.getDurability() + "! Item not a player head.");
 				}
 			}
 			if(itemData.contains("enchants")) {

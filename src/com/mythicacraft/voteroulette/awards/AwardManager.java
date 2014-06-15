@@ -19,6 +19,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
@@ -786,6 +787,12 @@ public class AwardManager {
 				String rgb = wim.getColor().getRed() + "," + wim.getColor().getGreen() + "," + wim.getColor().getBlue();
 				if(!rgb.equalsIgnoreCase("160,101,64")) {
 					awardsData.getConfig().set(itemPath + "armorColor", rgb);
+				}
+			}
+			if(im instanceof SkullMeta) {
+				SkullMeta sim = (SkullMeta) im;
+				if(sim.hasOwner()) {
+					awardsData.getConfig().set(itemPath + "skullOwner", sim.getOwner());
 				}
 			}
 		}
