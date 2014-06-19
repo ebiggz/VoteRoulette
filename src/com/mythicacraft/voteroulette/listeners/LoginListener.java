@@ -39,7 +39,7 @@ public class LoginListener implements Listener {
 		Voter voter = vm.getVoter(player.getName());
 
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
-		scheduler.scheduleSyncDelayedTask(plugin, new Runnable() {
+		scheduler.runTaskLaterAsynchronously(plugin, new Runnable() {
 
 			private Player player;
 			private Voter voter;
