@@ -46,6 +46,19 @@ public class VoteProcessor implements Runnable {
 			return;
 		}
 
+		voter.updateTimedStats();
+		voter.setVotesForTheDay(voter.getVotesForTheDay()+1);
+
+
+		if(plugin.HAS_VOTE_LIMIT) {
+			Utils.debugMessage("There is a vote limit...");
+			if(voter.getVotesForTheDay() >= plugin.VOTE_LIMIT) {
+				Utils.debugMessage(playerName + " has met the limit. Stopped vote processing.");
+				Utils.sendMessageToPlayer(plugin.REACHED_LIMIT_NOTIFICATION, playerName);
+				return;
+			}
+			Utils.debugMessage("Player is under the limit. Continuing...");
+		}
 		Utils.debugMessage("Incrementing " + playerName + " vote totals");
 
 		voter.incrementVoteTotals();
@@ -57,6 +70,9 @@ public class VoteProcessor implements Runnable {
 
 		String voteMessage = plugin.SERVER_BROADCAST_MESSAGE_NO_AWARD;
 		voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
+
+		String playerVoteMessage = plugin.PLAYER_VOTE_MESSAGE_NO_AWARD;
+		playerVoteMessage = playerVoteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
 
 		//First check if player is blacklisted & check if the blacklist is being used as a white list
 		if(!ignoreBlackList) {
@@ -110,6 +126,8 @@ public class VoteProcessor implements Runnable {
 				if(!website.equals("forcevote")) {
 					Utils.broadcastMessageToServer(voteMessage, playerName);
 				}
+				String currentCycle = Integer.toString(voter.getCurrentVoteCycle());
+				Utils.sendMessageToPlayer(playerVoteMessage.replace("%cycle%", currentCycle), playerName);
 				return;
 			}
 			voter.setCurrentVoteCycle(0);
@@ -286,7 +304,6 @@ public class VoteProcessor implements Runnable {
 		PlayerEarnedAwardEvent event = new PlayerEarnedAwardEvent(playerName, award);
 		Bukkit.getServer().getPluginManager().callEvent(event);
 		if (!event.isCancelled()) {
-			// Now you do the event
 			rm.administerAwardContents(event.getAward(), event.getPlayerName());
 			if(!website.equals("forcevote")) {
 				Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(event.getAward(), event.getPlayerName(), website), event.getPlayerName());
