@@ -159,17 +159,13 @@ public class VoteProcessor implements Runnable {
 			Utils.debugMessage("Running chance checks for rewards with chance...");
 
 			Utils.debugMessage("Sorting rewards with chance by rarity");
-			Collections.sort(rewardsWithChance, new Comparator<Award>() {
 
+			//arrange list by chance rarity
+			Collections.sort(rewardsWithChance, new Comparator<Award>() {
 				public int compare(Award a1, Award a2) {
 					return Float.compare(((float)a1.getChanceMin() / a1.getChanceMax()), ((float)a2.getChanceMin() / a2.getChanceMax()));
 				}
-
 			});
-
-			for(Reward reward : rewardsWithChance) {
-				System.out.println(reward.getName() + ": " + reward.getChanceMin() + " in " + reward.getChanceMax());
-			}
 
 			for(Reward reward: rewardsWithChance) {
 				Utils.debugMessage("Checking \"" + reward.getName() + "\" at " + reward.getChanceMin() + " in " + reward.getChanceMax());
