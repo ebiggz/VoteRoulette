@@ -2,10 +2,13 @@
 #General Settings#
 ##################
 
+## Whether or not to log to the console when a player votes.
+logToConsole: true
+
 ## Whether or not to send a message to a player when they vote.
 messagePlayer: true
 
-# Whether or not to broadcast to the server when a player votes.
+## Whether or not to broadcast to the server when a player votes.
 broadcastToServer: true
 
 ## If the above is true, should VoteRoulette only broadcast to server the votes from
@@ -15,10 +18,8 @@ onlyBroadcastOnlinePlayerVotes: false
 ## If broadcastToServer is set to true, this is the cooldown period (in minutes) before a 
 # players votes can be broadcasted to the server again. Useful if you have
 # many voting sites and arent using a vote threshold.
+# Setting to 0 disable this.
 broadcastCooldown: 0
-
-## Whether or not to log to the console when a player votes
-logToConsole: true
 
 ## Whether or not to have the periodic reminder enabled
 # You can change this reminder in the messages.yml file.
@@ -51,6 +52,12 @@ disableUnclaimedAwards: false
 ## Disable VoteRoulettes Inventory Protection and instead have items thrown on the ground
 # if a players inventory is full
 disableInventoryProtection: false
+
+## Set a limit on the amount of votes per day player is considered for awards.
+# Any votes past this limit will not update stats or give awards for the day.
+# This helps prevent users from racking up awards or stats illegitimately.
+# Setting to 0 disables this.
+voteLimit: 0
 
 ## Set which command alias you would like to be used
 # when VoteRoulette sends text to players.
@@ -196,4 +203,4 @@ blacklistedWorlds:
 ## Only disable the following if you know what you are doing.
 useUUIDs: true
 ## No need to touch this
-configVersion: 2.1
+configVersion: 2.2
