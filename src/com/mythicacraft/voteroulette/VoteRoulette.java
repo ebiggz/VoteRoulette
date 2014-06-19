@@ -90,6 +90,8 @@ public class VoteRoulette extends JavaPlugin {
 	public boolean REWARDS_ON_THRESHOLD;
 	public static boolean USE_DATABASE = false;
 	public static boolean USE_UUIDS;
+	public boolean HAS_VOTE_LIMIT = false;
+	public int VOTE_LIMIT;
 	public int VOTE_THRESHOLD;
 	public boolean MESSAGE_PLAYER;
 	public boolean BROADCAST_TO_SERVER;
@@ -128,6 +130,7 @@ public class VoteRoulette extends JavaPlugin {
 	public String SERVER_BROADCAST_MESSAGE;
 	public String SERVER_BROADCAST_MESSAGE_NO_AWARD;
 	public String PLAYER_VOTE_MESSAGE;
+	public String PLAYER_VOTE_MESSAGE_NO_AWARD;
 	public String PERIODIC_REMINDER;
 	public String TWENTYFOUR_REMINDER;
 	public List<String> VOTE_WEBSITES;
@@ -141,6 +144,7 @@ public class VoteRoulette extends JavaPlugin {
 	public String INVENTORY_FULL_NOTIFICATION;
 	public String NO_PERM_NOTIFICATION;
 	public String BASE_CMD_NOTIFICATION;
+	public String REACHED_LIMIT_NOTIFICATION;
 	public String REROLL_NOTIFICATION;
 	public String REROLL_FAILED_NOTIFICATION;
 	public String LAST_VOTE_SELF_CMD;
@@ -206,7 +210,7 @@ public class VoteRoulette extends JavaPlugin {
 		new Utils(this);
 
 		//check for 1.7
-		if(Bukkit.getBukkitVersion().contains("1.7")) {
+		if(!(Bukkit.getBukkitVersion().contains("1.6") || Bukkit.getBukkitVersion().contains("1.4") || Bukkit.getBukkitVersion().contains("1.5") || Bukkit.getBukkitVersion().contains("1.4") || Bukkit.getBukkitVersion().contains("1.3") || Bukkit.getBukkitVersion().contains("1.2") || Bukkit.getBukkitVersion().contains("1.1"))) {
 			isOn1dot7 = true;
 		}
 
@@ -249,15 +253,15 @@ public class VoteRoulette extends JavaPlugin {
 		}
 
 		//check file versions
-		if(CONFIG_VERSION != 2.1) {
+		if(CONFIG_VERSION != 2.2) {
 			log.warning("[VoteRoulette] It appears that your config is out of date. There may be new options! It's recommended that you take your old config out to let the new one save.");
 		}
 
-		if(MESSAGES_VERSION != 1.1) {
+		if(MESSAGES_VERSION != 1.2) {
 			log.warning("[VoteRoulette] It appears that your messages.yml file is out of date. There may be new options! It's recommended that you take your old messages file out to let the new one save.");
 		}
 
-		if(LOCALIZATIONS_VERSION != 1.4) {
+		if(LOCALIZATIONS_VERSION != 1.5) {
 			log.warning("[VoteRoulette] It appears that your localizations.yml file is out of date. There may be new options! It's recommended that you take your old localizations file out to let the new one save.");
 		}
 
@@ -460,6 +464,14 @@ public class VoteRoulette extends JavaPlugin {
 			USE_BROADCAST_COOLDOWN = true;
 		}
 
+		VOTE_LIMIT = getConfig().getInt("voteLimit", 0);
+
+		if(VOTE_LIMIT == 0) {
+			HAS_VOTE_LIMIT = false;
+		} else {
+			HAS_VOTE_LIMIT = true;
+		}
+
 		GUI_FOR_AWARDS = getConfig().getBoolean("GUI.awards.guiForAwards", true);
 
 		SHOW_COMMANDS_IN_AWARD = getConfig().getBoolean("GUI.awards.showCommands", false);
@@ -639,6 +651,9 @@ public class VoteRoulette extends JavaPlugin {
 
 		PLAYER_VOTE_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("player-reward-message"));
 
+		PLAYER_VOTE_MESSAGE_NO_AWARD = Utils.transcribeColorCodes(messageData.getConfig().getString("player-no-reward-message", "&bThanks for voting for &e%server% &bon %site%, &e%player%&b!"));
+
+
 		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("periodic-reminder").replace("%server%", Bukkit.getServerName()));
 
 		TWENTYFOUR_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("twentyfour-hour-reminder", "&b24 hours have passed since your last vote!"));
@@ -681,6 +696,8 @@ public class VoteRoulette extends JavaPlugin {
 		NO_UNCLAIMED_AWARDS_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("no-unclaimed-awards"));
 
 		BLACKLISTED_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("blacklisted-world"));
+
+		REACHED_LIMIT_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("reached-vote-limit", "%red%[VoteRoulette] You have reached the vote limit for today!"));
 
 		WRONG_AWARD_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("award-wrong-world"));
 
