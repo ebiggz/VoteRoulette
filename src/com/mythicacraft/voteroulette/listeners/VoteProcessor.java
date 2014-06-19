@@ -229,6 +229,14 @@ public class VoteProcessor implements Runnable {
 					milestonesNoChance.add(milestone);
 				}
 			}
+
+			//arrange list by chance rarity
+			Collections.sort(milestonesWithChance, new Comparator<Award>() {
+				public int compare(Award a1, Award a2) {
+					return Float.compare(((float)a1.getChanceMin() / a1.getChanceMax()), ((float)a2.getChanceMin() / a2.getChanceMax()));
+				}
+			});
+
 			for(Milestone milestone: milestonesWithChance) {
 				int random = 1 + (int)(Math.random() * ((milestone.getChanceMax() - 1) + 1));
 				if(random > milestone.getChanceMin()) continue;
