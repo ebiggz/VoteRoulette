@@ -18,10 +18,10 @@
 # and the player receives an award
 # Available variables:
 # %player%  - Player who is receiving the reward
-# %server%  - Name of the server
+# %server%  - Name of the server (Taken from the server.properties file)
 # %site%    - The website the player voted on
 # %type%    - The type of award, Reward/Milestone
-# %name%  - Name of the reward/milestone
+# %name%    - Name of the reward/milestone
 # %prizes%  - The stuff in the reward (money, xp levels, items)
 
 server-broadcast-message: "&b[&e%player%&b just voted for %server% on &e%site%&b and received the %type% &e%name%&b!]"
@@ -29,7 +29,7 @@ server-broadcast-message: "&b[&e%player%&b just voted for %server% on &e%site%&b
 ## The following is the message that everyone sees when a player votes and the player
 # didnt win anything.
 # Available variables:
-# %server%  - Name of the server
+# %server%  - Name of the server (Taken from the server.properties file)
 # %player%  - Player who voted
 # %site%    - The website the player voted on
 
@@ -37,13 +37,23 @@ server-broadcast-message-no-award: "&b[&e%player%&b just voted for %server% on &
 
 ## The following is the message the player sees when they receive an award.
 # Available variables:
-# %name%  - Name of the reward/milestone
+# %name%    - Name of the reward/milestone
 # %player%  - Player who is receiving the reward
 # %server%  - Name of the server (Taken from the server.properties file)
 # %type%    - The type of award, Reward/Milestone
 # %prizes%  - The stuff in the reward (money, xp levels, items)
 
 player-reward-message: "&bYou have received the %type% &e%name% &bwhich gave you:&e %prizes%"
+
+## The following is the message that the players sees when they vote but
+# didnt win anything.
+# Available variables:
+# %server%  - Name of the server (Taken from the server.properties file)
+# %player%  - Player who voted
+# %site%    - The website the player voted on
+# %cycle%   - The players current vote cycle, for when a vote threshold is used.
+
+player-no-reward-message: "&bThanks for voting for &e%server% &bon %site%, &e%player%&b!"
 
 ## The following is the message that is broadcasted if usePeriodicReminder is set to true
 # in the config.yml file. You can also set how often it broadcasts there.
@@ -82,4 +92,4 @@ vote-websites:
 
 #########################################
 # No need to touch this
-config-version: 1.1
+config-version: 1.2
