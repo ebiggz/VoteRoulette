@@ -33,6 +33,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.material.SpawnEgg;
 import org.bukkit.potion.Potion;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -87,6 +88,13 @@ public class Utils {
 			}
 			if(im.hasDisplayName()) {
 				im.setDisplayName(im.getDisplayName().replace("%player%", playerName));
+			}
+			if(item.getType() == Material.SKULL_ITEM && item.getDurability() == 3 /*playerhead*/) {
+				SkullMeta sim = (SkullMeta) im;
+				if(sim.hasOwner()) {
+					sim.setOwner(sim.getOwner().replace("%player%", playerName));
+					im = sim;
+				}
 			}
 			item.setItemMeta(im);
 		}
