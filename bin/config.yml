@@ -53,7 +53,7 @@ disableUnclaimedAwards: false
 # if a players inventory is full
 disableInventoryProtection: false
 
-## Set a limit on the amount of votes per day player is considered for awards.
+## Set a limit on the amount of votes per day a player is considered for awards.
 # Any votes past this limit will not update stats or give awards for the day.
 # This helps prevent users from racking up awards or stats illegitimately.
 # Setting to 0 disables this.
