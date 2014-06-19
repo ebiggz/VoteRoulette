@@ -28,15 +28,27 @@ class StatUpdater implements Runnable {
 		if(VoteRoulette.USE_DATABASE)  {
 
 		} else {
-			File[] files = new File(Bukkit.getPluginManager().getPlugin("VoteRoulette").getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata").listFiles();
+			String pluginFolder = Bukkit.getPluginManager().getPlugin("VoteRoulette").getDataFolder().getAbsolutePath();
+			String filePath = "";
+			if(VoteRoulette.USE_UUIDS) {
+				filePath = "data" + File.separator + "playerdata";
+			} else {
+				filePath = "data" + File.separator + "players";
+			}
+			File[] files = new File(pluginFolder + File.separator + filePath).listFiles();
 			if(files != null && files.length != 0) {
 				for (File file : files) {
 					if (file.isFile()) {
 						if(file.isHidden()) continue;
 						if(file.getName().endsWith(".yml")) {
-							String uuid = file.getName();
-							ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid);
-							Voter voter = vm.getVoter(playerCfg.getConfig().getString("name", ""));
+							String fileID = file.getName();
+							ConfigAccessor playerCfg = new ConfigAccessor(filePath + File.separator + fileID);
+							Voter voter;
+							if(VoteRoulette.USE_UUIDS) {
+								voter = vm.getVoter(playerCfg.getConfig().getString("name", ""));
+							} else {
+								voter = vm.getVoter(fileID.replace(".yml", ""));
+							}
 							if(voter.isReal()) {
 								stats.add(new VoteStat(voter));
 							}
