@@ -184,6 +184,13 @@ public class Utils {
 		}
 	}
 
+	public static void sendMessageToPlayer(String message, String playerName) {
+		@SuppressWarnings("deprecation")
+		Player player = Bukkit.getPlayerExact(playerName);
+		if(player == null) return;
+		player.sendMessage(message);
+	}
+
 	public static void broadcastMessageToServer(String message, String exemptPlayer) {
 		if(plugin.BROADCAST_TO_SERVER) {
 			if(plugin.ONLY_BROADCAST_ONLINE && !Utils.playerIsOnline(exemptPlayer)) return;
