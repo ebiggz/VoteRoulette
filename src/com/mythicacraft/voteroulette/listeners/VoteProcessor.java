@@ -2,6 +2,7 @@ package com.mythicacraft.voteroulette.listeners;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -156,16 +157,28 @@ public class VoteProcessor implements Runnable {
 			Utils.debugMessage(rewardsNoChance.size() + " dont have chance.");
 
 			Utils.debugMessage("Running chance checks for rewards with chance...");
-			Collections.shuffle(rewardsWithChance);
-			Utils.debugMessage("Shuffling rewards with chance");
+
+			Utils.debugMessage("Sorting rewards with chance by rarity");
+			Collections.sort(rewardsWithChance, new Comparator<Award>() {
+
+				public int compare(Award a1, Award a2) {
+					return Float.compare(((float)a1.getChanceMin() / a1.getChanceMax()), ((float)a2.getChanceMin() / a2.getChanceMax()));
+				}
+
+			});
+
+			for(Reward reward : rewardsWithChance) {
+				System.out.println(reward.getName() + ": " + reward.getChanceMin() + " in " + reward.getChanceMax());
+			}
+
 			for(Reward reward: rewardsWithChance) {
 				Utils.debugMessage("Checking \"" + reward.getName() + "\" at " + reward.getChanceMin() + " in " + reward.getChanceMax());
 				int random = 1 + (int)(Math.random() * ((reward.getChanceMax() - 1) + 1));
 				if(random > reward.getChanceMin()) {
-					Utils.debugMessage("Failed. (" + random + ")");
+					Utils.debugMessage("Failed (" + random + ").");
 					continue;
 				}
-				Utils.debugMessage("Passed. Administering \"" + reward.getName() + "\" to " + playerName);
+				Utils.debugMessage("Passed (" + random + "). Administering \"" + reward.getName() + "\" to " + playerName);
 				playerEarnAward(playerName, reward);
 				return;
 			}
