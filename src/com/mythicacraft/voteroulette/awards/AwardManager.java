@@ -60,7 +60,7 @@ public class AwardManager {
 
 		if(player == null) {
 			Utils.debugMessage(playerName + " isnt online. Saving as unclaimed.");
-			voter.saveUnclaimedReward(award.getName());
+			voter.saveUnclaimedAward(award);
 			return;
 		}
 
@@ -68,14 +68,14 @@ public class AwardManager {
 
 		if(Utils.worldIsBlacklisted(worldName)) {
 			Utils.debugMessage(playerName + " is in blacklisted world. Saving as unclaimed.");
-			voter.saveUnclaimedReward(award.getName());
+			voter.saveUnclaimedAward(award);
 			player.sendMessage(plugin.BLACKLISTED_WORLD_NOTIFICATION.replace("%type%", "award"));
 			return;
 		}
 		if(award.hasWorlds()) {
 			if(!award.getWorlds().contains(worldName)) {
 				Utils.debugMessage(playerName + " isn't in specific award world. Saving as unclaimed.");
-				voter.saveUnclaimedReward(award.getName());
+				voter.saveUnclaimedAward(award);
 				player.sendMessage(plugin.WRONG_AWARD_WORLD_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()).replace("%worlds%", Utils.worldsString(award.getWorlds())));
 				return;
 			}
@@ -112,7 +112,7 @@ public class AwardManager {
 					}.init(player, items), 1L);
 
 				} else {
-					voter.saveUnclaimedReward(award.getName());
+					voter.saveUnclaimedAward(award);
 					player.sendMessage(plugin.INVENTORY_FULL_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()).replace("%slots%", Integer.toString(award.getRequiredSlots())));
 					return;
 				}
@@ -180,7 +180,7 @@ public class AwardManager {
 		if(award.hasReroll()) {
 			Utils.debugMessage("Award has reroll settings, rolling");
 			player.sendMessage(plugin.REROLL_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()));
-			if(!rerollReward(award.getReroll(), player)) {
+			if(!rerollReward(award.getReroll(), player, award)) {
 				log.warning("[VoteRoulette] There was an error when doing the reroll settings in award " + award.getName() + " for the player " + player.getName() + ", was the reroll award spelled correctly?");
 			}
 		}
@@ -407,7 +407,7 @@ public class AwardManager {
 		return rewardsArray;
 	}
 
-	private boolean rerollReward(String reroll, Player player) {
+	private boolean rerollReward(String reroll, Player player, Award origAward) {
 		int chanceMin = 0;
 		int chanceMax = 100;
 		boolean useCustomChance = false;
@@ -439,7 +439,17 @@ public class AwardManager {
 		Award award;
 		if(name.equals("ANY")) {
 			Random rand = new Random();
-			award = rewards.get(rand.nextInt(rewards.size()));
+			if(origAward.getAwardType() == AwardType.REWARD) {
+				ArrayList<Reward> tempRewards = new ArrayList<Reward>();
+				Reward origReward = (Reward) origAward;
+				for(Reward reward : rewards) {
+					if(reward == origReward) continue;
+					tempRewards.add(reward);
+				}
+				award = tempRewards.get(rand.nextInt(tempRewards.size()));
+			} else {
+				award = rewards.get(rand.nextInt(rewards.size()));
+			}
 		} else {
 			award = getAwardByName(name, AwardType.REWARD);
 		}
