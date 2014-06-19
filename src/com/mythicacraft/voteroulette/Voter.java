@@ -14,6 +14,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.Plugin;
 
+import com.mythicacraft.voteroulette.awards.Award;
+import com.mythicacraft.voteroulette.awards.Award.AwardType;
 import com.mythicacraft.voteroulette.awards.Milestone;
 import com.mythicacraft.voteroulette.awards.Reward;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
@@ -323,6 +325,54 @@ public class Voter {
 		}
 	}
 
+	public boolean lastVoteWasToday() {
+
+		Calendar cal = Calendar.getInstance();
+
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy");
+
+		String currentTime = sdf.format(cal.getTime());
+
+		Date last = null;
+		Date current = new Date();
+
+		try {
+			last = sdf.parse(getLastVoteTimeStamp());
+			current = sdf.parse(currentTime);
+			if(current.after(last)) {
+				return false;
+			} else {
+				return true;
+			}
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	public void updateTimedStats() {
+		if(!lastVoteWasToday()) {
+			setVotesForTheDay(0);
+		}
+	}
+
+	public void setVotesForTheDay(int count) {
+		ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+		playerCfg.getConfig().set("votesToday", count);
+		playerCfg.saveConfig();
+	}
+
+	public int getVotesForTheDay() {
+		int votesToday;
+		if(VoteRoulette.USE_DATABASE) {
+			//place holder for db code
+			votesToday = 0;
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			votesToday = playerCfg.getConfig().getInt("votesToday", 0);
+		}
+		return votesToday;
+	}
+
 	public void saveUnclaimedReward(String rewardName) {
 		if(!VoteRoulette.DISABLE_UNCLAIMED) {
 			if(VoteRoulette.USE_DATABASE) {
@@ -407,6 +457,18 @@ public class Voter {
 			milestonesList.add(milestoneName);
 			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
 			playerCfg.saveConfig();
+		}
+	}
+
+	public void saveUnclaimedAward(Award award) {
+		if(VoteRoulette.USE_DATABASE) {
+			//place holder for db code
+		} else {
+			if(award.getAwardType() == AwardType.REWARD) {
+				this.saveUnclaimedReward(award.getName());
+			} else {
+				this.saveUnclaimedMilestone(award.getName());
+			}
 		}
 	}
 
