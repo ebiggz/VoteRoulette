@@ -403,8 +403,7 @@ public class Voter {
 			//place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-			List<String> milestonesList = awardsData.getConfig().getStringList("unclaimedMilestones");
+			List<String> milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
 			milestonesList.add(milestoneName);
 			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
 			playerCfg.saveConfig();
