@@ -1,0 +1,74 @@
+main: com.mythicacraft.voteroulette.VoteRoulette
+name: VoteRoulette
+version: 2.3
+author: ebiggz
+description: A listener for Votifier that gives randomized rewards
+softdepends: [Vault, Votifier]
+commands:
+    voteroulette:
+        description: Access to VoteRoulette commands.
+        usage: /<command> ?
+        aliases: [vr, vtr]
+    votelinks:
+        description: Shows list of voting sites.
+        usage: /<command>
+        aliases: [vote, votesites]
+permissions:
+    voteroulette.top10:
+        default: true
+    voteroulette.viewstats:
+        default: true
+    voteroulette.viewrewards:
+        default: true
+    voteroulette.viewallawards:
+        default: false
+    voteroulette.viewmilestones:
+        default: true
+    voteroulette.votecommand:
+        default: true
+    voteroulette.lastvote:
+        default: true
+    voteroulette.claimall:
+        default: true
+    voteroulette.viewotherstats:
+        default: false
+    voteroulette.editstats:
+        default: false
+    voteroulette.forcevote:
+        default: false
+    voteroulette.forceawards:
+        default: false
+    voteroulette.lastvoteothers:
+        default: false
+    voteroulette.remind:
+        default: false
+    voteroulette.wipestats:
+        default: false
+    voteroulette.colors:
+        default: false
+    voteroulette.createawards:
+        default: false
+    voteroulette.deleteawards:
+        default: false
+    voteroulette.edititems:
+        default: false
+        children:
+            voteroulette.colors: true
+    voteroulette.admin:
+        default: false
+        children:
+            voteroulette.viewallawards: true
+            voteroulette.viewotherstats: true
+            voteroulette.editstats: true
+            voteroulette.forcevote: true
+            voteroulette.lastvoteothers: true
+            voteroulette.remind: true
+            voteroulette.wipestats: true
+            voteroulette.forceawards: true
+            voteroulette.createawards: true
+            voteroulette.deleteawards: true
+            voteroulette.edititems: true
+    voteroulette.*:
+        default: op
+        children:
+            voteroulette.admin: true
