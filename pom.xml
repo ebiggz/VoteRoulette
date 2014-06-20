@@ -4,6 +4,19 @@
   <artifactId>VoteRoulette</artifactId>
   <version>2.3</version>
   <name>VoteRoulette</name>
+  <repositories>
+<repository>
+<id>bukkit-repo</id>
+<url>http://repo.bukkit.org/content/groups/public/</url>
+</repository>
+</repositories>
+<dependencies>
+<dependency>
+<groupId>org.bukkit</groupId>
+<artifactId>bukkit</artifactId>
+<version>1.7.2-R0.1-SNAPSHOT</version>
+</dependency>
+</dependencies>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
