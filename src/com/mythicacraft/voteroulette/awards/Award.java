@@ -179,7 +179,7 @@ public class Award {
 	}
 
 	public enum AwardType {
-		REWARD, MILESTONE, VOTESTREAK
+		REWARD, MILESTONE
 	}
 	public double getCurrency() {
 		return currency;

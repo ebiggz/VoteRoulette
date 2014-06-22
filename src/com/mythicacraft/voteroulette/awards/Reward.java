@@ -14,6 +14,7 @@ public class Reward extends Award{
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private List<String> websites = new ArrayList<String>();
 	private int voteStreak = 0;
+	private int voteStreakMax = 0;
 	private VoteStreakModifier vsModifier = VoteStreakModifier.NONE;
 
 	public Reward(String name, ConfigurationSection cs) {
@@ -56,7 +57,7 @@ public class Reward extends Award{
 	}
 
 	public enum VoteStreakModifier {
-		OR_LESS, OR_MORE, NONE
+		OR_LESS, OR_MORE, RANGE, NONE
 	}
 
 	public boolean hasWebsites() {
