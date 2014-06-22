@@ -12,7 +12,8 @@ import org.bukkit.plugin.Plugin;
 
 public class ConfigAccessor {
 
-	private Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("VoteRoulette");
+	private Plugin plugin = Bukkit.getServer().getPluginManager()
+	        .getPlugin("VoteRoulette");
 	private final String fileName;
 	private File configFile;
 	private FileConfiguration fileConfiguration;
@@ -32,10 +33,11 @@ public class ConfigAccessor {
 		// Look for defaults in the jar
 		InputStream defConfigStream = plugin.getResource(fileName);
 		if (defConfigStream != null) {
-			YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+			YamlConfiguration defConfig = YamlConfiguration
+			        .loadConfiguration(defConfigStream);
 			fileConfiguration.setDefaults(defConfig);
 			try {
-				//fileConfiguration.save(configFile);
+				// fileConfiguration.save(configFile);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -56,7 +58,8 @@ public class ConfigAccessor {
 			try {
 				getConfig().save(configFile);
 			} catch (IOException ex) {
-				plugin.getLogger().log(Level.SEVERE, "Could not save config to " + configFile, ex);
+				plugin.getLogger().log(Level.SEVERE,
+				        "Could not save config to " + configFile, ex);
 			}
 		}
 	}

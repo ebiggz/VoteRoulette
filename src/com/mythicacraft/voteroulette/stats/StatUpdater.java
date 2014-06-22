@@ -13,7 +13,6 @@ import com.mythicacraft.voteroulette.Voter;
 import com.mythicacraft.voteroulette.VoterManager;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 
-
 class StatUpdater implements Runnable {
 
 	VoterManager vm = VoteRoulette.getVoterManager();
@@ -23,33 +22,40 @@ class StatUpdater implements Runnable {
 
 	@Override
 	public void run() {
-		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator + "stats.yml");
+		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator
+		        + "stats.yml");
 		List<VoteStat> stats = new ArrayList<VoteStat>();
-		if(VoteRoulette.USE_DATABASE)  {
+		if (VoteRoulette.USE_DATABASE) {
 
 		} else {
-			String pluginFolder = Bukkit.getPluginManager().getPlugin("VoteRoulette").getDataFolder().getAbsolutePath();
+			String pluginFolder = Bukkit.getPluginManager()
+			        .getPlugin("VoteRoulette").getDataFolder()
+			        .getAbsolutePath();
 			String filePath = "";
-			if(VoteRoulette.USE_UUIDS) {
+			if (VoteRoulette.USE_UUIDS) {
 				filePath = "data" + File.separator + "playerdata";
 			} else {
 				filePath = "data" + File.separator + "players";
 			}
-			File[] files = new File(pluginFolder + File.separator + filePath).listFiles();
-			if(files != null && files.length != 0) {
+			File[] files = new File(pluginFolder + File.separator + filePath)
+			        .listFiles();
+			if (files != null && files.length != 0) {
 				for (File file : files) {
 					if (file.isFile()) {
-						if(file.isHidden()) continue;
-						if(file.getName().endsWith(".yml")) {
+						if (file.isHidden())
+							continue;
+						if (file.getName().endsWith(".yml")) {
 							String fileID = file.getName();
-							ConfigAccessor playerCfg = new ConfigAccessor(filePath + File.separator + fileID);
+							ConfigAccessor playerCfg = new ConfigAccessor(
+							        filePath + File.separator + fileID);
 							Voter voter;
-							if(VoteRoulette.USE_UUIDS) {
-								voter = vm.getVoter(playerCfg.getConfig().getString("name", ""));
+							if (VoteRoulette.USE_UUIDS) {
+								voter = vm.getVoter(playerCfg.getConfig()
+								        .getString("name", ""));
 							} else {
 								voter = vm.getVoter(fileID.replace(".yml", ""));
 							}
-							if(voter.isReal()) {
+							if (voter.isReal()) {
 								stats.add(new VoteStat(voter));
 							}
 						}
@@ -58,31 +64,37 @@ class StatUpdater implements Runnable {
 			}
 		}
 
-		Collections.sort(stats, new Comparator<VoteStat>(){
+		Collections.sort(stats, new Comparator<VoteStat>() {
+
+			@Override
 			public int compare(VoteStat v1, VoteStat v2) {
 				return v2.getLifetimeVotes() - v1.getLifetimeVotes();
 			}
 		});
 
-		//clear stats
+		// clear stats
 		statsData.getConfig().set("vote-totals.lifetime", null);
 		statsData.saveConfig();
 
-		//add stats for top timetime votes
+		// add stats for top timetime votes
 		int count = 0;
-		for(VoteStat stat : stats) {
-			if(count != 10) {
-				statsData.getConfig().set("vote-totals.lifetime." + stat.getPlayerName(), stat.getLifetimeVotes());
+		for (VoteStat stat : stats) {
+			if (count != 10) {
+				statsData.getConfig().set(
+				        "vote-totals.lifetime." + stat.getPlayerName(),
+				        stat.getLifetimeVotes());
 				count++;
 			} else {
 				break;
 			}
 		}
 
-		//add stats for top longest streaks
+		// add stats for top longest streaks
 		count = 0;
 		statsData.saveConfig();
-		Collections.sort(stats, new Comparator<VoteStat>(){
+		Collections.sort(stats, new Comparator<VoteStat>() {
+
+			@Override
 			public int compare(VoteStat v1, VoteStat v2) {
 				return v2.getLongestVoteStreak() - v1.getLongestVoteStreak();
 			}
@@ -90,9 +102,11 @@ class StatUpdater implements Runnable {
 
 		statsData.getConfig().set("vote-streaks.longest", null);
 		statsData.saveConfig();
-		for(VoteStat stat : stats) {
-			if(count != 10) {
-				statsData.getConfig().set("vote-streaks.longest." + stat.getPlayerName(), stat.getLongestVoteStreak());
+		for (VoteStat stat : stats) {
+			if (count != 10) {
+				statsData.getConfig().set(
+				        "vote-streaks.longest." + stat.getPlayerName(),
+				        stat.getLongestVoteStreak());
 				count++;
 			} else {
 				break;

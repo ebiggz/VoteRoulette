@@ -22,16 +22,16 @@ import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.UUIDFetcher;
 import com.mythicacraft.voteroulette.utils.Utils;
 
-
 public class Voter {
 
-	private Plugin plugin = Bukkit.getServer().getPluginManager().getPlugin("VoteRoulette");
+	private Plugin plugin = Bukkit.getServer().getPluginManager()
+	        .getPlugin("VoteRoulette");
 	private UUID uuid;
 	private boolean isReal;
 	private String filePath;
 
 	public Voter(String playerName) {
-		if(VoteRoulette.USE_UUIDS) {
+		if (VoteRoulette.USE_UUIDS) {
 			UUID id;
 			try {
 				id = UUIDFetcher.getUUIDOf(playerName);
@@ -39,23 +39,28 @@ public class Voter {
 				isReal = false;
 				return;
 			}
-			if(id != null) {
+			if (id != null) {
 				this.uuid = id;
 				isReal = true;
-				filePath = "data" + File.separator + "playerdata" + File.separator + id.toString() + ".yml";
-				createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata", id.toString() + ".yml");
+				filePath = "data" + File.separator + "playerdata"
+				        + File.separator + id.toString() + ".yml";
+				createFile(plugin.getDataFolder().getAbsolutePath()
+				        + File.separator + "data" + File.separator
+				        + "playerdata", id.toString() + ".yml");
 				this.setPlayerName(playerName);
 				return;
 			}
 			isReal = false;
 		} else {
-			filePath = "data" + File.separator + "players" + File.separator + playerName + ".yml";
-			createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "players", playerName + ".yml");
+			filePath = "data" + File.separator + "players" + File.separator
+			        + playerName + ".yml";
+			createFile(plugin.getDataFolder().getAbsolutePath()
+			        + File.separator + "data" + File.separator + "players",
+			        playerName + ".yml");
 			this.setPlayerName(playerName);
 			isReal = true;
 		}
 	}
-
 
 	public UUID getUUID() {
 		return uuid;
@@ -70,7 +75,7 @@ public class Voter {
 	}
 
 	public void wipeStat(Stat stat) {
-		switch(stat) {
+		switch (stat) {
 		case ALL:
 			setCurrentVoteCycle(0);
 			setCurrentVoteStreak(0);
@@ -108,8 +113,8 @@ public class Voter {
 
 	public int getLifetimeVotes() {
 		int lifetimeVotes;
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 			lifetimeVotes = 0;
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
@@ -119,8 +124,8 @@ public class Voter {
 	}
 
 	public void setCurrentVoteStreak(int voteStreak) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("currentVoteStreak", voteStreak);
@@ -130,8 +135,8 @@ public class Voter {
 
 	public int getCurrentVoteStreak() {
 		int voteStreak;
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 			voteStreak = 0;
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
@@ -141,8 +146,8 @@ public class Voter {
 	}
 
 	public void setLongestVoteStreak(int voteStreak) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("longestVoteStreak", voteStreak);
@@ -152,8 +157,8 @@ public class Voter {
 
 	public int getLongestVoteStreak() {
 		int voteStreak;
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 			voteStreak = 0;
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
@@ -164,11 +169,11 @@ public class Voter {
 
 	public boolean hasntVotedInADay() {
 		String lastVoteTimeStamp = getLastVoteTimeStamp();
-		if(lastVoteTimeStamp.equals("")) {
+		if (lastVoteTimeStamp.equals("")) {
 			return false;
 		}
 		int hours = getHoursSince(lastVoteTimeStamp);
-		if(hours >= 24) {
+		if (hours >= 24) {
 			return true;
 		} else {
 			return false;
@@ -177,8 +182,8 @@ public class Voter {
 
 	public void saveLastVoteTimeStamp() {
 		String timeStamp = Utils.getTime();
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("lastVote", timeStamp);
@@ -187,8 +192,8 @@ public class Voter {
 	}
 
 	public void setLastVoteTimeStamp(String timeStamp) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("lastVote", timeStamp);
@@ -197,8 +202,8 @@ public class Voter {
 	}
 
 	public void setPlayerName(String name) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("name", name);
@@ -208,8 +213,8 @@ public class Voter {
 
 	public String getPlayerName() {
 		String name = "";
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			name = playerCfg.getConfig().getString("name", "");
@@ -219,8 +224,8 @@ public class Voter {
 
 	public String getLastVoteTimeStamp() {
 		String timeStamp = "";
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			timeStamp = playerCfg.getConfig().getString("lastVote", "");
@@ -229,12 +234,13 @@ public class Voter {
 	}
 
 	public boolean hasLastVoteTimeStamp() {
-		if(VoteRoulette.USE_DATABASE) {
+		if (VoteRoulette.USE_DATABASE) {
 			return false;
-			//place holder for db code
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			if(playerCfg.getConfig().contains("lastVote")) return true;
+			if (playerCfg.getConfig().contains("lastVote"))
+				return true;
 			return false;
 		}
 	}
@@ -243,7 +249,8 @@ public class Voter {
 
 		Calendar cal = Calendar.getInstance();
 
-		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a", Locale.ENGLISH);
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a",
+		        Locale.ENGLISH);
 
 		String currentTime = sdf.format(cal.getTime());
 
@@ -258,16 +265,16 @@ public class Voter {
 
 		Long differnceInMills = date2.getTime() - date1.getTime();
 
-		long timeInMinutes = differnceInMills/60000;
+		long timeInMinutes = differnceInMills / 60000;
 		int totalMinutes = (int) timeInMinutes;
 
-		return totalMinutes/60;
+		return totalMinutes / 60;
 	}
 
 	public int getCurrentVoteCycle() {
 		int voteCycle;
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 			voteCycle = 0;
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
@@ -277,8 +284,8 @@ public class Voter {
 	}
 
 	public void setLifetimeVotes(int lifetimeVotes) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("lifetimeVotes", lifetimeVotes);
@@ -287,8 +294,8 @@ public class Voter {
 	}
 
 	public void setCurrentVoteCycle(int currentCycle) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("currentCycle", currentCycle);
@@ -305,24 +312,23 @@ public class Voter {
 		setLifetimeVotes(newLifetime);
 		setCurrentVoteCycle(getCurrentVoteCycle() + 1);
 
-
 		int hoursSince = getHoursSince(getLastVoteTimeStamp());
 
 		Utils.debugMessage("Hours since last vote: " + hoursSince);
 
-		if(hoursSince >= 23 && hoursSince < 48) {
+		if (hoursSince >= 23 && hoursSince < 48) {
 			int newVoteStreak = getCurrentVoteStreak() + 1;
 			Utils.debugMessage("New vote streak: " + newVoteStreak);
 			setCurrentVoteStreak(newVoteStreak);
-			if(newVoteStreak > getLongestVoteStreak()){
+			if (newVoteStreak > getLongestVoteStreak()) {
 				Utils.debugMessage("Is now the longest");
 				setLongestVoteStreak(newVoteStreak);
 			}
-		}
-		else if(hoursSince >= 48) {
-			Utils.debugMessage("Broke vote streak");
-			setCurrentVoteStreak(1);
-		}
+		} else
+			if (hoursSince >= 48) {
+				Utils.debugMessage("Broke vote streak");
+				setCurrentVoteStreak(1);
+			}
 	}
 
 	public boolean lastVoteWasToday() {
@@ -339,7 +345,7 @@ public class Voter {
 		try {
 			last = sdf.parse(getLastVoteTimeStamp());
 			current = sdf.parse(currentTime);
-			if(current.after(last)) {
+			if (current.after(last)) {
 				return false;
 			} else {
 				return true;
@@ -350,7 +356,7 @@ public class Voter {
 	}
 
 	public void updateTimedStats() {
-		if(!lastVoteWasToday()) {
+		if (!lastVoteWasToday()) {
 			setVotesForTheDay(0);
 		}
 	}
@@ -363,8 +369,8 @@ public class Voter {
 
 	public int getVotesForTheDay() {
 		int votesToday;
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 			votesToday = 0;
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
@@ -374,12 +380,13 @@ public class Voter {
 	}
 
 	public void saveUnclaimedReward(String rewardName) {
-		if(!VoteRoulette.DISABLE_UNCLAIMED) {
-			if(VoteRoulette.USE_DATABASE) {
-				//place holder for db code
+		if (!VoteRoulette.DISABLE_UNCLAIMED) {
+			if (VoteRoulette.USE_DATABASE) {
+				// place holder for db code
 			} else {
 				ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-				List<String> rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
+				List<String> rewardsList = playerCfg.getConfig().getStringList(
+				        "unclaimedRewards");
 				rewardsList.add(rewardName);
 				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
 				playerCfg.saveConfig();
@@ -388,12 +395,13 @@ public class Voter {
 	}
 
 	public void removeUnclaimedReward(String rewardName) {
-		if(!VoteRoulette.DISABLE_UNCLAIMED) {
-			if(VoteRoulette.USE_DATABASE) {
-				//place holder for db code
+		if (!VoteRoulette.DISABLE_UNCLAIMED) {
+			if (VoteRoulette.USE_DATABASE) {
+				// place holder for db code
 			} else {
 				ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-				List<String> rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
+				List<String> rewardsList = playerCfg.getConfig().getStringList(
+				        "unclaimedRewards");
 				rewardsList.remove(rewardName);
 				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
 				playerCfg.saveConfig();
@@ -402,8 +410,8 @@ public class Voter {
 	}
 
 	public void removeUnclaimedRewards() {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("unclaimedRewards", null);
@@ -414,19 +422,22 @@ public class Voter {
 	public List<Reward> getUnclaimedRewards() {
 		List<String> rewardsList = new ArrayList<String>();
 
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
+			rewardsList = playerCfg.getConfig().getStringList(
+			        "unclaimedRewards");
 		}
 
 		List<Reward> rewards = new ArrayList<Reward>();
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Rewards");
-		if(cs != null) {
-			for(String rewardName : rewardsList) {
-				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
+		ConfigurationSection cs = awardsData.getConfig()
+		        .getConfigurationSection("Rewards");
+		if (cs != null) {
+			for (String rewardName : rewardsList) {
+				ConfigurationSection rewardOptions = cs
+				        .getConfigurationSection(rewardName);
 				if (rewardOptions != null) {
 					rewards.add(new Reward(rewardName, rewardOptions));
 				} else {
@@ -436,24 +447,27 @@ public class Voter {
 		}
 		return rewards;
 	}
+
 	public int getUnclaimedRewardCount() {
 		List<String> rewardsList = new ArrayList<String>();
 
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
+			rewardsList = playerCfg.getConfig().getStringList(
+			        "unclaimedRewards");
 		}
 		return rewardsList.size();
 	}
 
 	public void saveUnclaimedMilestone(String milestoneName) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			List<String> milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
+			List<String> milestonesList = playerCfg.getConfig().getStringList(
+			        "unclaimedMilestones");
 			milestonesList.add(milestoneName);
 			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
 			playerCfg.saveConfig();
@@ -461,10 +475,10 @@ public class Voter {
 	}
 
 	public void saveUnclaimedAward(Award award) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
-			if(award.getAwardType() == AwardType.REWARD) {
+			if (award.getAwardType() == AwardType.REWARD) {
 				this.saveUnclaimedReward(award.getName());
 			} else {
 				this.saveUnclaimedMilestone(award.getName());
@@ -473,11 +487,12 @@ public class Voter {
 	}
 
 	public void removeUnclaimedMilestone(String milestoneName) {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			List<String> milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
+			List<String> milestonesList = playerCfg.getConfig().getStringList(
+			        "unclaimedMilestones");
 			milestonesList.remove(milestoneName);
 			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
 			playerCfg.saveConfig();
@@ -485,8 +500,8 @@ public class Voter {
 	}
 
 	public void removeUnclaimedMilestones() {
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
 			playerCfg.getConfig().set("unclaimedMilestones", null);
@@ -497,11 +512,12 @@ public class Voter {
 	public int getUnclaimedMilestoneCount() {
 		List<String> milestonesList = new ArrayList<String>();
 
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
+			milestonesList = playerCfg.getConfig().getStringList(
+			        "unclaimedMilestones");
 		}
 		return milestonesList.size();
 	}
@@ -509,22 +525,26 @@ public class Voter {
 	public List<Milestone> getUnclaimedMilestones() {
 		List<String> milestonesList = new ArrayList<String>();
 
-		if(VoteRoulette.USE_DATABASE) {
-			//place holder for db code
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
+			milestonesList = playerCfg.getConfig().getStringList(
+			        "unclaimedMilestones");
 		}
 
 		List<Milestone> milestones = new ArrayList<Milestone>();
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Milestones");
+		ConfigurationSection cs = awardsData.getConfig()
+		        .getConfigurationSection("Milestones");
 
-		if(cs != null) {
-			for(String milestoneName : milestonesList) {
-				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
+		if (cs != null) {
+			for (String milestoneName : milestonesList) {
+				ConfigurationSection milestoneOptions = cs
+				        .getConfigurationSection(milestoneName);
 				if (milestoneOptions != null) {
-					milestones.add(new Milestone(milestoneName, milestoneOptions));
+					milestones.add(new Milestone(milestoneName,
+					        milestoneOptions));
 				} else {
 					removeUnclaimedMilestone(milestoneName);
 				}
@@ -540,7 +560,8 @@ public class Voter {
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
-				plugin.getLogger().info("Created new player file: \"" + fileName + "\".");
+				plugin.getLogger().info(
+				        "Created new player file: \"" + fileName + "\".");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

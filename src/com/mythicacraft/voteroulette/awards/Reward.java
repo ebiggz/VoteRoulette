@@ -8,8 +8,7 @@ import java.util.regex.Pattern;
 
 import org.bukkit.configuration.ConfigurationSection;
 
-
-public class Reward extends Award{
+public class Reward extends Award {
 
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private List<String> websites = new ArrayList<String>();
@@ -21,32 +20,48 @@ public class Reward extends Award{
 
 		super(name, cs, AwardType.REWARD);
 
-		if(cs.contains("websites")) {
+		if (cs.contains("websites")) {
 			try {
 				String websitesStr = cs.getString("websites");
 				String[] websitesArray = websitesStr.split(",");
-				for(String website : websitesArray) {
+				for (String website : websitesArray) {
 					websites.add(website.trim());
 				}
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading websites for reward:" + name + ", Skipping websites.");
+				log.warning("[VoteRoulette] Error loading websites for reward:"
+						+ name + ", Skipping websites.");
 			}
 		}
-		if(cs.contains("voteStreak")) {
-			String voteStringInfo  = cs.getString("voteStreak").toLowerCase();
-			Pattern p = Pattern.compile("\\d+");
-			Matcher m = p.matcher(voteStringInfo);
-			if(m.find()) {
+		if (cs.contains("voteStreak")) {
+			String voteStringInfo = cs.getString("voteStreak").toLowerCase();
+
+			if(voteStringInfo.contains("-")) {
+				String[] split = voteStringInfo.split("-");
 				try {
-					voteStreak = Integer.parseInt(m.group());
-					if(voteStringInfo.contains("or more")) {
-						vsModifier = VoteStreakModifier.OR_MORE;
-					}
-					else if(voteStringInfo.contains("or less")) {
-						vsModifier = VoteStreakModifier.OR_LESS;
-					}
+					voteStreak = Integer.parseInt(split[0].trim());
+					voteStreakMax = Integer.parseInt(split[1].trim());
+					vsModifier = VoteStreakModifier.RANGE;
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] Error loading vote streak settings for reward:" + name + ", Skipping vote streak.");
+					log.warning("[VoteRoulette] Error loading vote streak settings for reward:"
+							+ name + ", Skipping vote streak.");
+				}
+			} else {
+
+				Pattern p = Pattern.compile("\\d+");
+				Matcher m = p.matcher(voteStringInfo);
+				if (m.find()) {
+					try {
+						voteStreak = Integer.parseInt(m.group());
+						if (voteStringInfo.contains("or more")) {
+							vsModifier = VoteStreakModifier.OR_MORE;
+						} else
+							if (voteStringInfo.contains("or less")) {
+								vsModifier = VoteStreakModifier.OR_LESS;
+							}
+					} catch (Exception e) {
+						log.warning("[VoteRoulette] Error loading vote streak settings for reward:"
+								+ name + ", Skipping vote streak.");
+					}
 				}
 			}
 		}
@@ -61,7 +76,8 @@ public class Reward extends Award{
 	}
 
 	public boolean hasWebsites() {
-		if(websites == null || websites.isEmpty()) return false;
+		if (websites == null || websites.isEmpty())
+			return false;
 		return true;
 	}
 
@@ -82,7 +98,9 @@ public class Reward extends Award{
 	}
 
 	public boolean hasOptions() {
-		if(this.hasAwardOptions() || this.hasVoteStreak() || this.hasWebsites()) return true;
+		if (this.hasAwardOptions() || this.hasVoteStreak()
+				|| this.hasWebsites())
+			return true;
 		return false;
 	}
 
@@ -100,5 +118,13 @@ public class Reward extends Award{
 
 	public boolean hasVoteStreak() {
 		return voteStreak > 0;
+	}
+
+	public int getVoteStreakMax() {
+		return voteStreakMax;
+	}
+
+	public void setVoteStreakMax(int voteStreakMax) {
+		this.voteStreakMax = voteStreakMax;
 	}
 }

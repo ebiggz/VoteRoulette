@@ -10,9 +10,6 @@ import com.mythicacraft.voteroulette.api.PlayerReceivedAwardEvent;
 import com.mythicacraft.voteroulette.awards.Award.AwardType;
 import com.mythicacraft.voteroulette.utils.Utils;
 
-
-
-
 public class AwardListener implements Listener {
 
 	private VoteRoulette plugin;
@@ -21,11 +18,12 @@ public class AwardListener implements Listener {
 		this.plugin = plugin;
 	}
 
-	@EventHandler (priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onJoin(PlayerReceivedAwardEvent event) {
-		if(event.getAward().getAwardType() == AwardType.MILESTONE && plugin.FIREWORK_ON_MILESTONE) {
+		if (event.getAward().getAwardType() == AwardType.MILESTONE
+		        && plugin.FIREWORK_ON_MILESTONE) {
 			Location fireworkLoc = event.getPlayer().getLocation();
-			fireworkLoc.setY(fireworkLoc.getY()+2);
+			fireworkLoc.setY(fireworkLoc.getY() + 2);
 			Utils.randomFireWork(fireworkLoc);
 		}
 	}

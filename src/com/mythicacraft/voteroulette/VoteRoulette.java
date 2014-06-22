@@ -50,13 +50,13 @@ import com.mythicacraft.voteroulette.utils.Utils;
 public class VoteRoulette extends JavaPlugin {
 
 	/**
-	 * A Bukkit plugin for Minecraft servers that gives random
-	 * rewards to players who vote for the server.
+	 * A Bukkit plugin for Minecraft servers that gives random rewards to
+	 * players who vote for the server.
 	 * 
 	 * @author Erik Bigler (ebiggz)
 	 */
 
-	//plugin variables
+	// plugin variables
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 
 	public static Economy economy = null;
@@ -76,9 +76,9 @@ public class VoteRoulette extends JavaPlugin {
 	private BukkitRunnable updateChecker;
 
 	public static List<Player> notifiedPlayers = new ArrayList<Player>();
-	public static HashMap<Player,Integer> lookingAtRewards = new HashMap<Player,Integer>();
-	public static HashMap<Player,Integer> lookingAtMilestones = new HashMap<Player,Integer>();
-	public static HashMap<Player,AwardCreator> inAwardCreator = new HashMap<Player,AwardCreator>();
+	public static HashMap<Player, Integer> lookingAtRewards = new HashMap<Player, Integer>();
+	public static HashMap<Player, Integer> lookingAtMilestones = new HashMap<Player, Integer>();
+	public static HashMap<Player, AwardCreator> inAwardCreator = new HashMap<Player, AwardCreator>();
 	public static List<DelayedCommand> delayedCommands = new ArrayList<DelayedCommand>();
 	public static List<String> cooldownPlayers = new ArrayList<String>();
 
@@ -86,7 +86,7 @@ public class VoteRoulette extends JavaPlugin {
 	 * TODO: Create a class to hold all these constants
 	 */
 
-	//config.yml constants
+	// config.yml constants
 	public boolean REWARDS_ON_THRESHOLD;
 	public static boolean USE_DATABASE = false;
 	public static boolean USE_UUIDS;
@@ -117,7 +117,7 @@ public class VoteRoulette extends JavaPlugin {
 	public boolean CHECK_UPDATES;
 	public boolean GUI_FOR_AWARDS;
 	public boolean SHOW_COMMANDS_IN_AWARD;
-	public boolean 	SHOW_PLAYER_AND_GROUPS;
+	public boolean SHOW_PLAYER_AND_GROUPS;
 	public boolean USE_FANCY_LINKS;
 	public boolean USE_SCOREBOARD;
 	public boolean FIREWORK_ON_MILESTONE;
@@ -126,7 +126,7 @@ public class VoteRoulette extends JavaPlugin {
 	public static boolean DISABLE_INVENTORY_PROT;
 	public double CONFIG_VERSION;
 
-	//messages.yml constants
+	// messages.yml constants
 	public String SERVER_BROADCAST_MESSAGE;
 	public String SERVER_BROADCAST_MESSAGE_NO_AWARD;
 	public String PLAYER_VOTE_MESSAGE;
@@ -136,7 +136,7 @@ public class VoteRoulette extends JavaPlugin {
 	public List<String> VOTE_WEBSITES;
 	public double MESSAGES_VERSION;
 
-	//localizations.yml constants
+	// localizations.yml constants
 	public String UNCLAIMED_AWARDS_NOTIFICATION;
 	public String NO_UNCLAIMED_AWARDS_NOTIFICATION;
 	public String BLACKLISTED_WORLD_NOTIFICATION;
@@ -155,7 +155,7 @@ public class VoteRoulette extends JavaPlugin {
 	public String INVALID_NUMBER_NOTIFICATION;
 	public double LOCALIZATIONS_VERSION;
 
-	//localization word definitions
+	// localization word definitions
 	public String REWARD_DEF;
 	public String REWARDS_PURAL_DEF;
 	public String MILESTONE_DEF;
@@ -203,72 +203,85 @@ public class VoteRoulette extends JavaPlugin {
 	public String FORCEREWARD_DEF;
 	public String FORCEMILESTONE_DEF;
 
-	//Called when the plugin is booting up.
+	// Called when the plugin is booting up.
+	@Override
 	public void onEnable() {
 
-		//instantiate the utils
+		// instantiate the utils
 		new Utils(this);
 
-		//check for 1.7
-		if(!(Bukkit.getBukkitVersion().contains("1.6") || Bukkit.getBukkitVersion().contains("1.4") || Bukkit.getBukkitVersion().contains("1.5") || Bukkit.getBukkitVersion().contains("1.4") || Bukkit.getBukkitVersion().contains("1.3") || Bukkit.getBukkitVersion().contains("1.2") || Bukkit.getBukkitVersion().contains("1.1"))) {
+		// check for 1.7
+		if (!(Bukkit.getBukkitVersion().contains("1.6")
+		        || Bukkit.getBukkitVersion().contains("1.4")
+		        || Bukkit.getBukkitVersion().contains("1.5")
+		        || Bukkit.getBukkitVersion().contains("1.4")
+		        || Bukkit.getBukkitVersion().contains("1.3")
+		        || Bukkit.getBukkitVersion().contains("1.2") || Bukkit
+		        .getBukkitVersion().contains("1.1"))) {
 			isOn1dot7 = true;
 		}
 
-		//instantiate managers
+		// instantiate managers
 		pm = new VoterManager(this);
 		rm = new AwardManager(this);
 		sm = StatManager.getInstance();
 
-		//check for votifier
-		if(!setupVotifier()) {
+		// check for votifier
+		if (!setupVotifier()) {
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
 
-		//check for and setup vault
-		if(setupVault()) {
+		// check for and setup vault
+		if (setupVault()) {
 			vaultEnabled = true;
 		}
 
-		//register events and commands
-		getServer().getPluginManager().registerEvents(new VoteListener(this), this);
-		getServer().getPluginManager().registerEvents(new LoginListener(this), this);
-		getServer().getPluginManager().registerEvents(new AwardListener(this), this);
-		getServer().getPluginManager().registerEvents(new ACListener(this), this);
+		// register events and commands
+		getServer().getPluginManager().registerEvents(new VoteListener(this),
+		        this);
+		getServer().getPluginManager().registerEvents(new LoginListener(this),
+		        this);
+		getServer().getPluginManager().registerEvents(new AwardListener(this),
+		        this);
+		getServer().getPluginManager().registerEvents(new ACListener(this),
+		        this);
 
 		getCommand("voteroulette").setExecutor(new Commands(this));
 		getCommand("votelinks").setExecutor(new Commands(this));
 
-		//load configs
+		// load configs
 		loadAllFilesAndData();
 
-		//convert old data, if present
-		if(VoteRoulette.USE_UUIDS) {
+		// convert old data, if present
+		if (VoteRoulette.USE_UUIDS) {
 			convertPlayersYmlToUUID();
 			covertPlayersFolderToUUID();
 		}
 
-		if(getServer().getOnlineMode() == false && VoteRoulette.USE_UUIDS){
-			getLogger().warning("Your server is in offline mode and VoteRoulette is tracking UUIDs. Players with illegitimate copies of Minecraft will not get their stats tracked. Consider setting \"useUUIDs\" to false in the config.yml.");
+		if (getServer().getOnlineMode() == false && VoteRoulette.USE_UUIDS) {
+			getLogger()
+			        .warning(
+			                "Your server is in offline mode and VoteRoulette is tracking UUIDs. Players with illegitimate copies of Minecraft will not get their stats tracked. Consider setting \"useUUIDs\" to false in the config.yml.");
 		}
 
-		//check file versions
-		if(CONFIG_VERSION != 2.2) {
+		// check file versions
+		if (CONFIG_VERSION != 2.2) {
 			log.warning("[VoteRoulette] It appears that your config is out of date. There may be new options! It's recommended that you take your old config out to let the new one save.");
 		}
 
-		if(MESSAGES_VERSION != 1.2) {
+		if (MESSAGES_VERSION != 1.2) {
 			log.warning("[VoteRoulette] It appears that your messages.yml file is out of date. There may be new options! It's recommended that you take your old messages file out to let the new one save.");
 		}
 
-		if(LOCALIZATIONS_VERSION != 1.5) {
+		if (LOCALIZATIONS_VERSION != 1.5) {
 			log.warning("[VoteRoulette] It appears that your localizations.yml file is out of date. There may be new options! It's recommended that you take your old localizations file out to let the new one save.");
 		}
 
-		//run a stat update
+		// run a stat update
 		sm.updateStats();
 
-		//submit metrics
+		// submit metrics
 		try {
 			Metrics metrics = new Metrics(this);
 			metrics.start();
@@ -279,36 +292,37 @@ public class VoteRoulette extends JavaPlugin {
 		log.info("[VoteRoulette] Enabled!");
 	}
 
-	//Called when the plugin is getting disabled.
+	// Called when the plugin is getting disabled.
+	@Override
 	public void onDisable() {
 
-		//cancel scheduled events
-		if(periodicReminder != null) {
+		// cancel scheduled events
+		if (periodicReminder != null) {
 			periodicReminder.cancel();
 		}
-		if(twentyFourHourChecker != null) {
+		if (twentyFourHourChecker != null) {
 			twentyFourHourChecker.cancel();
 		}
-		if(updateChecker != null) {
+		if (updateChecker != null) {
 			updateChecker.cancel();
 		}
 
-		//run delayed commands
-		for(int i = 0; i < delayedCommands.size(); i++) {
+		// run delayed commands
+		for (int i = 0; i < delayedCommands.size(); i++) {
 			DelayedCommand dCmd = delayedCommands.get(i);
-			if(dCmd.shouldRunOnShutdown()) {
+			if (dCmd.shouldRunOnShutdown()) {
 				dCmd.run();
 				dCmd.cancel();
 			}
 		}
 
-		//close any open reward/milestone inventory views
+		// close any open reward/milestone inventory views
 		Set<Player> rewardKeys = lookingAtRewards.keySet();
-		for(Player key : rewardKeys) {
+		for (Player key : rewardKeys) {
 			key.closeInventory();
 		}
 		Set<Player> milestoneKeys = lookingAtMilestones.keySet();
-		for(Player key : milestoneKeys) {
+		for (Player key : milestoneKeys) {
 			key.closeInventory();
 		}
 
@@ -320,7 +334,7 @@ public class VoteRoulette extends JavaPlugin {
 	 */
 
 	private boolean setupVotifier() {
-		Plugin votifier =  getServer().getPluginManager().getPlugin("Votifier");
+		Plugin votifier = getServer().getPluginManager().getPlugin("Votifier");
 		if (!(votifier != null && votifier instanceof com.vexsoftware.votifier.Votifier)) {
 			log.severe("[VoteRoulette] Votifier was not found! Votifier is required for VoteRoulette to work!");
 			return false;
@@ -330,13 +344,13 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	private boolean setupVault() {
-		Plugin vault =  getServer().getPluginManager().getPlugin("Vault");
+		Plugin vault = getServer().getPluginManager().getPlugin("Vault");
 		if (vault != null && vault instanceof net.milkbowl.vault.Vault) {
 			System.out.println("[VoteRoulette] Hooked into Vault!");
-			if(!setupEconomy()) {
+			if (!setupEconomy()) {
 				log.warning("[VoteRoulette] No plugin to handle currency, cash rewards will not be given!");
 			}
-			if(!setupPermissions()) {
+			if (!setupPermissions()) {
 				log.warning("[VoteRoulette] No plugin to handle permission groups, permission group reward settings will be ignored!");
 			}
 			return true;
@@ -347,7 +361,9 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	private boolean setupEconomy() {
-		RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+		RegisteredServiceProvider<Economy> economyProvider = getServer()
+		        .getServicesManager().getRegistration(
+		                net.milkbowl.vault.economy.Economy.class);
 		if (economyProvider != null) {
 			hasEconPlugin = true;
 			economy = economyProvider.getProvider();
@@ -356,7 +372,9 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	private boolean setupPermissions() {
-		RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
+		RegisteredServiceProvider<Permission> permissionProvider = getServer()
+		        .getServicesManager().getRegistration(
+		                net.milkbowl.vault.permission.Permission.class);
 		if (permissionProvider != null) {
 			hasPermPlugin = true;
 			permission = permissionProvider.getProvider();
@@ -372,29 +390,29 @@ public class VoteRoulette extends JavaPlugin {
 
 		this.getLogger().info("Loading all files and data...");
 
-		//load main config
+		// load main config
 		loadConfig();
 		reloadConfig();
 		loadConfigOptions();
-		//load awards.yml
+		// load awards.yml
 		loadAwardsFile();
 		transferAwards();
 		loadRewards();
 		loadMilestones();
-		//load messages.yml
+		// load messages.yml
 		loadMessagesFile();
 		loadMessagesData();
-		//load localizations.yml
+		// load localizations.yml
 		loadLocalizationsFile();
 		loadLocalizationsData();
-		//load known sites.yml
+		// load known sites.yml
 		loadKnownSitesFile();
-		//load stats.yml
+		// load stats.yml
 		loadStatsFile();
 
 		this.getLogger().info("...finished loading files and data!");
 
-		//schedule reminders and update checker
+		// schedule reminders and update checker
 		scheduleTasks();
 
 	}
@@ -404,13 +422,14 @@ public class VoteRoulette extends JavaPlugin {
 		String pluginFolder = getDataFolder().getAbsolutePath();
 		(new File(pluginFolder)).mkdirs();
 		File configFile = new File(pluginFolder, "config.yml");
-		if(!configFile.exists()) {
+		if (!configFile.exists()) {
 			saveResource("config.yml", true);
 		}
 		try {
 			reloadConfig();
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception while loading VoteRoulette/config.yml", e);
+			log.log(Level.SEVERE,
+			        "Exception while loading VoteRoulette/config.yml", e);
 			pm.disablePlugin(this);
 		}
 	}
@@ -422,35 +441,45 @@ public class VoteRoulette extends JavaPlugin {
 
 		MESSAGE_PLAYER = getConfig().getBoolean("messagePlayer");
 
-		DISABLE_UNCLAIMED = getConfig().getBoolean("disableUnclaimedAwards", false);
+		DISABLE_UNCLAIMED = getConfig().getBoolean("disableUnclaimedAwards",
+		        false);
 
 		AUTO_CLAIM = getConfig().getBoolean("autoClaimAwards", false);
 
 		USE_UUIDS = getConfig().getBoolean("useUUIDs", true);
 
-		DISABLE_INVENTORY_PROT = getConfig().getBoolean("disableInventoryProtection", false);
+		DISABLE_INVENTORY_PROT = getConfig().getBoolean(
+		        "disableInventoryProtection", false);
 
-		String defaultAlias = getConfig().getString("defaultCommandAlias", "vr").trim();
+		String defaultAlias = getConfig()
+		        .getString("defaultCommandAlias", "vr").trim();
 
-		if(defaultAlias.equalsIgnoreCase("vr") || defaultAlias.equalsIgnoreCase("vtr") || defaultAlias.equalsIgnoreCase("voteroulette")) {
+		if (defaultAlias.equalsIgnoreCase("vr")
+		        || defaultAlias.equalsIgnoreCase("vtr")
+		        || defaultAlias.equalsIgnoreCase("voteroulette")) {
 			DEFAULT_ALIAS = defaultAlias.toLowerCase().replace("/", "");
-			Plugin voxelSniper =  getServer().getPluginManager().getPlugin("VoxelSniper");
+			Plugin voxelSniper = getServer().getPluginManager().getPlugin(
+			        "VoxelSniper");
 			if (voxelSniper != null) {
-				if(DEFAULT_ALIAS.equalsIgnoreCase("vr")) {
-					getLogger().warning("VoxelSniper detected! Setting default alias to: \"/vtr\"");
+				if (DEFAULT_ALIAS.equalsIgnoreCase("vr")) {
+					getLogger()
+					        .warning(
+					                "VoxelSniper detected! Setting default alias to: \"/vtr\"");
 					DEFAULT_ALIAS = "vtr";
 				}
 			} else {
-				getLogger().info("Setting default command alias: " + DEFAULT_ALIAS);
+				getLogger().info(
+				        "Setting default command alias: " + DEFAULT_ALIAS);
 			}
 		} else {
-			getLogger().info("Default alias in config isn't one of the options, keeping it at: vr ");
+			getLogger()
+			        .info("Default alias in config isn't one of the options, keeping it at: vr ");
 		}
-
 
 		BROADCAST_TO_SERVER = getConfig().getBoolean("broadcastToServer");
 
-		ONLY_BROADCAST_ONLINE = getConfig().getBoolean("onlyBroadcastOnlinePlayerVotes", false);
+		ONLY_BROADCAST_ONLINE = getConfig().getBoolean(
+		        "onlyBroadcastOnlinePlayerVotes", false);
 
 		LOG_TO_CONSOLE = getConfig().getBoolean("logToConsole");
 
@@ -458,7 +487,7 @@ public class VoteRoulette extends JavaPlugin {
 
 		BROADCAST_COOLDOWN = getConfig().getInt("broadcastCooldown", 0);
 
-		if(BROADCAST_COOLDOWN == 0) {
+		if (BROADCAST_COOLDOWN == 0) {
 			USE_BROADCAST_COOLDOWN = false;
 		} else {
 			USE_BROADCAST_COOLDOWN = true;
@@ -466,39 +495,49 @@ public class VoteRoulette extends JavaPlugin {
 
 		VOTE_LIMIT = getConfig().getInt("voteLimit", 0);
 
-		if(VOTE_LIMIT == 0) {
+		if (VOTE_LIMIT == 0) {
 			HAS_VOTE_LIMIT = false;
 		} else {
 			HAS_VOTE_LIMIT = true;
 		}
 
-		GUI_FOR_AWARDS = getConfig().getBoolean("GUI.awards.guiForAwards", true);
+		GUI_FOR_AWARDS = getConfig()
+		        .getBoolean("GUI.awards.guiForAwards", true);
 
-		SHOW_COMMANDS_IN_AWARD = getConfig().getBoolean("GUI.awards.showCommands", false);
+		SHOW_COMMANDS_IN_AWARD = getConfig().getBoolean(
+		        "GUI.awards.showCommands", false);
 
-		SHOW_PLAYER_AND_GROUPS = getConfig().getBoolean("GUI.awards.showPlayersAndGroups", false);
+		SHOW_PLAYER_AND_GROUPS = getConfig().getBoolean(
+		        "GUI.awards.showPlayersAndGroups", false);
 
-		USE_FANCY_LINKS = getConfig().getBoolean("GUI.vote-command.useFancyLinks", false);
+		USE_FANCY_LINKS = getConfig().getBoolean(
+		        "GUI.vote-command.useFancyLinks", false);
 
 		GIVE_RANDOM_REWARD = getConfig().getBoolean("giveRandomReward");
 
-		PRIORITIZE_VOTESTREAKS = getConfig().getBoolean("prioritizeVoteStreaks", true);
+		PRIORITIZE_VOTESTREAKS = getConfig().getBoolean(
+		        "prioritizeVoteStreaks", true);
 
-		USE_SCOREBOARD = getConfig().getBoolean("GUI.stats.useScoreboard", true);
+		USE_SCOREBOARD = getConfig()
+		        .getBoolean("GUI.stats.useScoreboard", true);
 
 		GIVE_RANDOM_MILESTONE = getConfig().getBoolean("giveRandomMilestone");
 
-		RANDOMIZE_SAME_PRIORITY = getConfig().getBoolean("randomizeTiedHighestPriorityMilestones", false);
+		RANDOMIZE_SAME_PRIORITY = getConfig().getBoolean(
+		        "randomizeTiedHighestPriorityMilestones", false);
 
-		ONLY_MILESTONE_ON_COMPLETION = getConfig().getBoolean("onlyGiveMilestoneUponCompletion", true);
+		ONLY_MILESTONE_ON_COMPLETION = getConfig().getBoolean(
+		        "onlyGiveMilestoneUponCompletion", true);
 
-		BLACKLIST_AS_WHITELIST = getConfig().getBoolean("useBlacklistAsWhitelist");
+		BLACKLIST_AS_WHITELIST = getConfig().getBoolean(
+		        "useBlacklistAsWhitelist");
 
-		USE_TWENTYFOUR_REMINDER = getConfig().getBoolean("useTwentyFourHourReminder", true);
+		USE_TWENTYFOUR_REMINDER = getConfig().getBoolean(
+		        "useTwentyFourHourReminder", true);
 
 		USE_PERIODIC_REMINDER = getConfig().getBoolean("usePeriodicReminder");
 
-		REMINDER_INTERVAL = getConfig().getLong("periodicReminderInterval")*1200;
+		REMINDER_INTERVAL = getConfig().getLong("periodicReminderInterval") * 1200;
 
 		BLACKLIST_PLAYERS = getConfig().getStringList("blacklistedPlayers");
 
@@ -506,16 +545,19 @@ public class VoteRoulette extends JavaPlugin {
 
 		CHECK_UPDATES = getConfig().getBoolean("checkForUpdates", true);
 
-		CONSIDER_REWARDS_FOR_CURRENT_WORLD = getConfig().getBoolean("considerRewardsForPlayersCurrentWorld");
+		CONSIDER_REWARDS_FOR_CURRENT_WORLD = getConfig().getBoolean(
+		        "considerRewardsForPlayersCurrentWorld");
 
-		CONSIDER_MILESTONES_FOR_CURRENT_WORLD = getConfig().getBoolean("considerMilestonesForPlayersCurrentWorld");
+		CONSIDER_MILESTONES_FOR_CURRENT_WORLD = getConfig().getBoolean(
+		        "considerMilestonesForPlayersCurrentWorld");
 
-		ONLY_PRIMARY_GROUP = getConfig().getBoolean("onlyConsiderPlayersPrimaryGroup", false);
+		ONLY_PRIMARY_GROUP = getConfig().getBoolean(
+		        "onlyConsiderPlayersPrimaryGroup", false);
 
-		FIREWORK_ON_MILESTONE = getConfig().getBoolean("randomFireworkOnMilestone", true);
+		FIREWORK_ON_MILESTONE = getConfig().getBoolean(
+		        "randomFireworkOnMilestone", true);
 
 		CONFIG_VERSION = getConfig().getDouble("configVersion", 1.0);
-
 
 	}
 
@@ -526,49 +568,63 @@ public class VoteRoulette extends JavaPlugin {
 		File awardsFile = new File(pluginFolder, "awards.yml");
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
 
-		if(!awardsFile.exists()) {
+		if (!awardsFile.exists()) {
 			saveResource("awards.yml", true);
 			return;
 		}
 		try {
 			awardsData.reloadConfig();
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception while loading VoteRoulette/awards.yml", e);
+			log.log(Level.SEVERE,
+			        "Exception while loading VoteRoulette/awards.yml", e);
 			pm.disablePlugin(this);
 		}
 	}
 
 	private void transferAwards() {
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		if(this.getConfig().contains("Rewards")) {
-			ConfigurationSection cs = this.getConfig().getConfigurationSection("Rewards");
-			if(cs != null) {
-				for(String rewardName : cs.getKeys(false)) {
-					ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
+		if (this.getConfig().contains("Rewards")) {
+			ConfigurationSection cs = this.getConfig().getConfigurationSection(
+			        "Rewards");
+			if (cs != null) {
+				for (String rewardName : cs.getKeys(false)) {
+					ConfigurationSection rewardOptions = cs
+					        .getConfigurationSection(rewardName);
 					if (rewardOptions != null) {
-						if(!awardsData.getConfig().contains("Rewards." + rewardName)) {
-							awardsData.getConfig().set("Rewards." + rewardName, rewardOptions);
+						if (!awardsData.getConfig().contains(
+						        "Rewards." + rewardName)) {
+							awardsData.getConfig().set("Rewards." + rewardName,
+							        rewardOptions);
 						}
 					}
 				}
 				awardsData.saveConfig();
-				getLogger().warning("Rewards have moved to the awards.yml, your current Rewards have been copied from config.yml to there! You can delete the old Rewards in your config.yml.");
+				getLogger()
+				        .warning(
+				                "Rewards have moved to the awards.yml, your current Rewards have been copied from config.yml to there! You can delete the old Rewards in your config.yml.");
 			}
 		}
 
-		if(this.getConfig().contains("Milestones")) {
-			ConfigurationSection cs1 = this.getConfig().getConfigurationSection("Milestones");
-			if(cs1 != null) {
-				for(String milestoneName : cs1.getKeys(false)) {
-					ConfigurationSection milestoneOptions = cs1.getConfigurationSection(milestoneName);
+		if (this.getConfig().contains("Milestones")) {
+			ConfigurationSection cs1 = this.getConfig()
+			        .getConfigurationSection("Milestones");
+			if (cs1 != null) {
+				for (String milestoneName : cs1.getKeys(false)) {
+					ConfigurationSection milestoneOptions = cs1
+					        .getConfigurationSection(milestoneName);
 					if (milestoneOptions != null) {
-						if(!awardsData.getConfig().contains("Milestones." + milestoneName)) {
-							awardsData.getConfig().set("Milestones." + milestoneName, milestoneOptions);
+						if (!awardsData.getConfig().contains(
+						        "Milestones." + milestoneName)) {
+							awardsData.getConfig().set(
+							        "Milestones." + milestoneName,
+							        milestoneOptions);
 						}
 					}
 				}
 				awardsData.saveConfig();
-				getLogger().warning("Milestones have moved to the awards.yml, your current Milestones have been copied from config.yml to there! You can delete the old Milestones in your config.yml.");
+				getLogger()
+				        .warning(
+				                "Milestones have moved to the awards.yml, your current Milestones have been copied from config.yml to there! You can delete the old Milestones in your config.yml.");
 			}
 		}
 	}
@@ -576,23 +632,30 @@ public class VoteRoulette extends JavaPlugin {
 	private void loadRewards() {
 		rm.clearRewards();
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Rewards");
-		if(cs != null) {
-			for(String rewardName : cs.getKeys(false)) {
-				ConfigurationSection rewardOptions = cs.getConfigurationSection(rewardName);
+		ConfigurationSection cs = awardsData.getConfig()
+		        .getConfigurationSection("Rewards");
+		if (cs != null) {
+			for (String rewardName : cs.getKeys(false)) {
+				ConfigurationSection rewardOptions = cs
+				        .getConfigurationSection(rewardName);
 				if (rewardOptions != null) {
 					Reward newReward = new Reward(rewardName, rewardOptions);
 					rm.addReward(newReward);
-					System.out.println("[VoteRoulette] Added Reward: " + rewardName);
-					if(rewardName.equals(getConfig().getString("defaultReward"))) {
+					System.out.println("[VoteRoulette] Added Reward: "
+					        + rewardName);
+					if (rewardName.equals(getConfig()
+					        .getString("defaultReward"))) {
 						rm.setDefaultReward(newReward);
-						System.out.println("[VoteRoulette] \"" + rewardName + "\" saved as default reward.");
+						System.out.println("[VoteRoulette] \"" + rewardName
+						        + "\" saved as default reward.");
 					}
 					continue;
 				}
-				log.warning("[VoteRoulette] The reward \"" + rewardName + "\" is empty! Skipping reward.");
+				log.warning("[VoteRoulette] The reward \"" + rewardName
+				        + "\" is empty! Skipping reward.");
 			}
-			if(!rm.hasDefaultReward() && !getConfig().getBoolean("giveRandomReward")) {
+			if (!rm.hasDefaultReward()
+			        && !getConfig().getBoolean("giveRandomReward")) {
 				log.warning("[VoteRoulette] The default reward name could not be matched to a reward and you have giveRandomReward set to false, players will NOT receive awards for votes.");
 			}
 		} else {
@@ -603,20 +666,27 @@ public class VoteRoulette extends JavaPlugin {
 	private void loadMilestones() {
 		rm.clearMilestones();
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		ConfigurationSection cs = awardsData.getConfig().getConfigurationSection("Milestones");
-		if(cs != null) {
+		ConfigurationSection cs = awardsData.getConfig()
+		        .getConfigurationSection("Milestones");
+		if (cs != null) {
 			for (String milestoneName : cs.getKeys(false)) {
-				ConfigurationSection milestoneOptions = cs.getConfigurationSection(milestoneName);
+				ConfigurationSection milestoneOptions = cs
+				        .getConfigurationSection(milestoneName);
 				if (milestoneOptions != null) {
-					if(milestoneOptions.contains("votes")) {
-						rm.addMilestone(new Milestone(milestoneName, milestoneOptions));
-						System.out.println("[VoteRoulette] Added Milestone: " + milestoneName);
+					if (milestoneOptions.contains("votes")) {
+						rm.addMilestone(new Milestone(milestoneName,
+						        milestoneOptions));
+						System.out.println("[VoteRoulette] Added Milestone: "
+						        + milestoneName);
 						continue;
 					}
-					log.warning("[VoteRoulette] Milestone \"" + milestoneName + "\" doesn't have a vote number set! Ignoring Milestone...");
+					log.warning("[VoteRoulette] Milestone \""
+					        + milestoneName
+					        + "\" doesn't have a vote number set! Ignoring Milestone...");
 					continue;
 				}
-				log.warning("[VoteRoulette] The reward \"" + milestoneName + "\" is empty! Skipping...");
+				log.warning("[VoteRoulette] The reward \"" + milestoneName
+				        + "\" is empty! Skipping...");
 			}
 		} else {
 			log.warning("[VoteRoulette] Your Milestone section is empty, no milestones will be given!");
@@ -630,14 +700,15 @@ public class VoteRoulette extends JavaPlugin {
 		File messagesFile = new File(pluginFolder, "messages.yml");
 		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
 
-		if(!messagesFile.exists()) {
+		if (!messagesFile.exists()) {
 			saveResource("messages.yml", true);
 			return;
 		}
 		try {
 			messageData.reloadConfig();
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception while loading VoteRoulette/messages.yml", e);
+			log.log(Level.SEVERE,
+			        "Exception while loading VoteRoulette/messages.yml", e);
 			pm.disablePlugin(this);
 		}
 	}
@@ -645,133 +716,238 @@ public class VoteRoulette extends JavaPlugin {
 	private void loadMessagesData() {
 		ConfigAccessor messageData = new ConfigAccessor("messages.yml");
 
-		SERVER_BROADCAST_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("server-broadcast-message"));
+		SERVER_BROADCAST_MESSAGE = Utils.transcribeColorCodes(messageData
+		        .getConfig().getString("server-broadcast-message"));
 
-		SERVER_BROADCAST_MESSAGE_NO_AWARD = Utils.transcribeColorCodes(messageData.getConfig().getString("server-broadcast-message-no-award", "&b[&e%player%&b just voted for %server% on &e%site%&b!]"));
+		SERVER_BROADCAST_MESSAGE_NO_AWARD = Utils
+		        .transcribeColorCodes(messageData
+		                .getConfig()
+		                .getString("server-broadcast-message-no-award",
+		                        "&b[&e%player%&b just voted for %server% on &e%site%&b!]"));
 
-		PLAYER_VOTE_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("player-reward-message"));
+		PLAYER_VOTE_MESSAGE = Utils.transcribeColorCodes(messageData
+		        .getConfig().getString("player-reward-message"));
 
-		PLAYER_VOTE_MESSAGE_NO_AWARD = Utils.transcribeColorCodes(messageData.getConfig().getString("player-no-reward-message", "&bThanks for voting for &e%server% &bon %site%, &e%player%&b!"));
+		PLAYER_VOTE_MESSAGE_NO_AWARD = Utils
+		        .transcribeColorCodes(messageData
+		                .getConfig()
+		                .getString("player-no-reward-message",
+		                        "&bThanks for voting for &e%server% &bon %site%, &e%player%&b!"));
 
+		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig()
+		        .getString("periodic-reminder")
+		        .replace("%server%", Bukkit.getServerName()));
 
-		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("periodic-reminder").replace("%server%", Bukkit.getServerName()));
+		TWENTYFOUR_REMINDER = Utils.transcribeColorCodes(messageData
+		        .getConfig().getString("twentyfour-hour-reminder",
+		                "&b24 hours have passed since your last vote!"));
 
-		TWENTYFOUR_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("twentyfour-hour-reminder", "&b24 hours have passed since your last vote!"));
-
-		List<String> voteSites = messageData.getConfig().getStringList("vote-websites");
-		for(int i = 0; i < voteSites.size(); i++) {
+		List<String> voteSites = messageData.getConfig().getStringList(
+		        "vote-websites");
+		for (int i = 0; i < voteSites.size(); i++) {
 			String website = voteSites.get(i);
 			website = Utils.transcribeColorCodes(website);
 			voteSites.set(i, website);
 		}
 		VOTE_WEBSITES = voteSites;
 
-		MESSAGES_VERSION = messageData.getConfig().getDouble("config-version", 1.0);
+		MESSAGES_VERSION = messageData.getConfig().getDouble("config-version",
+		        1.0);
 	}
 
 	private void loadLocalizationsFile() {
 		PluginManager pm = getServer().getPluginManager();
-		String pluginFolder = this.getDataFolder().getAbsolutePath() + File.separator + "data";
+		String pluginFolder = this.getDataFolder().getAbsolutePath()
+		        + File.separator + "data";
 		(new File(pluginFolder)).mkdirs();
 		File localizationsFile = new File(pluginFolder, "localizations.yml");
-		ConfigAccessor localizationsData = new ConfigAccessor("data" + File.separator + "localizations.yml");
+		ConfigAccessor localizationsData = new ConfigAccessor("data"
+		        + File.separator + "localizations.yml");
 
-		if(!localizationsFile.exists()) {
+		if (!localizationsFile.exists()) {
 			saveResource("data" + File.separator + "localizations.yml", true);
 			return;
 		}
 		try {
 			localizationsData.reloadConfig();
 		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/localizations.yml", e);
+			log.log(Level.SEVERE,
+			        "Exception while loading VoteRoulette/data/localizations.yml",
+			        e);
 			pm.disablePlugin(this);
 		}
 	}
 
 	private void loadLocalizationsData() {
-		ConfigAccessor localeData = new ConfigAccessor("data" + File.separator + "localizations.yml");
+		ConfigAccessor localeData = new ConfigAccessor("data" + File.separator
+		        + "localizations.yml");
 
-		UNCLAIMED_AWARDS_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("unclaimed-awards"));
+		UNCLAIMED_AWARDS_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("unclaimed-awards"));
 
-		NO_UNCLAIMED_AWARDS_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("no-unclaimed-awards"));
+		NO_UNCLAIMED_AWARDS_NOTIFICATION = Utils
+		        .transcribeColorCodes(localeData.getConfig().getString(
+		                "no-unclaimed-awards"));
 
-		BLACKLISTED_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("blacklisted-world"));
+		BLACKLISTED_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("blacklisted-world"));
 
-		REACHED_LIMIT_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("reached-vote-limit", "%red%[VoteRoulette] You have reached the vote limit for today!"));
+		REACHED_LIMIT_NOTIFICATION = Utils
+		        .transcribeColorCodes(localeData
+		                .getConfig()
+		                .getString("reached-vote-limit",
+		                        "%red%[VoteRoulette] You have reached the vote limit for today!"));
 
-		WRONG_AWARD_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("award-wrong-world"));
+		WRONG_AWARD_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("award-wrong-world"));
 
-		INVENTORY_FULL_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("award-inventory-full"));
+		INVENTORY_FULL_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("award-inventory-full"));
 
-		NO_PERM_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("no-permission"));
+		NO_PERM_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("no-permission"));
 
-		BASE_CMD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("base-command-text").replace("%alias%", this.DEFAULT_ALIAS));
+		BASE_CMD_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("base-command-text")
+		        .replace("%alias%", this.DEFAULT_ALIAS));
 
-		REROLL_FAILED_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("reroll-failed"));
+		REROLL_FAILED_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("reroll-failed"));
 
-		REROLL_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("rerolling"));
+		REROLL_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig()
+		        .getString("rerolling"));
 
-		LAST_VOTE_SELF_CMD = Utils.transcribeColorCodes(localeData.getConfig().getString("last-vote-self", "%darkaqua%[VoteRoulette] Time since your last vote: %time%"));
+		LAST_VOTE_SELF_CMD = Utils
+		        .transcribeColorCodes(localeData
+		                .getConfig()
+		                .getString("last-vote-self",
+		                        "%darkaqua%[VoteRoulette] Time since your last vote: %time%"));
 
-		LAST_VOTE_OTHER_CMD = Utils.transcribeColorCodes(localeData.getConfig().getString("last-vote-other", "%darkaqua%[VoteRoulette] Time since %player%s last vote: %time%"));
+		LAST_VOTE_OTHER_CMD = Utils
+		        .transcribeColorCodes(localeData
+		                .getConfig()
+		                .getString("last-vote-other",
+		                        "%darkaqua%[VoteRoulette] Time since %player%s last vote: %time%"));
 
-		CANT_FIND_PLAYER_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("cant-find-player", "%red%[VoteRoulette] Could not find player: %player%"));
+		CANT_FIND_PLAYER_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("cant-find-player",
+		                "%red%[VoteRoulette] Could not find player: %player%"));
 
-		INVALID_NUMBER_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("invalid-number", "%red%[VoteRoulette] Invalid number!"));
+		INVALID_NUMBER_NOTIFICATION = Utils.transcribeColorCodes(localeData
+		        .getConfig().getString("invalid-number",
+		                "%red%[VoteRoulette] Invalid number!"));
 
-		LAST_VOTE_NONE_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("last-vote-none-saved", "%red%[VoteRoulette] A last vote time stamp has not been saved yet!"));
+		LAST_VOTE_NONE_NOTIFICATION = Utils
+		        .transcribeColorCodes(localeData
+		                .getConfig()
+		                .getString("last-vote-none-saved",
+		                        "%red%[VoteRoulette] A last vote time stamp has not been saved yet!"));
 
-		TOP_10_CMD = Utils.transcribeColorCodes(localeData.getConfig().getString("top-10", "%aqua%[VoteRoulette] Showing top 10 players for %yellow%%stat%"));
+		TOP_10_CMD = Utils
+		        .transcribeColorCodes(localeData
+		                .getConfig()
+		                .getString("top-10",
+		                        "%aqua%[VoteRoulette] Showing top 10 players for %yellow%%stat%"));
 
-		LOCALIZATIONS_VERSION = localeData.getConfig().getDouble("config-version", 1.0);
+		LOCALIZATIONS_VERSION = localeData.getConfig().getDouble(
+		        "config-version", 1.0);
 
 		// word definitions
-		REWARD_DEF = localeData.getConfig().getString("general-word-definitions.reward", "Reward");
-		REWARDS_PURAL_DEF = localeData.getConfig().getString("general-word-definitions.reward-plural", "Rewards");
-		MILESTONE_DEF = localeData.getConfig().getString("general-word-definitions.milestone", "Milestone");
-		MILESTONE_PURAL_DEF = localeData.getConfig().getString("general-word-definitions.milestone-plural", "Milestones");
-		CURRENCY_DEF = localeData.getConfig().getString("general-word-definitions.currency", "Dollar");
-		CURRENCY_PURAL_DEF = localeData.getConfig().getString("general-word-definitions.currency-plural", "Dollars");
-		CURRENCY_SYMBOL = localeData.getConfig().getString("general-word-definitions.currency-symbol", "$");
-		ITEM_DEF = localeData.getConfig().getString("general-word-definitions.item", "Item");
-		ITEM_PLURAL_DEF = localeData.getConfig().getString("general-word-definitions.item-plural", "Items");
-		WORLDS_DEF = localeData.getConfig().getString("general-word-definitions.worlds", "Worlds");
-		CHANCE_DEF = localeData.getConfig().getString("general-word-definitions.chance", "Chance");
-		CLAIM_DEF = localeData.getConfig().getString("general-word-definitions.claim", "Claim");
-		ALL_DEF = localeData.getConfig().getString("general-word-definitions.all", "All");
-		FANCY_LINK_POPUP = localeData.getConfig().getString("general-word-definitions.fancy-link-popup", "Click me to vote!");
-		STATS_DEF = localeData.getConfig().getString("general-word-definitions.stats", "Stats");
-		EVERY_DEF = localeData.getConfig().getString("general-word-definitions.every", "Every");
-		VOTE_DEF = localeData.getConfig().getString("general-word-definitions.vote", "Vote");
-		VOTES_DEF = localeData.getConfig().getString("general-word-definitions.vote-plural", "Votes");
-		VOTE_CYCLE_DEF = localeData.getConfig().getString("general-word-definitions.vote-cycle", "Vote Cycle");
-		TOTAL_VOTES_DEF = localeData.getConfig().getString("general-word-definitions.total-votes", "Lifetime Votes");
-		TOTAL_DEF = localeData.getConfig().getString("general-word-definitions.total", "Total");
-		TOP_DEF = localeData.getConfig().getString("general-word-definitions.top", "top");
-		VOTE_STREAK_DEF  = localeData.getConfig().getString("general-word-definitions.vote-streak", "Votestreak");
-		STREAK_DEF  = localeData.getConfig().getString("general-word-definitions.streak", "Streak");
-		CURRENT_VOTE_STREAK_DEF = localeData.getConfig().getString("general-word-definitions.current-vote-streak", "Current Votestreak");
-		LONGEST_VOTE_STREAK_DEF = localeData.getConfig().getString("general-word-definitions.longest-vote-streak", "Longest Votestreak");
-		SETTOTAL_DEF = localeData.getConfig().getString("general-word-definitions.settotal", "settotal");
-		SETCYCLE_DEF = localeData.getConfig().getString("general-word-definitions.setcycle", "setcycle");
-		SETSTREAK_DEF = localeData.getConfig().getString("general-word-definitions.setstreak", "setstreak");
-		WIPESTATS_DEF = localeData.getConfig().getString("general-word-definitions.wipestats", "wipestats");
-		PLAYER_DEF = localeData.getConfig().getString("general-word-definitions.player", "Player");
-		WEBSITES_DEF = localeData.getConfig().getString("general-word-definitions.websites", "Websites");
-		XPLEVELS_DEF = localeData.getConfig().getString("general-word-definitions.xplevels", "XP levels");
-		RELOAD_DEF = localeData.getConfig().getString("general-word-definitions.reload", "reload");
-		REMIND_DEF = localeData.getConfig().getString("general-word-definitions.remind", "remind");
-		LASTVOTE_DEF = localeData.getConfig().getString("general-word-definitions.last-vote", "lastvote");
-		DAY_DEF = localeData.getConfig().getString("general-word-definitions.day", "day");
-		DAY_PLURAL_DEF = localeData.getConfig().getString("general-word-definitions.day-plural", "days");
-		HOUR_DEF = localeData.getConfig().getString("general-word-definitions.hour", "hour");
-		HOUR_PLURAL_DEF = localeData.getConfig().getString("general-word-definitions.hour-plural", "hours");
-		MINUTE_DEF = localeData.getConfig().getString("general-word-definitions.minute", "minute");
-		MINUTE_PLURAL_DEF = localeData.getConfig().getString("general-word-definitions.minute-plural", "minutes");
-		AND_DEF = localeData.getConfig().getString("general-word-definitions.and", "and");
-		FORCEVOTE_DEF = localeData.getConfig().getString("general-word-definitions.forcevote", "forcevote");
-		FORCEREWARD_DEF = localeData.getConfig().getString("general-word-definitions.forcereward", "forcereward");
-		FORCEMILESTONE_DEF = localeData.getConfig().getString("general-word-definitions.forcemilestone", "forcemilestone");
+		REWARD_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.reward", "Reward");
+		REWARDS_PURAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.reward-plural", "Rewards");
+		MILESTONE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.milestone", "Milestone");
+		MILESTONE_PURAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.milestone-plural", "Milestones");
+		CURRENCY_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.currency", "Dollar");
+		CURRENCY_PURAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.currency-plural", "Dollars");
+		CURRENCY_SYMBOL = localeData.getConfig().getString(
+		        "general-word-definitions.currency-symbol", "$");
+		ITEM_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.item", "Item");
+		ITEM_PLURAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.item-plural", "Items");
+		WORLDS_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.worlds", "Worlds");
+		CHANCE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.chance", "Chance");
+		CLAIM_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.claim", "Claim");
+		ALL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.all", "All");
+		FANCY_LINK_POPUP = localeData.getConfig().getString(
+		        "general-word-definitions.fancy-link-popup",
+		        "Click me to vote!");
+		STATS_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.stats", "Stats");
+		EVERY_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.every", "Every");
+		VOTE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.vote", "Vote");
+		VOTES_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.vote-plural", "Votes");
+		VOTE_CYCLE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.vote-cycle", "Vote Cycle");
+		TOTAL_VOTES_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.total-votes", "Lifetime Votes");
+		TOTAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.total", "Total");
+		TOP_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.top", "top");
+		VOTE_STREAK_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.vote-streak", "Votestreak");
+		STREAK_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.streak", "Streak");
+		CURRENT_VOTE_STREAK_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.current-vote-streak",
+		        "Current Votestreak");
+		LONGEST_VOTE_STREAK_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.longest-vote-streak",
+		        "Longest Votestreak");
+		SETTOTAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.settotal", "settotal");
+		SETCYCLE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.setcycle", "setcycle");
+		SETSTREAK_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.setstreak", "setstreak");
+		WIPESTATS_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.wipestats", "wipestats");
+		PLAYER_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.player", "Player");
+		WEBSITES_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.websites", "Websites");
+		XPLEVELS_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.xplevels", "XP levels");
+		RELOAD_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.reload", "reload");
+		REMIND_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.remind", "remind");
+		LASTVOTE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.last-vote", "lastvote");
+		DAY_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.day", "day");
+		DAY_PLURAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.day-plural", "days");
+		HOUR_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.hour", "hour");
+		HOUR_PLURAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.hour-plural", "hours");
+		MINUTE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.minute", "minute");
+		MINUTE_PLURAL_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.minute-plural", "minutes");
+		AND_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.and", "and");
+		FORCEVOTE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.forcevote", "forcevote");
+		FORCEREWARD_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.forcereward", "forcereward");
+		FORCEMILESTONE_DEF = localeData.getConfig().getString(
+		        "general-word-definitions.forcemilestone", "forcemilestone");
 
 	}
 
@@ -782,23 +958,31 @@ public class VoteRoulette extends JavaPlugin {
 		String playerFolder = pluginFolder + File.separator + "data";
 		(new File(playerFolder)).mkdirs();
 		File playerDataFile = new File(playerFolder, "known websites.yml");
-		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "known websites.yml");
+		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator
+		        + "known websites.yml");
 
 		if (!playerDataFile.exists()) {
 			try {
 				playerData.saveDefaultConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
+				log.log(Level.SEVERE,
+				        "Exception while loading VoteRoulette/data/known websites.yml",
+				        e);
 				pm.disablePlugin(this);
 			}
 			return;
 		} else {
 			try {
-				playerData.getConfig().options().header("This file collects all the known voting websites that have been used on your server. Every time a vote comes through and if the website hasnt been saved before, the website is added here.");
+				playerData
+				        .getConfig()
+				        .options()
+				        .header("This file collects all the known voting websites that have been used on your server. Every time a vote comes through and if the website hasnt been saved before, the website is added here.");
 				playerData.getConfig().options().copyHeader();
 				playerData.reloadConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
+				log.log(Level.SEVERE,
+				        "Exception while loading VoteRoulette/data/known websites.yml",
+				        e);
 				pm.disablePlugin(this);
 			}
 		}
@@ -811,23 +995,31 @@ public class VoteRoulette extends JavaPlugin {
 		String playerFolder = pluginFolder + File.separator + "data";
 		(new File(playerFolder)).mkdirs();
 		File playerDataFile = new File(playerFolder, "stats.yml");
-		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "stats.yml");
+		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator
+		        + "stats.yml");
 
 		if (!playerDataFile.exists()) {
 			try {
 				playerData.saveDefaultConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/stats.yml", e);
+				log.log(Level.SEVERE,
+				        "Exception while loading VoteRoulette/data/stats.yml",
+				        e);
 				pm.disablePlugin(this);
 			}
 			return;
 		} else {
 			try {
-				playerData.getConfig().options().header("This file keeps track of the stats of VR. Theres no need to edit anything here.");
+				playerData
+				        .getConfig()
+				        .options()
+				        .header("This file keeps track of the stats of VR. Theres no need to edit anything here.");
 				playerData.getConfig().options().copyHeader();
 				playerData.reloadConfig();
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/stats.yml", e);
+				log.log(Level.SEVERE,
+				        "Exception while loading VoteRoulette/data/stats.yml",
+				        e);
 				pm.disablePlugin(this);
 			}
 		}
@@ -835,19 +1027,22 @@ public class VoteRoulette extends JavaPlugin {
 
 	private void covertPlayersFolderToUUID() {
 
-		String oldPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "players";
-		String newPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata";
+		String oldPlayerFilePath = getDataFolder().getAbsolutePath()
+		        + File.separator + "data" + File.separator + "players";
+		String newPlayerFilePath = getDataFolder().getAbsolutePath()
+		        + File.separator + "data" + File.separator + "playerdata";
 		(new File(newPlayerFilePath)).mkdirs();
 
 		File oldPlayerFolder = new File(oldPlayerFilePath);
-		if(!oldPlayerFolder.exists()) return;
+		if (!oldPlayerFolder.exists())
+			return;
 
 		String[] oldPlayersNamesLs = oldPlayerFolder.list();
 		String[] oldPlayersNames = null;
 		ArrayList<String> oldPlayersNamesAl = new ArrayList<String>();
 
-		for(String pn : oldPlayersNamesLs) {
-			if(pn.endsWith(".yml")) {
+		for (String pn : oldPlayersNamesLs) {
+			if (pn.endsWith(".yml")) {
 				oldPlayersNamesAl.add(pn.replace(".yml", ""));
 			}
 		}
@@ -855,76 +1050,101 @@ public class VoteRoulette extends JavaPlugin {
 		oldPlayersNames = new String[oldPlayersNamesAl.size()];
 		oldPlayersNamesAl.toArray(oldPlayersNames);
 
-		if(oldPlayersNames.length > 0) {
+		if (oldPlayersNames.length > 0) {
 
-			getLogger().info("Detected old player folder, attempting to convert files to UUID...");
+			getLogger()
+			        .info("Detected old player folder, attempting to convert files to UUID...");
 
-			UUIDFetcher fetcher = new UUIDFetcher(Arrays.asList(oldPlayersNames));
+			UUIDFetcher fetcher = new UUIDFetcher(
+			        Arrays.asList(oldPlayersNames));
 
 			Map<String, UUID> response = null;
 			try {
 				response = fetcher.call();
 			} catch (Exception e) {
-				this.getLogger().severe("There was an issue getting UUIDs while attempting to convert data in the old players folder to the new format. The conversion will not happen. The error was: " + e.toString());
+				this.getLogger()
+				        .severe("There was an issue getting UUIDs while attempting to convert data in the old players folder to the new format. The conversion will not happen. The error was: "
+				                + e.toString());
 				return;
 			}
 
-			if(response == null) {
+			if (response == null) {
 				System.out.println("Error getting UUIDs");
 				return;
 			}
 
-			for(String oldPlayer : oldPlayersNames) {
+			for (String oldPlayer : oldPlayersNames) {
 
-				if(response.containsKey(oldPlayer)) {
+				if (response.containsKey(oldPlayer)) {
 
 					UUID uuid = response.get(oldPlayer);
-					if(uuid == null) continue;
-					File newPlayerFile = new File(newPlayerFilePath + File.separator + uuid.toString() + ".yml");
+					if (uuid == null)
+						continue;
+					File newPlayerFile = new File(newPlayerFilePath
+					        + File.separator + uuid.toString() + ".yml");
 
-					if(!newPlayerFile.exists()) {
+					if (!newPlayerFile.exists()) {
 
-						ConfigAccessor oldPlayerCfg = new ConfigAccessor("data" + File.separator + "players" + File.separator + oldPlayer + ".yml");
+						ConfigAccessor oldPlayerCfg = new ConfigAccessor("data"
+						        + File.separator + "players" + File.separator
+						        + oldPlayer + ".yml");
 
 						Voter voter = getVoterManager().getVoter(oldPlayer);
 
-
-						if(oldPlayerCfg.getConfig().contains("currentCycle")) {
-							voter.setCurrentVoteCycle(oldPlayerCfg.getConfig().getInt("currentCycle", 0));
+						if (oldPlayerCfg.getConfig().contains("currentCycle")) {
+							voter.setCurrentVoteCycle(oldPlayerCfg.getConfig()
+							        .getInt("currentCycle", 0));
 						}
-						if(oldPlayerCfg.getConfig().contains("lifetimeVotes")) {
-							voter.setLifetimeVotes(oldPlayerCfg.getConfig().getInt("lifetimeVotes", 0));
+						if (oldPlayerCfg.getConfig().contains("lifetimeVotes")) {
+							voter.setLifetimeVotes(oldPlayerCfg.getConfig()
+							        .getInt("lifetimeVotes", 0));
 						}
-						if(oldPlayerCfg.getConfig().contains("lastVote")) {
-							voter.setLastVoteTimeStamp(oldPlayerCfg.getConfig().getString("lastVote", ""));
+						if (oldPlayerCfg.getConfig().contains("lastVote")) {
+							voter.setLastVoteTimeStamp(oldPlayerCfg.getConfig()
+							        .getString("lastVote", ""));
 						}
-						if(oldPlayerCfg.getConfig().contains("currentVoteStreak")) {
-							voter.setCurrentVoteStreak(oldPlayerCfg.getConfig().getInt("currentVoteStreak", 0));
+						if (oldPlayerCfg.getConfig().contains(
+						        "currentVoteStreak")) {
+							voter.setCurrentVoteStreak(oldPlayerCfg.getConfig()
+							        .getInt("currentVoteStreak", 0));
 						}
-						if(oldPlayerCfg.getConfig().contains("longestVoteStreak")) {
-							voter.setLongestVoteStreak(oldPlayerCfg.getConfig().getInt("longestVoteStreak", 0));
+						if (oldPlayerCfg.getConfig().contains(
+						        "longestVoteStreak")) {
+							voter.setLongestVoteStreak(oldPlayerCfg.getConfig()
+							        .getInt("longestVoteStreak", 0));
 						}
-						if(oldPlayerCfg.getConfig().contains("unclaimedRewards")) {
-							List<String> unclaimedRewards = oldPlayerCfg.getConfig().getStringList("unclaimedRewards");
-							for(String unclaimedReward : unclaimedRewards) {
-								if(unclaimedReward != null) {
+						if (oldPlayerCfg.getConfig().contains(
+						        "unclaimedRewards")) {
+							List<String> unclaimedRewards = oldPlayerCfg
+							        .getConfig().getStringList(
+							                "unclaimedRewards");
+							for (String unclaimedReward : unclaimedRewards) {
+								if (unclaimedReward != null) {
 									voter.saveUnclaimedReward(unclaimedReward);
 								}
 							}
 						}
-						if(oldPlayerCfg.getConfig().contains("unclaimedMilestones")) {
-							List<String> unclaimedMilestones = oldPlayerCfg.getConfig().getStringList("unclaimedMilestones");
-							for(String unclaimedMilestone : unclaimedMilestones) {
-								if(unclaimedMilestone != null) {
+						if (oldPlayerCfg.getConfig().contains(
+						        "unclaimedMilestones")) {
+							List<String> unclaimedMilestones = oldPlayerCfg
+							        .getConfig().getStringList(
+							                "unclaimedMilestones");
+							for (String unclaimedMilestone : unclaimedMilestones) {
+								if (unclaimedMilestone != null) {
 									voter.saveUnclaimedMilestone(unclaimedMilestone);
 								}
 							}
 						}
-						File oldPlayerFile = new File(oldPlayerFilePath + File.separator + oldPlayer + ".yml");
+						File oldPlayerFile = new File(oldPlayerFilePath
+						        + File.separator + oldPlayer + ".yml");
 						oldPlayerFile.delete();
 					}
 				} else {
-					getLogger().warning("Could not convert name \"" + oldPlayer + "\" to a UUID as the name is not an actual minecraft player. Was it a mistyped name or is there connectivity issues with Mojangs UUID server?");
+					getLogger()
+					        .warning(
+					                "Could not convert name \""
+					                        + oldPlayer
+					                        + "\" to a UUID as the name is not an actual minecraft player. Was it a mistyped name or is there connectivity issues with Mojangs UUID server?");
 				}
 			}
 		}
@@ -937,65 +1157,95 @@ public class VoteRoulette extends JavaPlugin {
 		String playerFolder = pluginFolder + File.separator + "data";
 		(new File(playerFolder)).mkdirs();
 		File playerDataFile = new File(playerFolder, "players.yml");
-		ConfigAccessor playersCfg = new ConfigAccessor("data" + File.separator + "players.yml");
+		ConfigAccessor playersCfg = new ConfigAccessor("data" + File.separator
+		        + "players.yml");
 
 		if (playerDataFile.exists()) {
 			try {
-				getLogger().info("Old players.yml file detected. Attempting to transfer player data to new file format...");
-				String oldPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata";
+				getLogger()
+				        .info("Old players.yml file detected. Attempting to transfer player data to new file format...");
+				String oldPlayerFilePath = getDataFolder().getAbsolutePath()
+				        + File.separator + "data" + File.separator
+				        + "playerdata";
 				Set<String> players = playersCfg.getConfig().getKeys(false);
 				int count = 0;
 				int failCount = 0;
-				for(String playerName : players) {
-					ConfigurationSection playerData = playersCfg.getConfig().getConfigurationSection(playerName);
-					if(playerName.equals("currentCycle") || playerName.equals("lifetimeVotes") || playerName.equals("lastVote") || playerName.equals("unclaimedRewards") || playerName.equals("currentMilestones")) continue;
+				for (String playerName : players) {
+					ConfigurationSection playerData = playersCfg.getConfig()
+					        .getConfigurationSection(playerName);
+					if (playerName.equals("currentCycle")
+					        || playerName.equals("lifetimeVotes")
+					        || playerName.equals("lastVote")
+					        || playerName.equals("unclaimedRewards")
+					        || playerName.equals("currentMilestones"))
+						continue;
 					(new File(oldPlayerFilePath)).mkdirs();
-					if(playerData == null) continue;
+					if (playerData == null)
+						continue;
 
-					UUIDFetcher fetcher = new UUIDFetcher(Arrays.asList(playerName));
+					UUIDFetcher fetcher = new UUIDFetcher(
+					        Arrays.asList(playerName));
 					Map<String, UUID> response = null;
 					try {
 						response = fetcher.call();
 					} catch (Exception e) {
-						this.getLogger().severe("There was an issue getting UUIDs while attempting to convert \"" + playerName + "\" in the old players.yml to the new format. The conversion will not happen. The error was: " + e.toString());
+						this.getLogger()
+						        .severe("There was an issue getting UUIDs while attempting to convert \""
+						                + playerName
+						                + "\" in the old players.yml to the new format. The conversion will not happen. The error was: "
+						                + e.toString());
 						failCount++;
 						continue;
 					}
-					if(response != null) {
+					if (response != null) {
 						UUID id = response.get(playerName);
-						if(id == null) {
-							this.getLogger().severe("Could not get a UUID for \"" + playerName + "\" while attempting to convert to new format. Perhaps this is a mistyped name?");
+						if (id == null) {
+							this.getLogger()
+							        .severe("Could not get a UUID for \""
+							                + playerName
+							                + "\" while attempting to convert to new format. Perhaps this is a mistyped name?");
 							failCount++;
 							continue;
 						}
-						String newPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata";
+						String newPlayerFilePath = getDataFolder()
+						        .getAbsolutePath()
+						        + File.separator
+						        + "data"
+						        + File.separator + "playerdata";
 						(new File(newPlayerFilePath)).mkdirs();
-						File playerFile = new File(newPlayerFilePath + File.separator + id.toString() + ".yml");
-						if(!playerFile.exists()) {
+						File playerFile = new File(newPlayerFilePath
+						        + File.separator + id.toString() + ".yml");
+						if (!playerFile.exists()) {
 							count++;
-							if(playersCfg.getConfig().contains(playerName)) {
-								Voter voter = VoteRoulette.getVoterManager().getVoter(playerName);
-								if(playerData.contains("currentCycle")) {
-									voter.setCurrentVoteCycle(playerData.getInt("currentCycle", 0));
+							if (playersCfg.getConfig().contains(playerName)) {
+								Voter voter = VoteRoulette.getVoterManager()
+								        .getVoter(playerName);
+								if (playerData.contains("currentCycle")) {
+									voter.setCurrentVoteCycle(playerData
+									        .getInt("currentCycle", 0));
 								}
-								if(playerData.contains("lifetimeVotes")) {
-									voter.setLifetimeVotes(playerData.getInt("lifetimeVotes", 0));
+								if (playerData.contains("lifetimeVotes")) {
+									voter.setLifetimeVotes(playerData.getInt(
+									        "lifetimeVotes", 0));
 								}
-								if(playerData.contains("lastVote")) {
-									voter.setLastVoteTimeStamp(playerData.getString("lastVote", ""));
+								if (playerData.contains("lastVote")) {
+									voter.setLastVoteTimeStamp(playerData
+									        .getString("lastVote", ""));
 								}
-								if(playerData.contains("unclaimedRewards")) {
-									List<String> unclaimedRewards = playerData.getStringList("unclaimedRewards");
-									for(String unclaimedReward : unclaimedRewards) {
-										if(unclaimedReward != null) {
+								if (playerData.contains("unclaimedRewards")) {
+									List<String> unclaimedRewards = playerData
+									        .getStringList("unclaimedRewards");
+									for (String unclaimedReward : unclaimedRewards) {
+										if (unclaimedReward != null) {
 											voter.saveUnclaimedReward(unclaimedReward);
 										}
 									}
 								}
-								if(playerData.contains("unclaimedMilestones")) {
-									List<String> unclaimedMilestones = playerData.getStringList("unclaimedMilestones");
-									for(String unclaimedMilestone : unclaimedMilestones) {
-										if(unclaimedMilestone != null) {
+								if (playerData.contains("unclaimedMilestones")) {
+									List<String> unclaimedMilestones = playerData
+									        .getStringList("unclaimedMilestones");
+									for (String unclaimedMilestone : unclaimedMilestones) {
+										if (unclaimedMilestone != null) {
 											voter.saveUnclaimedMilestone(unclaimedMilestone);
 										}
 									}
@@ -1005,46 +1255,57 @@ public class VoteRoulette extends JavaPlugin {
 						}
 					}
 				}
-				if(count == 0 && failCount == 0) {
-					getLogger().info("All players appear to have already been transfered. You can now delete the players.yml file.");
-				} else if(count > 0) {
-					getLogger().info("Successfully transfered " + count + " player(s) to new format.");
-				}
-				else if(failCount > 0) {
-					getLogger().info("Failed to transfer " + failCount + " player(s) to new format.");
-				}
+				if (count == 0 && failCount == 0) {
+					getLogger()
+					        .info("All players appear to have already been transfered. You can now delete the players.yml file.");
+				} else
+					if (count > 0) {
+						getLogger().info(
+						        "Successfully transfered " + count
+						                + " player(s) to new format.");
+					} else
+						if (failCount > 0) {
+							getLogger().info(
+							        "Failed to transfer " + failCount
+							                + " player(s) to new format.");
+						}
 			} catch (Exception e) {
-				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/players.yml", e);
+				log.log(Level.SEVERE,
+				        "Exception while loading VoteRoulette/data/players.yml",
+				        e);
 			}
 		}
 	}
 
 	private void scheduleTasks() {
-		//cancel any previously set tasks
-		if(periodicReminder != null) {
+		// cancel any previously set tasks
+		if (periodicReminder != null) {
 			periodicReminder.cancel();
 		}
-		if(twentyFourHourChecker != null) {
+		if (twentyFourHourChecker != null) {
 			twentyFourHourChecker.cancel();
 		}
-		if(updateChecker != null) {
+		if (updateChecker != null) {
 			updateChecker.cancel();
 		}
 
-		//schedule new ones
-		if(USE_PERIODIC_REMINDER) {
+		// schedule new ones
+		if (USE_PERIODIC_REMINDER) {
 			periodicReminder = new PeriodicReminder(PERIODIC_REMINDER);
-			periodicReminder.runTaskTimer(this, REMINDER_INTERVAL, REMINDER_INTERVAL);
+			periodicReminder.runTaskTimer(this, REMINDER_INTERVAL,
+			        REMINDER_INTERVAL);
 		}
 
-		if(USE_TWENTYFOUR_REMINDER) {
+		if (USE_TWENTYFOUR_REMINDER) {
 			twentyFourHourChecker = new TwentyFourHourCheck(TWENTYFOUR_REMINDER);
 			twentyFourHourChecker.runTaskTimer(this, 12000, 12000);
 		}
 
 		if (CHECK_UPDATES) {
-			if (getDescription().getVersion().toLowerCase().contains("snapshot")) {
-				getLogger().info("This is not a release version. Automatic update checking will be disabled.");
+			if (getDescription().getVersion().toLowerCase()
+			        .contains("snapshot")) {
+				getLogger()
+				        .info("This is not a release version. Automatic update checking will be disabled.");
 			} else {
 				updateChecker = new UpdateChecker(this);
 				updateChecker.runTaskTimerAsynchronously(this, 40, 432000);
@@ -1087,7 +1348,6 @@ public class VoteRoulette extends JavaPlugin {
 	/*
 	 * 
 	 * Runnable Tasks
-	 *
 	 */
 
 	private class PeriodicReminder extends BukkitRunnable {
@@ -1115,11 +1375,13 @@ public class VoteRoulette extends JavaPlugin {
 		@Override
 		public void run() {
 			Player[] onlinePlayers = Bukkit.getOnlinePlayers();
-			for(Player player : onlinePlayers) {
-				Voter voter = VoteRoulette.getVoterManager().getVoter(player.getName());
-				if(voter.hasntVotedInADay()) {
-					if(!VoteRoulette.notifiedPlayers.contains(player)) {
-						player.sendMessage(message.replace("%player%", player.getName()));
+			for (Player player : onlinePlayers) {
+				Voter voter = VoteRoulette.getVoterManager().getVoter(
+				        player.getName());
+				if (voter.hasntVotedInADay()) {
+					if (!VoteRoulette.notifiedPlayers.contains(player)) {
+						player.sendMessage(message.replace("%player%",
+						        player.getName()));
 						VoteRoulette.notifiedPlayers.add(player);
 					}
 				}
@@ -1145,7 +1407,8 @@ public class VoteRoulette extends JavaPlugin {
 
 			URL url;
 			try {
-				url = new URL("https://api.curseforge.com/servermods/files?projectIds=71726");
+				url = new URL(
+				        "https://api.curseforge.com/servermods/files?projectIds=71726");
 			} catch (final Exception e) {
 				return;
 			}
@@ -1155,10 +1418,12 @@ public class VoteRoulette extends JavaPlugin {
 
 				conn = url.openConnection();
 				conn.setConnectTimeout(5000);
-				conn.addRequestProperty("User-Agent", "VoteRoulette Update Checker");
+				conn.addRequestProperty("User-Agent",
+				        "VoteRoulette Update Checker");
 				conn.setDoOutput(true);
 
-				final BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+				final BufferedReader reader = new BufferedReader(
+				        new InputStreamReader(conn.getInputStream()));
 				final String response = reader.readLine();
 
 				final JSONArray array = (JSONArray) JSONValue.parse(response);
@@ -1166,19 +1431,27 @@ public class VoteRoulette extends JavaPlugin {
 					return;
 				}
 
-				latest = (String) ((JSONObject) array.get(array.size() - 1)).get("name");
+				latest = (String) ((JSONObject) array.get(array.size() - 1))
+				        .get("name");
 			} catch (final Exception e) {
 			}
 			if (latest != null) {
 				latest = latest.replace("VoteRoulette v", "");
 				if (!CURRENT_VERSION.equals(latest)) {
-					plugin.getLogger().info("There's a different version available: " + latest + " (Current version is: " + CURRENT_VERSION + ")");
-					plugin.getLogger().info("Visit http://dev.bukkit.org/bukkit-plugins/voteroulette/");
-					plugin.getLogger().info("You can disable automatic update checking in the config.");
+					plugin.getLogger().info(
+					        "There's a different version available: " + latest
+					                + " (Current version is: "
+					                + CURRENT_VERSION + ")");
+					plugin.getLogger()
+					        .info("Visit http://dev.bukkit.org/bukkit-plugins/voteroulette/");
+					plugin.getLogger()
+					        .info("You can disable automatic update checking in the config.");
 					plugin.hasUpdate = true;
 				}
 			} else {
-				this.plugin.getLogger().info("Couldn't check for plugin updates. Will try again later.");
+				this.plugin
+				        .getLogger()
+				        .info("Couldn't check for plugin updates. Will try again later.");
 			}
 		}
 	}

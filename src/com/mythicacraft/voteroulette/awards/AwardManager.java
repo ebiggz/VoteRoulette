@@ -58,41 +58,51 @@ public class AwardManager {
 		Player player = Bukkit.getPlayerExact(playerName);
 		Voter voter = vm.getVoter(playerName);
 
-		if(player == null) {
-			Utils.debugMessage(playerName + " isnt online. Saving as unclaimed.");
+		if (player == null) {
+			Utils.debugMessage(playerName
+					+ " isnt online. Saving as unclaimed.");
 			voter.saveUnclaimedAward(award);
 			return;
 		}
 
 		String worldName = player.getWorld().getName();
 
-		if(Utils.worldIsBlacklisted(worldName)) {
-			Utils.debugMessage(playerName + " is in blacklisted world. Saving as unclaimed.");
+		if (Utils.worldIsBlacklisted(worldName)) {
+			Utils.debugMessage(playerName
+					+ " is in blacklisted world. Saving as unclaimed.");
 			voter.saveUnclaimedAward(award);
-			player.sendMessage(plugin.BLACKLISTED_WORLD_NOTIFICATION.replace("%type%", "award"));
+			player.sendMessage(plugin.BLACKLISTED_WORLD_NOTIFICATION.replace(
+					"%type%", "award"));
 			return;
 		}
-		if(award.hasWorlds()) {
-			if(!award.getWorlds().contains(worldName)) {
+		if (award.hasWorlds()) {
+			if (!award.getWorlds().contains(worldName)) {
 				Utils.debugMessage(playerName + " isn't in specific award world. Saving as unclaimed.");
 				voter.saveUnclaimedAward(award);
-				player.sendMessage(plugin.WRONG_AWARD_WORLD_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()).replace("%worlds%", Utils.worldsString(award.getWorlds())));
+				player.sendMessage(plugin.WRONG_AWARD_WORLD_NOTIFICATION
+						.replace("%type%", "award")
+						.replace("%name%", award.getName())
+						.replace("%worlds%", Utils.worldsString(award.getWorlds())));
 				return;
 			}
 		}
-		if(award.hasItems()) {
+		if (award.hasItems()) {
 			Utils.debugMessage("Award contains items");
-			ItemStack[] items = Utils.updateLoreAndCustomNames(player.getName(), award.getItems());
-			if(award.getRequiredSlots() <= Utils.getPlayerOpenInvSlots(player)) {
+			ItemStack[] items = Utils.updateLoreAndCustomNames(
+					player.getName(), award.getItems());
+			if (award.getRequiredSlots() <= Utils.getPlayerOpenInvSlots(player)) {
 				Inventory inv = player.getInventory();
-				for(int i = 0; i < items.length; i++) {
+				for (int i = 0; i < items.length; i++) {
 					inv.addItem(items[i]);
 				}
 			} else {
-				Utils.debugMessage(playerName + " doesnt have space in inventory. Saving as unclaimed.");
-				if(VoteRoulette.DISABLE_UNCLAIMED || VoteRoulette.DISABLE_INVENTORY_PROT) {
+				Utils.debugMessage(playerName
+						+ " doesnt have space in inventory. Saving as unclaimed.");
+				if (VoteRoulette.DISABLE_UNCLAIMED
+						|| VoteRoulette.DISABLE_INVENTORY_PROT) {
 
-					BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+					BukkitScheduler scheduler = Bukkit.getServer()
+							.getScheduler();
 					scheduler.scheduleSyncDelayedTask(plugin, new Runnable() {
 
 						private Player player;
@@ -100,11 +110,13 @@ public class AwardManager {
 
 						@Override
 						public void run() {
-							for(int i = 0; i < items.length; i++) {
-								player.getWorld().dropItemNaturally(player.getLocation(), items[i]);
+							for (int i = 0; i < items.length; i++) {
+								player.getWorld().dropItemNaturally(
+										player.getLocation(), items[i]);
 							}
 						}
-						private Runnable init(Player player, ItemStack[] items){
+
+						private Runnable init(Player player, ItemStack[] items) {
 							this.player = player;
 							this.items = items;
 							return this;
@@ -113,87 +125,110 @@ public class AwardManager {
 
 				} else {
 					voter.saveUnclaimedAward(award);
-					player.sendMessage(plugin.INVENTORY_FULL_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()).replace("%slots%", Integer.toString(award.getRequiredSlots())));
+					player.sendMessage(plugin.INVENTORY_FULL_NOTIFICATION
+							.replace("%type%", "award")
+							.replace("%name%", award.getName())
+							.replace("%slots%",
+									Integer.toString(award.getRequiredSlots())));
 					return;
 				}
 			}
 		}
-		if(award.hasCurrency()) {
+		if (award.hasCurrency()) {
 			Utils.debugMessage("Award contains curreny, depositing in bank");
 			VoteRoulette.economy.depositPlayer(playerName, award.getCurrency());
 		}
-		if(award.hasXpLevels()) {
+		if (award.hasXpLevels()) {
 			Utils.debugMessage("Award contains xp, giving it.");
 			player.giveExpLevels(award.getXpLevels());
 		}
-		if(award.hasCommands()) {
+		if (award.hasCommands()) {
 			Utils.debugMessage("Award has commands, running them");
-			for(String command : award.getCommands()) {
-				if(command.startsWith("/")) {
+			for (String command : award.getCommands()) {
+				if (command.startsWith("/")) {
 					command = command.replaceFirst("/", "");
 				}
-				if(command.startsWith("(")) {
+				if (command.startsWith("(")) {
 					command = command.replaceFirst("\\(", "");
 					String[] delayedCommandData = command.split("\\)");
 					String delayedCommand = delayedCommandData[1].trim();
-					if(delayedCommand.startsWith("/")) {
+					if (delayedCommand.startsWith("/")) {
 						delayedCommand = delayedCommand.replaceFirst("/", "");
 					}
 					int delay = 1;
 					boolean runOnLogOff = false;
 					boolean runOnShutdown = false;
-					if(delayedCommandData[0].contains("/")) {
-						String[] delayedCommandOptions = delayedCommandData[0].split("/");
-						for(String cmdOption: delayedCommandOptions) {
-							if(cmdOption.trim().equalsIgnoreCase("logoff") || cmdOption.trim().equalsIgnoreCase("log off")) {
+					if (delayedCommandData[0].contains("/")) {
+						String[] delayedCommandOptions = delayedCommandData[0]
+								.split("/");
+						for (String cmdOption : delayedCommandOptions) {
+							if (cmdOption.trim().equalsIgnoreCase("logoff")
+									|| cmdOption.trim().equalsIgnoreCase(
+											"log off")) {
 								runOnLogOff = true;
-							}
-							else if(cmdOption.trim().equalsIgnoreCase("shutdown")) {
-								runOnShutdown = true;
-							}
-							else {
-								try {
-									delay = Integer.parseInt(cmdOption.trim());
-								} catch (Exception e) {
-									log.warning("[VoteRoulette] Error parsing delay for command in award: " + award.getName());
+							} else
+								if (cmdOption.trim().equalsIgnoreCase(
+										"shutdown")) {
+									runOnShutdown = true;
+								} else {
+									try {
+										delay = Integer.parseInt(cmdOption
+												.trim());
+									} catch (Exception e) {
+										log.warning("[VoteRoulette] Error parsing delay for command in award: "
+												+ award.getName());
+									}
 								}
-							}
 						}
 					} else {
 						delay = Integer.parseInt(delayedCommandData[0].trim());
 					}
-					DelayedCommand dc = new DelayedCommand(delayedCommand, playerName, runOnLogOff, runOnShutdown);
-					dc.runTaskLater(plugin, delay*20);
+					DelayedCommand dc = new DelayedCommand(delayedCommand,
+							playerName, runOnLogOff, runOnShutdown);
+					dc.runTaskLater(plugin, delay * 20);
 					VoteRoulette.delayedCommands.add(dc);
 				} else {
-					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", player.getName()));
+					Bukkit.getServer().dispatchCommand(
+							Bukkit.getServer().getConsoleSender(),
+							command.replace("%player%", player.getName()));
 				}
 			}
 		}
-		if(plugin.MESSAGE_PLAYER) {
-			if(award.hasMessage()) {
-				player.sendMessage(Utils.transcribeColorCodes(award.getMessage().replace("%player%", player.getName())));
+		if (plugin.MESSAGE_PLAYER) {
+			if (award.hasMessage()) {
+				player.sendMessage(Utils.transcribeColorCodes(award
+						.getMessage().replace("%player%", player.getName())));
 			} else {
-				player.sendMessage(Utils.getAwardMessage(plugin.PLAYER_VOTE_MESSAGE, award, player.getName()));
+				player.sendMessage(Utils.getAwardMessage(
+						plugin.PLAYER_VOTE_MESSAGE, award, player.getName()));
 			}
 		}
-		if(award.hasReroll()) {
+		if (award.hasReroll()) {
 			Utils.debugMessage("Award has reroll settings, rolling");
-			player.sendMessage(plugin.REROLL_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()));
-			if(!rerollReward(award.getReroll(), player, award)) {
-				log.warning("[VoteRoulette] There was an error when doing the reroll settings in award " + award.getName() + " for the player " + player.getName() + ", was the reroll award spelled correctly?");
+			player.sendMessage(plugin.REROLL_NOTIFICATION.replace("%type%",
+					"award").replace("%name%", award.getName()));
+			if (!rerollReward(award.getReroll(), player, award)) {
+				log.warning("[VoteRoulette] There was an error when doing the reroll settings in award "
+						+ award.getName()
+						+ " for the player "
+						+ player.getName()
+						+ ", was the reroll award spelled correctly?");
 			}
 		}
 
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
 		scheduler.scheduleSyncDelayedTask(plugin, new Runnable() {
+
 			private Player player;
 			private Award award;
+
 			@Override
 			public void run() {
-				Bukkit.getServer().getPluginManager().callEvent(new PlayerReceivedAwardEvent(player, award));
+				Bukkit.getServer().getPluginManager()
+				.callEvent(new PlayerReceivedAwardEvent(player, award));
 			}
-			private Runnable init(Player player, Award award){
+
+			private Runnable init(Player player, Award award) {
 				this.player = player;
 				this.award = award;
 				return this;
@@ -203,22 +238,25 @@ public class AwardManager {
 	}
 
 	public Award getAwardByName(String awardName, AwardType awardType) {
-		if(awardType == AwardType.REWARD) {
-			for(Reward reward: rewards) {
-				if(reward.getName().equals(awardName)) return reward;
+		if (awardType == AwardType.REWARD) {
+			for (Reward reward : rewards) {
+				if (reward.getName().equals(awardName))
+					return reward;
 			}
 			return null;
 		} else {
-			for(Milestone milestone: milestones) {
-				if(milestone.getName().equals(awardName)) return milestone;
+			for (Milestone milestone : milestones) {
+				if (milestone.getName().equals(awardName))
+					return milestone;
 			}
 			return null;
 		}
 	}
 
 	public boolean awardsContainChance(Award[] awards) {
-		for(Award award : awards) {
-			if(award.hasChance()) return true;
+		for (Award award : awards) {
+			if (award.hasChance())
+				return true;
 		}
 		return false;
 	}
@@ -228,7 +266,7 @@ public class AwardManager {
 	 **/
 
 	public void addAward(Award award) {
-		if(award.getAwardType() == AwardType.REWARD) {
+		if (award.getAwardType() == AwardType.REWARD) {
 			rewards.add((Reward) award);
 		} else {
 			milestones.add((Milestone) award);
@@ -240,10 +278,10 @@ public class AwardManager {
 	}
 
 	public void removeAward(Award award) {
-		if(award.getAwardType() == AwardType.REWARD) {
-			rewards.remove((Reward) award);
+		if (award.getAwardType() == AwardType.REWARD) {
+			rewards.remove(award);
 		} else {
-			milestones.remove((Milestone) award);
+			milestones.remove(award);
 		}
 	}
 
@@ -256,7 +294,8 @@ public class AwardManager {
 	}
 
 	public boolean hasDefaultReward() {
-		if(defaultReward == null) return false;
+		if (defaultReward == null)
+			return false;
 		return true;
 	}
 
@@ -268,35 +307,38 @@ public class AwardManager {
 		this.defaultReward = defaultReward;
 	}
 
-
 	public Reward[] getQualifiedRewards(String playerName, boolean skipFilters) {
 
 		ArrayList<Reward> qualifiedRewards = new ArrayList<Reward>();
 
-		//iterate through all rewards
-		for(Reward reward: rewards) {
+		// iterate through all rewards
+		for (Reward reward : rewards) {
 
-			//check if reward has specific players set
-			if(reward.hasPlayers()) {
-				if(reward.containsPlayer(playerName)) {
+			// check if reward has specific players set
+			if (reward.hasPlayers()) {
+				if (reward.containsPlayer(playerName)) {
 					qualifiedRewards.add(reward);
 					continue;
 				}
-				if(VoteRoulette.hasPermPlugin()) {
-					if(reward.hasPermissionGroups()) {
-						if(plugin.ONLY_PRIMARY_GROUP) {
-							String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
-							if(primaryGroup != null) {
-								if(reward.containsPermGroup(primaryGroup)) {
+				if (VoteRoulette.hasPermPlugin()) {
+					if (reward.hasPermissionGroups()) {
+						if (plugin.ONLY_PRIMARY_GROUP) {
+							String primaryGroup = VoteRoulette.permission
+									.getPrimaryGroup("", playerName);
+							if (primaryGroup != null) {
+								if (reward.containsPermGroup(primaryGroup)) {
 									qualifiedRewards.add(reward);
 								}
 							} else {
-								System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
+								System.out
+								.println("[VoteRoulette] Warning! Could not get the primary group for player: "
+										+ playerName);
 							}
 						} else {
 							String[] groups = reward.getPermGroups();
-							for(String group: groups) {
-								if(VoteRoulette.permission.playerInGroup("",playerName, group)) {
+							for (String group : groups) {
+								if (VoteRoulette.permission.playerInGroup("",
+										playerName, group)) {
 									qualifiedRewards.add(reward);
 									break;
 								}
@@ -306,92 +348,104 @@ public class AwardManager {
 				}
 			}
 
-			//check if reward has specific perm groups set
-			else if(VoteRoulette.hasPermPlugin()) {
-				if(reward.hasPermissionGroups()) {
-					if(plugin.ONLY_PRIMARY_GROUP) {
-						String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
-						if(primaryGroup != null) {
-							if(reward.containsPermGroup(primaryGroup)) {
-								qualifiedRewards.add(reward);
+			// check if reward has specific perm groups set
+			else
+				if (VoteRoulette.hasPermPlugin()) {
+					if (reward.hasPermissionGroups()) {
+						if (plugin.ONLY_PRIMARY_GROUP) {
+							String primaryGroup = VoteRoulette.permission
+									.getPrimaryGroup("", playerName);
+							if (primaryGroup != null) {
+								if (reward.containsPermGroup(primaryGroup)) {
+									qualifiedRewards.add(reward);
+								}
+							} else {
+								System.out
+								.println("[VoteRoulette] Warning! Could not get the primary group for player: "
+										+ playerName);
 							}
 						} else {
-							System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
-						}
-					} else {
-						String[] groups = reward.getPermGroups();
-						for(String group: groups) {
-							if(VoteRoulette.permission.playerInGroup("",playerName, group)) {
-								qualifiedRewards.add(reward);
-								break;
+							String[] groups = reward.getPermGroups();
+							for (String group : groups) {
+								if (VoteRoulette.permission.playerInGroup("",
+										playerName, group)) {
+									qualifiedRewards.add(reward);
+									break;
+								}
 							}
 						}
+					} else {
+						qualifiedRewards.add(reward);
 					}
 				} else {
 					qualifiedRewards.add(reward);
 				}
-			} else {
-				qualifiedRewards.add(reward);
-			}
 		}
 
 		Reward[] rewardsArray;
 		rewardsArray = new Reward[qualifiedRewards.size()];
 		qualifiedRewards.toArray(rewardsArray);
 
-		//filter out rewards not for the world player is standing in
-		if(plugin.CONSIDER_REWARDS_FOR_CURRENT_WORLD && !skipFilters) {
+		// filter out rewards not for the world player is standing in
+		if (plugin.CONSIDER_REWARDS_FOR_CURRENT_WORLD && !skipFilters) {
 			@SuppressWarnings("deprecation")
 			OfflinePlayer op = Bukkit.getOfflinePlayer(playerName);
 			ArrayList<Reward> worldFilteredRewards = new ArrayList<Reward>();
-			if(op.isOnline()) {
+			if (op.isOnline()) {
 				String worldName = op.getPlayer().getWorld().getName();
-				for(Reward reward : rewardsArray) {
-					if(reward.hasWorlds()) {
-						if(reward.getWorlds().contains(worldName)) {
+				for (Reward reward : rewardsArray) {
+					if (reward.hasWorlds()) {
+						if (reward.getWorlds().contains(worldName)) {
 							worldFilteredRewards.add(reward);
 						}
 					} else {
 						worldFilteredRewards.add(reward);
 					}
 				}
-				if(!worldFilteredRewards.isEmpty()) {
+				if (!worldFilteredRewards.isEmpty()) {
 					rewardsArray = new Reward[worldFilteredRewards.size()];
 					worldFilteredRewards.toArray(rewardsArray);
 				}
 			}
 		}
 
-		// filter out rewards that have votestreak settings that the player doesn't meet
-		if(!skipFilters) {
-			int playerVoteStreak = VoteRoulette.getVoterManager().getVoter(playerName).getCurrentVoteStreak();
+		// filter out rewards which have votestreak settings that the player
+		// doesn't currently meet
+		if (!skipFilters) {
+			int playerVoteStreak = VoteRoulette.getVoterManager()
+					.getVoter(playerName).getCurrentVoteStreak();
 			ArrayList<Reward> qualifiedVoteStreaks = new ArrayList<Reward>();
 			ArrayList<Reward> nonVoteStreakRewards = new ArrayList<Reward>();
-			for(Reward reward : rewardsArray) {
-				if(!reward.hasVoteStreak()) {
+			for (Reward reward : rewardsArray) {
+				if (!reward.hasVoteStreak()) {
 					nonVoteStreakRewards.add(reward);
 					continue;
 				}
-				if(reward.hasVoteStreakModifier()) {
+				if (reward.hasVoteStreakModifier()) {
 					VoteStreakModifier vsm = reward.getVoteStreakModifier();
-					if(vsm == VoteStreakModifier.OR_LESS) {
-						if(playerVoteStreak <= reward.getVoteStreak()) {
+					if (vsm == VoteStreakModifier.OR_LESS) {
+						if (playerVoteStreak <= reward.getVoteStreak()) {
 							qualifiedVoteStreaks.add(reward);
 						}
 					}
-					else if(vsm == VoteStreakModifier.OR_MORE) {
-						if(playerVoteStreak >= reward.getVoteStreak()) {
+					else if (vsm == VoteStreakModifier.OR_MORE) {
+						if (playerVoteStreak >= reward.getVoteStreak()) {
+							qualifiedVoteStreaks.add(reward);
+						}
+					}
+					else if(vsm == VoteStreakModifier.RANGE) {
+						if (playerVoteStreak >= reward.getVoteStreak() && playerVoteStreak <= reward.getVoteStreakMax()) {
 							qualifiedVoteStreaks.add(reward);
 						}
 					}
 				} else {
-					if(playerVoteStreak == reward.getVoteStreak()) {
+					if (playerVoteStreak == reward.getVoteStreak()) {
 						qualifiedVoteStreaks.add(reward);
 					}
 				}
 			}
-			if(!qualifiedVoteStreaks.isEmpty()) {
-				if(plugin.PRIORITIZE_VOTESTREAKS) {
+			if (!qualifiedVoteStreaks.isEmpty()) {
+				if (plugin.PRIORITIZE_VOTESTREAKS) {
 					rewardsArray = new Reward[qualifiedVoteStreaks.size()];
 					qualifiedVoteStreaks.toArray(rewardsArray);
 				} else {
@@ -412,11 +466,13 @@ public class AwardManager {
 		int chanceMax = 100;
 		boolean useCustomChance = false;
 		String name;
-		if(reroll.contains("(") && reroll.contains(")") && reroll.endsWith(")")) {
+		if (reroll.contains("(") && reroll.contains(")")
+				&& reroll.endsWith(")")) {
 			String[] rerollData = reroll.split("\\(");
 			name = rerollData[0].trim();
-			rerollData[1] = rerollData[1].replace("%", "").trim().replace(")", "");
-			if(rerollData[1].contains("/")) {
+			rerollData[1] = rerollData[1].replace("%", "").trim()
+					.replace(")", "");
+			if (rerollData[1].contains("/")) {
 				String[] chanceData = rerollData[1].split("/");
 				try {
 					chanceMin = Integer.parseInt(chanceData[0].trim());
@@ -437,13 +493,14 @@ public class AwardManager {
 		}
 
 		Award award;
-		if(name.equals("ANY")) {
+		if (name.equals("ANY")) {
 			Random rand = new Random();
-			if(origAward.getAwardType() == AwardType.REWARD) {
+			if (origAward.getAwardType() == AwardType.REWARD) {
 				ArrayList<Reward> tempRewards = new ArrayList<Reward>();
 				Reward origReward = (Reward) origAward;
-				for(Reward reward : rewards) {
-					if(reward == origReward) continue;
+				for (Reward reward : rewards) {
+					if (reward == origReward)
+						continue;
 					tempRewards.add(reward);
 				}
 				award = tempRewards.get(rand.nextInt(tempRewards.size()));
@@ -454,10 +511,11 @@ public class AwardManager {
 			award = getAwardByName(name, AwardType.REWARD);
 		}
 
-		if(award == null) return false;
+		if (award == null)
+			return false;
 
-		if(!useCustomChance) {
-			if(award.hasChance()) {
+		if (!useCustomChance) {
+			if (award.hasChance()) {
 				chanceMin = award.getChanceMin();
 				chanceMax = award.getChanceMax();
 			} else {
@@ -465,9 +523,10 @@ public class AwardManager {
 			}
 		}
 
-		int random = 1 + (int)(Math.random() * ((chanceMax - 1) + 1));
-		if(random <= chanceMin) {
-			PlayerEarnedAwardEvent event = new PlayerEarnedAwardEvent(player.getName(), award);
+		int random = 1 + (int) (Math.random() * ((chanceMax - 1) + 1));
+		if (random <= chanceMin) {
+			PlayerEarnedAwardEvent event = new PlayerEarnedAwardEvent(
+					player.getName(), award);
 			Bukkit.getServer().getPluginManager().callEvent(event);
 			if (!event.isCancelled()) {
 				administerAwardContents(event.getAward(), event.getPlayerName());
@@ -499,30 +558,34 @@ public class AwardManager {
 
 		ArrayList<Milestone> qualifiedMilestones = new ArrayList<Milestone>();
 
-		//iterate through all rewards
-		for(Milestone milestone: milestones) {
+		// iterate through all rewards
+		for (Milestone milestone : milestones) {
 
-			//check if reward has specific players set
-			if(milestone.hasPlayers()) {
-				if(milestone.containsPlayer(playerName)) {
+			// check if reward has specific players set
+			if (milestone.hasPlayers()) {
+				if (milestone.containsPlayer(playerName)) {
 					qualifiedMilestones.add(milestone);
 					continue;
 				}
-				if(VoteRoulette.hasPermPlugin()) {
-					if(milestone.hasPermissionGroups()) {
-						if(plugin.ONLY_PRIMARY_GROUP) {
-							String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
-							if(primaryGroup != null) {
-								if(milestone.containsPermGroup(primaryGroup)) {
+				if (VoteRoulette.hasPermPlugin()) {
+					if (milestone.hasPermissionGroups()) {
+						if (plugin.ONLY_PRIMARY_GROUP) {
+							String primaryGroup = VoteRoulette.permission
+									.getPrimaryGroup("", playerName);
+							if (primaryGroup != null) {
+								if (milestone.containsPermGroup(primaryGroup)) {
 									qualifiedMilestones.add(milestone);
 								}
 							} else {
-								System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
+								System.out
+								.println("[VoteRoulette] Warning! Could not get the primary group for player: "
+										+ playerName);
 							}
 						} else {
 							String[] groups = milestone.getPermGroups();
-							for(String group: groups) {
-								if(VoteRoulette.permission.playerInGroup("",playerName, group)) {
+							for (String group : groups) {
+								if (VoteRoulette.permission.playerInGroup("",
+										playerName, group)) {
 									qualifiedMilestones.add(milestone);
 									break;
 								}
@@ -532,56 +595,62 @@ public class AwardManager {
 				}
 			}
 
-			//check if reward has specific perm groups set
-			else if(VoteRoulette.hasPermPlugin()) {
-				if(milestone.hasPermissionGroups()) {
-					if(plugin.ONLY_PRIMARY_GROUP) {
-						String primaryGroup = VoteRoulette.permission.getPrimaryGroup("", playerName);
-						if(primaryGroup != null) {
-							if(milestone.containsPermGroup(primaryGroup)) {
-								qualifiedMilestones.add(milestone);
+			// check if reward has specific perm groups set
+			else
+				if (VoteRoulette.hasPermPlugin()) {
+					if (milestone.hasPermissionGroups()) {
+						if (plugin.ONLY_PRIMARY_GROUP) {
+							String primaryGroup = VoteRoulette.permission
+									.getPrimaryGroup("", playerName);
+							if (primaryGroup != null) {
+								if (milestone.containsPermGroup(primaryGroup)) {
+									qualifiedMilestones.add(milestone);
+								}
+							} else {
+								System.out
+								.println("[VoteRoulette] Warning! Could not get the primary group for player: "
+										+ playerName);
 							}
 						} else {
-							System.out.println("[VoteRoulette] Warning! Could not get the primary group for player: " + playerName);
-						}
-					} else {
-						String[] groups = milestone.getPermGroups();
-						for(String group: groups) {
-							if(VoteRoulette.permission.playerInGroup("",playerName, group)) {
-								qualifiedMilestones.add(milestone);
-								break;
+							String[] groups = milestone.getPermGroups();
+							for (String group : groups) {
+								if (VoteRoulette.permission.playerInGroup("",
+										playerName, group)) {
+									qualifiedMilestones.add(milestone);
+									break;
+								}
 							}
 						}
+					} else {
+						qualifiedMilestones.add(milestone);
 					}
 				} else {
 					qualifiedMilestones.add(milestone);
 				}
-			} else {
-				qualifiedMilestones.add(milestone);
-			}
 		}
 
 		Milestone[] milestonesArray;
 		milestonesArray = new Milestone[qualifiedMilestones.size()];
 		qualifiedMilestones.toArray(milestonesArray);
 
-		//filter out rewards not for the world player is standing in
-		if(plugin.CONSIDER_MILESTONES_FOR_CURRENT_WORLD) {
+		// filter out rewards not for the world player is standing in
+		if (plugin.CONSIDER_MILESTONES_FOR_CURRENT_WORLD) {
 			OfflinePlayer op = Bukkit.getOfflinePlayer(playerName);
 			ArrayList<Milestone> worldFilteredMilestones = new ArrayList<Milestone>();
-			if(op.isOnline()) {
+			if (op.isOnline()) {
 				String worldName = op.getPlayer().getWorld().getName();
-				for(Milestone milestone : milestonesArray) {
-					if(milestone.hasWorlds()) {
-						if(milestone.getWorlds().contains(worldName)) {
+				for (Milestone milestone : milestonesArray) {
+					if (milestone.hasWorlds()) {
+						if (milestone.getWorlds().contains(worldName)) {
 							worldFilteredMilestones.add(milestone);
 						}
 					} else {
 						worldFilteredMilestones.add(milestone);
 					}
 				}
-				if(!worldFilteredMilestones.isEmpty()) {
-					milestonesArray = new Milestone[worldFilteredMilestones.size()];
+				if (!worldFilteredMilestones.isEmpty()) {
+					milestonesArray = new Milestone[worldFilteredMilestones
+					                                .size()];
 					worldFilteredMilestones.toArray(milestonesArray);
 				}
 			}
@@ -597,20 +666,22 @@ public class AwardManager {
 		Milestone[] playerMS = getQualifiedMilestones(playerName);
 		int playerVotes = voter.getLifetimeVotes();
 
-		for(int i = 0; i < playerMS.length; i++) {
+		for (int i = 0; i < playerMS.length; i++) {
 			int milVotes = playerMS[i].getVotes();
-			if(playerMS[i].isRecurring()) {
+			if (playerMS[i].isRecurring()) {
 				if (playerVotes % milVotes == 0) {
 					reachedMils.add(playerMS[i]);
 					continue;
 				}
 			}
-			if(milVotes == playerVotes) {
+			if (milVotes == playerVotes) {
 				reachedMils.add(playerMS[i]);
 			}
 		}
 
-		Collections.sort(reachedMils, new Comparator<Milestone>(){
+		Collections.sort(reachedMils, new Comparator<Milestone>() {
+
+			@Override
 			public int compare(Milestone m1, Milestone m2) {
 				return m1.getPriority() - m2.getPriority();
 			}
@@ -625,7 +696,7 @@ public class AwardManager {
 	public void deleteAwardFromFile(Award award) {
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
 		String awardType;
-		if(award.getAwardType() == AwardType.REWARD) {
+		if (award.getAwardType() == AwardType.REWARD) {
 			awardType = "Rewards";
 		} else {
 			awardType = "Milestones";
@@ -639,112 +710,124 @@ public class AwardManager {
 	public void saveAwardToFile(Award award) {
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
 		String awardType;
-		if(award.getAwardType() == AwardType.REWARD) {
+		if (award.getAwardType() == AwardType.REWARD) {
 			awardType = "Rewards";
 		} else {
 			awardType = "Milestones";
 		}
 		String awardPath = awardType + "." + award.getName() + ".";
-		if(award.hasItems()) {
+		if (award.hasItems()) {
 			ItemStack[] items = award.getItems();
 
 			List<Material> handledItems = new ArrayList<Material>();
 
-			for(ItemStack item: items) {
-				if(handledItems.contains(item.getType())) continue;
+			for (ItemStack item : items) {
+				if (handledItems.contains(item.getType()))
+					continue;
 				ItemStack[] multiples = this.getMultiples(item, items);
-				if(multiples != null) {
+				if (multiples != null) {
 					handledItems.add(item.getType());
 					int count = 1;
-					String itemPath = awardPath + "items." + item.getData().getItemTypeId() + ".multiple.";
-					for(ItemStack i : multiples) {
+					String itemPath = awardPath + "items."
+							+ item.getData().getItemTypeId() + ".multiple.";
+					for (ItemStack i : multiples) {
 						this.saveItemToPath(itemPath + count + ".", i);
 						count++;
 					}
 				} else {
-					String itemPath = awardPath + "items." + item.getData().getItemTypeId() + ".";
+					String itemPath = awardPath + "items."
+							+ item.getData().getItemTypeId() + ".";
 					this.saveItemToPath(itemPath, item);
 				}
 			}
 		}
-		if(award.hasXpLevels()) {
-			awardsData.getConfig().set(awardPath + "xpLevels", award.getXpLevels());
+		if (award.hasXpLevels()) {
+			awardsData.getConfig().set(awardPath + "xpLevels",
+					award.getXpLevels());
 		}
-		if(award.hasCurrency()) {
-			awardsData.getConfig().set(awardPath + "currency", award.getCurrency());
+		if (award.hasCurrency()) {
+			awardsData.getConfig().set(awardPath + "currency",
+					award.getCurrency());
 		}
-		if(award.hasCommands()) {
-			awardsData.getConfig().set(awardPath + "commands", award.getCommands());
+		if (award.hasCommands()) {
+			awardsData.getConfig().set(awardPath + "commands",
+					award.getCommands());
 		}
-		if(award.hasChance()) {
-			awardsData.getConfig().set(awardPath + "chance", award.getChanceMin() + "/" + award.getChanceMax());
+		if (award.hasChance()) {
+			awardsData.getConfig().set(awardPath + "chance",
+					award.getChanceMin() + "/" + award.getChanceMax());
 		}
-		if(award.hasMessage()) {
-			awardsData.getConfig().set(awardPath + "message", award.getMessage());
+		if (award.hasMessage()) {
+			awardsData.getConfig().set(awardPath + "message",
+					award.getMessage());
 		}
-		if(award.hasDescription()) {
-			awardsData.getConfig().set(awardPath + "description", award.getDescription());
+		if (award.hasDescription()) {
+			awardsData.getConfig().set(awardPath + "description",
+					award.getDescription());
 		}
-		if(award.hasPermissionGroups()) {
+		if (award.hasPermissionGroups()) {
 			String[] array = award.getPermGroups();
 			StringBuilder sb = new StringBuilder();
-			for(String entry : array) {
+			for (String entry : array) {
 				sb.append(entry);
 				sb.append(", ");
 			}
-			sb.delete(sb.length()-2, sb.length());
+			sb.delete(sb.length() - 2, sb.length());
 			awardsData.getConfig().set(awardPath + "permGroups", sb.toString());
 		}
-		if(award.hasPlayers()) {
+		if (award.hasPlayers()) {
 			String[] array = award.getPlayers();
 			StringBuilder sb = new StringBuilder();
-			for(String entry : array) {
+			for (String entry : array) {
 				sb.append(entry);
 				sb.append(", ");
 			}
-			sb.delete(sb.length()-2, sb.length());
+			sb.delete(sb.length() - 2, sb.length());
 			awardsData.getConfig().set(awardPath + "players", sb.toString());
 		}
-		if(award.hasWorlds()) {
+		if (award.hasWorlds()) {
 			List<String> array = award.getWorlds();
 			StringBuilder sb = new StringBuilder();
-			for(String entry : array) {
+			for (String entry : array) {
 				sb.append(entry);
 				sb.append(", ");
 			}
-			sb.delete(sb.length()-2, sb.length());
+			sb.delete(sb.length() - 2, sb.length());
 			awardsData.getConfig().set(awardPath + "worlds", sb.toString());
 		}
-		if(award.hasReroll()) {
+		if (award.hasReroll()) {
 			awardsData.getConfig().set(awardPath + "reroll", award.getReroll());
 		}
-		if(award.getAwardType() == AwardType.REWARD) {
+		if (award.getAwardType() == AwardType.REWARD) {
 			Reward r = (Reward) award;
-			if(r.hasWebsites()) {
+			if (r.hasWebsites()) {
 				List<String> array = r.getWebsites();
 				StringBuilder sb = new StringBuilder();
-				for(String entry : array) {
+				for (String entry : array) {
 					sb.append(entry);
 					sb.append(", ");
 				}
-				sb.delete(sb.length()-2, sb.length());
-				awardsData.getConfig().set(awardPath + "websites", sb.toString());
+				sb.delete(sb.length() - 2, sb.length());
+				awardsData.getConfig().set(awardPath + "websites",
+						sb.toString());
 			}
-			if(r.hasVoteStreak()) {
-				awardsData.getConfig().set(awardPath + "voteStreak", r.getVoteStreak());
+			if (r.hasVoteStreak()) {
+				awardsData.getConfig().set(awardPath + "voteStreak",
+						r.getVoteStreak());
 			}
-		}
-		else if(award.getAwardType() == AwardType.MILESTONE) {
-			Milestone ms = (Milestone) award;
-			awardsData.getConfig().set(awardPath + "votes", ms.getVotes());
-			if(ms.isRecurring()) {
-				awardsData.getConfig().set(awardPath + "recurring", true);
-			}
-			if(ms.getPriority() != 10) {
-				awardsData.getConfig().set(awardPath + "priority", ms.getPriority());
-			}
+		} else
+			if (award.getAwardType() == AwardType.MILESTONE) {
+				Milestone ms = (Milestone) award;
+				awardsData.getConfig().set(awardPath + "votes", ms.getVotes());
+				if (ms.isRecurring()) {
+					awardsData.getConfig().set(awardPath + "recurring", true);
+				}
+				if (ms.getPriority() != 10) {
+					awardsData.getConfig().set(awardPath + "priority",
+							ms.getPriority());
+				}
 
-		}
+			}
 		awardsData.saveConfig();
 	}
 
@@ -752,57 +835,68 @@ public class AwardManager {
 	void saveItemToPath(String itemPath, ItemStack item) {
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
 		awardsData.getConfig().set(itemPath + "amount", item.getAmount());
-		if(item.getData().getData() != 0) {
-			awardsData.getConfig().set(itemPath + "dataID", item.getData().getData());
-			if(item.getType() == Material.POTION) {
-				awardsData.getConfig().set(itemPath + "dataID", item.getDurability());
+		if (item.getData().getData() != 0) {
+			awardsData.getConfig().set(itemPath + "dataID",
+					item.getData().getData());
+			if (item.getType() == Material.POTION) {
+				awardsData.getConfig().set(itemPath + "dataID",
+						item.getDurability());
 			}
 		}
-		if(item.hasItemMeta()) {
+		if (item.hasItemMeta()) {
 			ItemMeta im = item.getItemMeta();
-			if(im.hasDisplayName()) {
-				awardsData.getConfig().set(itemPath + "name", im.getDisplayName());
+			if (im.hasDisplayName()) {
+				awardsData.getConfig().set(itemPath + "name",
+						im.getDisplayName());
 			}
-			if(im.hasLore()) {
+			if (im.hasLore()) {
 				awardsData.getConfig().set(itemPath + "lore", im.getLore());
 			}
-			if(im.hasEnchants()) {
+			if (im.hasEnchants()) {
 				Map<Enchantment, Integer> enchants = im.getEnchants();
 				Set<Enchantment> keys = enchants.keySet();
 				StringBuilder sb = new StringBuilder();
-				for(Enchantment key : keys) {
+				for (Enchantment key : keys) {
 					int level = enchants.get(key);
 					sb.append(Utils.getNameFromEnchant(key) + "(" + level + ")");
 					sb.append(", ");
 				}
-				sb.delete(sb.length()-2, sb.length());
-				awardsData.getConfig().set(itemPath + "enchants", sb.toString());
-			} else if(im instanceof EnchantmentStorageMeta) {
-				EnchantmentStorageMeta esm = (EnchantmentStorageMeta) im;
-				if(esm.hasStoredEnchants()) {
-					Map<Enchantment, Integer> enchants = esm.getStoredEnchants();
-					Set<Enchantment> keys = enchants.keySet();
-					StringBuilder sb = new StringBuilder();
-					for(Enchantment key : keys) {
-						int level = enchants.get(key);
-						sb.append(Utils.getNameFromEnchant(key) + "(" + level + ")");
-						sb.append(", ");
+				sb.delete(sb.length() - 2, sb.length());
+				awardsData.getConfig()
+				.set(itemPath + "enchants", sb.toString());
+			} else
+				if (im instanceof EnchantmentStorageMeta) {
+					EnchantmentStorageMeta esm = (EnchantmentStorageMeta) im;
+					if (esm.hasStoredEnchants()) {
+						Map<Enchantment, Integer> enchants = esm
+								.getStoredEnchants();
+						Set<Enchantment> keys = enchants.keySet();
+						StringBuilder sb = new StringBuilder();
+						for (Enchantment key : keys) {
+							int level = enchants.get(key);
+							sb.append(Utils.getNameFromEnchant(key) + "("
+									+ level + ")");
+							sb.append(", ");
+						}
+						sb.delete(sb.length() - 2, sb.length());
+						awardsData.getConfig().set(itemPath + "enchants",
+								sb.toString());
 					}
-					sb.delete(sb.length()-2, sb.length());
-					awardsData.getConfig().set(itemPath + "enchants", sb.toString());
 				}
-			}
-			if(im instanceof LeatherArmorMeta) {
+			if (im instanceof LeatherArmorMeta) {
 				LeatherArmorMeta wim = (LeatherArmorMeta) im;
-				String rgb = wim.getColor().getRed() + "," + wim.getColor().getGreen() + "," + wim.getColor().getBlue();
-				if(!rgb.equalsIgnoreCase("160,101,64")) {
+				String rgb = wim.getColor().getRed() + ","
+						+ wim.getColor().getGreen() + ","
+						+ wim.getColor().getBlue();
+				if (!rgb.equalsIgnoreCase("160,101,64")) {
 					awardsData.getConfig().set(itemPath + "armorColor", rgb);
 				}
 			}
-			if(im instanceof SkullMeta) {
+			if (im instanceof SkullMeta) {
 				SkullMeta sim = (SkullMeta) im;
-				if(sim.hasOwner()) {
-					awardsData.getConfig().set(itemPath + "skullOwner", sim.getOwner());
+				if (sim.hasOwner()) {
+					awardsData.getConfig().set(itemPath + "skullOwner",
+							sim.getOwner());
 				}
 			}
 		}
@@ -812,13 +906,14 @@ public class AwardManager {
 	ItemStack[] getMultiples(ItemStack item, ItemStack[] items) {
 		ItemStack[] returnedItems = null;
 		List<ItemStack> matches = new ArrayList<ItemStack>();
-		for(ItemStack i : items) {
-			if(i == item) continue;
-			if(i.getType() == item.getType()) {
+		for (ItemStack i : items) {
+			if (i == item)
+				continue;
+			if (i.getType() == item.getType()) {
 				matches.add(i);
 			}
 		}
-		if(!matches.isEmpty()) {
+		if (!matches.isEmpty()) {
 			returnedItems = new ItemStack[matches.size()];
 			matches.toArray(returnedItems);
 		}

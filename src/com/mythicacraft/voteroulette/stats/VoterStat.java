@@ -1,6 +1,5 @@
 package com.mythicacraft.voteroulette.stats;
 
-
 public class VoterStat {
 
 	private String playerName;

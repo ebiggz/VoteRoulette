@@ -1,8 +1,5 @@
 package com.mythicacraft.voteroulette;
 
-
-
-
 public class VoterManager {
 
 	@SuppressWarnings("unused")

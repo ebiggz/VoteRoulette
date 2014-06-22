@@ -4,8 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 
-
-public class BoardReset implements Runnable{
+public class BoardReset implements Runnable {
 
 	/**
 	 * Used to reset the players Scoreboard after x amount of time.
@@ -21,8 +20,9 @@ public class BoardReset implements Runnable{
 
 	@Override
 	public void run() {
-		Scoreboard emptyBoard = Bukkit.getScoreboardManager().getNewScoreboard();
-		if(user.getScoreboard() == board) {
+		Scoreboard emptyBoard = Bukkit.getScoreboardManager()
+		        .getNewScoreboard();
+		if (user.getScoreboard() == board) {
 			user.setScoreboard(emptyBoard);
 		}
 	}

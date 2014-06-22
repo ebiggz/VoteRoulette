@@ -4,8 +4,6 @@ import java.util.logging.Logger;
 
 import org.bukkit.configuration.ConfigurationSection;
 
-
-
 public class Milestone extends Award {
 
 	private static final Logger log = Logger.getLogger("VoteRoulette");
@@ -21,32 +19,36 @@ public class Milestone extends Award {
 		try {
 			this.votes = Integer.parseInt(votes);
 		} catch (Exception e) {
-			log.warning("[VoteRoulette] Milestone \"" + name + "\" votes format invalid! Ignoring Milestone...");
+			log.warning("[VoteRoulette] Milestone \"" + name
+			        + "\" votes format invalid! Ignoring Milestone...");
 			try {
 				this.finalize();
-			}
-			catch (Throwable t) {
+			} catch (Throwable t) {
 			}
 			return;
 		}
-		if(cs.contains("recurring")) {
+		if (cs.contains("recurring")) {
 			try {
 				boolean tmp = Boolean.parseBoolean(cs.getString("recurring"));
 				this.recurring = tmp;
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid recurring format for milestone: " + name + ", Recurring defaulting to false...");
+				log.warning("[VoteRoulette] Invalid recurring format for milestone: "
+				        + name + ", Recurring defaulting to false...");
 			}
 		}
-		if(cs.contains("priority")) {
+		if (cs.contains("priority")) {
 			try {
 				String prior = cs.getString("priority");
 				this.priority = Integer.parseInt(prior);
-				if(this.priority < 1) {
-					log.warning("[VoteRoulette] Invalid priority format for milestone: " + name + ", Priority can't be less than 1! Setting priorty to default of 10...");
+				if (this.priority < 1) {
+					log.warning("[VoteRoulette] Invalid priority format for milestone: "
+					        + name
+					        + ", Priority can't be less than 1! Setting priorty to default of 10...");
 					this.priority = 10;
 				}
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid priority format for milestone: " + name + ", Setting priorty to default of 10...");
+				log.warning("[VoteRoulette] Invalid priority format for milestone: "
+				        + name + ", Setting priorty to default of 10...");
 			}
 		}
 	}
@@ -64,7 +66,8 @@ public class Milestone extends Award {
 	}
 
 	public boolean hasOptions() {
-		if(this.hasAwardOptions() || this.getPriority() != 10) return true;
+		if (this.hasAwardOptions() || this.getPriority() != 10)
+			return true;
 		return false;
 	}
 

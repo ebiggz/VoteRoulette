@@ -5,7 +5,6 @@ import org.bukkit.event.HandlerList;
 
 import com.mythicacraft.voteroulette.awards.Award;
 
-
 public class PlayerEarnedAwardEvent extends Event {
 
 	private static final HandlerList handlers = new HandlerList();
@@ -18,6 +17,7 @@ public class PlayerEarnedAwardEvent extends Event {
 		this.award = award;
 	}
 
+	@Override
 	public HandlerList getHandlers() {
 		return handlers;
 	}
