@@ -14,29 +14,28 @@ import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 public class StatManager {
 
 	private static StatManager Instance = new StatManager();
+
+	public static synchronized StatManager getInstance() {
+		return Instance;
+	}
+
 	private StatUpdater su;
 
 	private StatManager() {
 		su = new StatUpdater();
 	}
 
-	public static synchronized StatManager getInstance() {
-		return Instance;
-	}
-
 	public List<VoterStat> getTopLifetimeVotes() {
 		List<VoterStat> topStats = new ArrayList<VoterStat>();
-		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator
-		        + "stats.yml");
+		ConfigAccessor statsData = new ConfigAccessor(
+		        "data" + File.separator + "stats.yml");
 		ConfigurationSection cs = statsData.getConfig()
 		        .getConfigurationSection("vote-totals.lifetime");
-		if (cs == null) {
+		if (cs == null)
 			return null;
-		}
 		Set<String> keys = cs.getKeys(false);
-		if (keys == null) {
+		if (keys == null)
 			return null;
-		}
 		for (String key : keys) {
 			topStats.add(new VoterStat(key, cs.getInt(key)));
 		}
@@ -45,17 +44,15 @@ public class StatManager {
 
 	public List<VoterStat> getTopLongestVotestreaks() {
 		List<VoterStat> topStats = new ArrayList<VoterStat>();
-		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator
-		        + "stats.yml");
+		ConfigAccessor statsData = new ConfigAccessor(
+		        "data" + File.separator + "stats.yml");
 		ConfigurationSection cs = statsData.getConfig()
 		        .getConfigurationSection("vote-streaks.longest");
-		if (cs == null) {
+		if (cs == null)
 			return null;
-		}
 		Set<String> keys = cs.getKeys(false);
-		if (keys == null) {
+		if (keys == null)
 			return null;
-		}
 		for (String key : keys) {
 			topStats.add(new VoterStat(key, cs.getInt(key)));
 		}

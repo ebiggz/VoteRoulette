@@ -31,6 +31,32 @@ public class LoginListener implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR)
+	public void invClick(InventoryClickEvent e) {
+		if (!(e.getWhoClicked() instanceof Player))
+			return;
+		Player p = (Player) e.getWhoClicked();
+		if (VoteRoulette.lookingAtRewards.containsKey(p)) {
+			e.setCancelled(true);
+		}
+		if (VoteRoulette.lookingAtMilestones.containsKey(p)) {
+			e.setCancelled(true);
+		}
+
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void invClose(InventoryCloseEvent e) {
+		if (!(e.getPlayer() instanceof Player))
+			return;
+		if (VoteRoulette.lookingAtRewards.containsKey(e.getPlayer())) {
+			VoteRoulette.lookingAtRewards.remove(e.getPlayer());
+		}
+		if (VoteRoulette.lookingAtMilestones.containsKey(e.getPlayer())) {
+			VoteRoulette.lookingAtMilestones.remove(e.getPlayer());
+		}
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onJoin(PlayerJoinEvent event) {
 
 		VoterManager vm = VoteRoulette.getVoterManager();
@@ -42,6 +68,12 @@ public class LoginListener implements Listener {
 
 			private Player player;
 			private Voter voter;
+
+			private Runnable init(Player player, Voter voter) {
+				this.player = player;
+				this.voter = voter;
+				return this;
+			}
 
 			@Override
 			public void run() {
@@ -71,14 +103,9 @@ public class LoginListener implements Listener {
 							                Integer.toString(unclaimedRewardsCount))
 							        .replace(
 							                "%command%",
-							                "/"
-							                        + plugin.DEFAULT_ALIAS
-							                        + " "
-							                        + plugin.CLAIM_DEF
-							                                .toLowerCase()
-							                        + " "
-							                        + plugin.REWARDS_PURAL_DEF
-							                                .toLowerCase()));
+							                "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF
+							                        .toLowerCase() + " " + plugin.REWARDS_PURAL_DEF
+							                        .toLowerCase()));
 						}
 					}
 
@@ -104,14 +131,9 @@ public class LoginListener implements Listener {
 							                Integer.toString(unclaimedMilestonesCount))
 							        .replace(
 							                "%command%",
-							                "/"
-							                        + plugin.DEFAULT_ALIAS
-							                        + " "
-							                        + plugin.CLAIM_DEF
-							                                .toLowerCase()
-							                        + " "
-							                        + plugin.MILESTONE_PURAL_DEF
-							                                .toLowerCase()));
+							                "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF
+							                        .toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF
+							                        .toLowerCase()));
 						}
 					}
 				}
@@ -128,18 +150,9 @@ public class LoginListener implements Listener {
 
 				if (player.hasPermission("voteroulette.admin")) {
 					if (plugin.hasUpdate()) {
-						player.sendMessage(ChatColor.AQUA
-						        + "[VoteRoulette] There is a new version available to download! Visit "
-						        + ChatColor.YELLOW
-						        + "http://dev.bukkit.org/bukkit-plugins/voteroulette/");
+						player.sendMessage(ChatColor.AQUA + "[VoteRoulette] There is a new version available to download! Visit " + ChatColor.YELLOW + "http://dev.bukkit.org/bukkit-plugins/voteroulette/");
 					}
 				}
-			}
-
-			private Runnable init(Player player, Voter voter) {
-				this.player = player;
-				this.voter = voter;
-				return this;
 			}
 		}.init(player, voter), 20L);
 
@@ -157,32 +170,6 @@ public class LoginListener implements Listener {
 				dCmd.run();
 				dCmd.cancel();
 			}
-		}
-	}
-
-	@EventHandler(priority = EventPriority.MONITOR)
-	public void invClick(InventoryClickEvent e) {
-		if (!(e.getWhoClicked() instanceof Player))
-			return;
-		Player p = (Player) e.getWhoClicked();
-		if (VoteRoulette.lookingAtRewards.containsKey(p)) {
-			e.setCancelled(true);
-		}
-		if (VoteRoulette.lookingAtMilestones.containsKey(p)) {
-			e.setCancelled(true);
-		}
-
-	}
-
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void invClose(InventoryCloseEvent e) {
-		if (!(e.getPlayer() instanceof Player))
-			return;
-		if (VoteRoulette.lookingAtRewards.containsKey(e.getPlayer())) {
-			VoteRoulette.lookingAtRewards.remove(e.getPlayer());
-		}
-		if (VoteRoulette.lookingAtMilestones.containsKey(e.getPlayer())) {
-			VoteRoulette.lookingAtMilestones.remove(e.getPlayer());
 		}
 	}
 

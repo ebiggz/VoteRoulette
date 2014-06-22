@@ -24,225 +24,8 @@ import com.mythicacraft.voteroulette.utils.Utils;
 
 public class Voter {
 
-	private Plugin plugin = Bukkit.getServer().getPluginManager()
-	        .getPlugin("VoteRoulette");
-	private UUID uuid;
-	private boolean isReal;
-	private String filePath;
-
-	public Voter(String playerName) {
-		if (VoteRoulette.USE_UUIDS) {
-			UUID id;
-			try {
-				id = UUIDFetcher.getUUIDOf(playerName);
-			} catch (Exception e) {
-				isReal = false;
-				return;
-			}
-			if (id != null) {
-				this.uuid = id;
-				isReal = true;
-				filePath = "data" + File.separator + "playerdata"
-				        + File.separator + id.toString() + ".yml";
-				createFile(plugin.getDataFolder().getAbsolutePath()
-				        + File.separator + "data" + File.separator
-				        + "playerdata", id.toString() + ".yml");
-				this.setPlayerName(playerName);
-				return;
-			}
-			isReal = false;
-		} else {
-			filePath = "data" + File.separator + "players" + File.separator
-			        + playerName + ".yml";
-			createFile(plugin.getDataFolder().getAbsolutePath()
-			        + File.separator + "data" + File.separator + "players",
-			        playerName + ".yml");
-			this.setPlayerName(playerName);
-			isReal = true;
-		}
-	}
-
-	public UUID getUUID() {
-		return uuid;
-	}
-
-	public boolean isReal() {
-		return isReal;
-	}
-
 	public enum Stat {
 		CURRENT_VOTE_STREAK, LONGEST_VOTE_STREAK, CURRENT_VOTE_CYCLE, LIFETIME_VOTES, UNCLAIMED_MILSTONES, UNCLAIMED_REWARDS, LAST_VOTE, ALL
-	}
-
-	public void wipeStat(Stat stat) {
-		switch (stat) {
-		case ALL:
-			setCurrentVoteCycle(0);
-			setCurrentVoteStreak(0);
-			setLongestVoteStreak(0);
-			setLastVoteTimeStamp(null);
-			setLifetimeVotes(0);
-			removeUnclaimedMilestones();
-			removeUnclaimedRewards();
-			break;
-		case CURRENT_VOTE_CYCLE:
-			setCurrentVoteCycle(0);
-			break;
-		case CURRENT_VOTE_STREAK:
-			setCurrentVoteStreak(0);
-			break;
-		case LAST_VOTE:
-			setLastVoteTimeStamp(null);
-			break;
-		case LIFETIME_VOTES:
-			setLifetimeVotes(0);
-			break;
-		case LONGEST_VOTE_STREAK:
-			setLongestVoteStreak(0);
-			break;
-		case UNCLAIMED_MILSTONES:
-			removeUnclaimedMilestones();
-			break;
-		case UNCLAIMED_REWARDS:
-			removeUnclaimedRewards();
-			break;
-		default:
-			break;
-		}
-	}
-
-	public int getLifetimeVotes() {
-		int lifetimeVotes;
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-			lifetimeVotes = 0;
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			lifetimeVotes = playerCfg.getConfig().getInt("lifetimeVotes", 0);
-		}
-		return lifetimeVotes;
-	}
-
-	public void setCurrentVoteStreak(int voteStreak) {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("currentVoteStreak", voteStreak);
-			playerCfg.saveConfig();
-		}
-	}
-
-	public int getCurrentVoteStreak() {
-		int voteStreak;
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-			voteStreak = 0;
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			voteStreak = playerCfg.getConfig().getInt("currentVoteStreak", 0);
-		}
-		return voteStreak;
-	}
-
-	public void setLongestVoteStreak(int voteStreak) {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("longestVoteStreak", voteStreak);
-			playerCfg.saveConfig();
-		}
-	}
-
-	public int getLongestVoteStreak() {
-		int voteStreak;
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-			voteStreak = 0;
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			voteStreak = playerCfg.getConfig().getInt("longestVoteStreak", 0);
-		}
-		return voteStreak;
-	}
-
-	public boolean hasntVotedInADay() {
-		String lastVoteTimeStamp = getLastVoteTimeStamp();
-		if (lastVoteTimeStamp.equals("")) {
-			return false;
-		}
-		int hours = getHoursSince(lastVoteTimeStamp);
-		if (hours >= 24) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public void saveLastVoteTimeStamp() {
-		String timeStamp = Utils.getTime();
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("lastVote", timeStamp);
-			playerCfg.saveConfig();
-		}
-	}
-
-	public void setLastVoteTimeStamp(String timeStamp) {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("lastVote", timeStamp);
-			playerCfg.saveConfig();
-		}
-	}
-
-	public void setPlayerName(String name) {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("name", name);
-			playerCfg.saveConfig();
-		}
-	}
-
-	public String getPlayerName() {
-		String name = "";
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			name = playerCfg.getConfig().getString("name", "");
-		}
-		return name;
-	}
-
-	public String getLastVoteTimeStamp() {
-		String timeStamp = "";
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			timeStamp = playerCfg.getConfig().getString("lastVote", "");
-		}
-		return timeStamp;
-	}
-
-	public boolean hasLastVoteTimeStamp() {
-		if (VoteRoulette.USE_DATABASE) {
-			return false;
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			if (playerCfg.getConfig().contains("lastVote"))
-				return true;
-			return false;
-		}
 	}
 
 	private static int getHoursSince(String time) {
@@ -271,6 +54,60 @@ public class Voter {
 		return totalMinutes / 60;
 	}
 
+	private Plugin plugin = Bukkit.getServer().getPluginManager()
+	        .getPlugin("VoteRoulette");
+	private UUID uuid;
+
+	private boolean isReal;
+
+	private String filePath;
+
+	public Voter(String playerName) {
+		if (VoteRoulette.USE_UUIDS) {
+			UUID id;
+			try {
+				id = UUIDFetcher.getUUIDOf(playerName);
+			} catch (Exception e) {
+				isReal = false;
+				return;
+			}
+			if (id != null) {
+				this.uuid = id;
+				isReal = true;
+				filePath = "data" + File.separator + "playerdata" + File.separator + id
+				        .toString() + ".yml";
+				createFile(
+				        plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata",
+				        id.toString() + ".yml");
+				this.setPlayerName(playerName);
+				return;
+			}
+			isReal = false;
+		} else {
+			filePath = "data" + File.separator + "players" + File.separator + playerName + ".yml";
+			createFile(
+			        plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "players",
+			        playerName + ".yml");
+			this.setPlayerName(playerName);
+			isReal = true;
+		}
+	}
+
+	private void createFile(String path, String fileName) {
+		(new File(path)).mkdirs();
+		File file = new File(path + File.separator + fileName);
+
+		if (!file.exists()) {
+			try {
+				file.createNewFile();
+				plugin.getLogger().info(
+				        "Created new player file: \"" + fileName + "\".");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	public int getCurrentVoteCycle() {
 		int voteCycle;
 		if (VoteRoulette.USE_DATABASE) {
@@ -283,230 +120,62 @@ public class Voter {
 		return voteCycle;
 	}
 
-	public void setLifetimeVotes(int lifetimeVotes) {
+	public int getCurrentVoteStreak() {
+		int voteStreak;
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+			voteStreak = 0;
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			voteStreak = playerCfg.getConfig().getInt("currentVoteStreak", 0);
+		}
+		return voteStreak;
+	}
+
+	public String getLastVoteTimeStamp() {
+		String timeStamp = "";
 		if (VoteRoulette.USE_DATABASE) {
 			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("lifetimeVotes", lifetimeVotes);
-			playerCfg.saveConfig();
+			timeStamp = playerCfg.getConfig().getString("lastVote", "");
 		}
+		return timeStamp;
 	}
 
-	public void setCurrentVoteCycle(int currentCycle) {
+	public int getLifetimeVotes() {
+		int lifetimeVotes;
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+			lifetimeVotes = 0;
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			lifetimeVotes = playerCfg.getConfig().getInt("lifetimeVotes", 0);
+		}
+		return lifetimeVotes;
+	}
+
+	public int getLongestVoteStreak() {
+		int voteStreak;
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+			voteStreak = 0;
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			voteStreak = playerCfg.getConfig().getInt("longestVoteStreak", 0);
+		}
+		return voteStreak;
+	}
+
+	public String getPlayerName() {
+		String name = "";
 		if (VoteRoulette.USE_DATABASE) {
 			// place holder for db code
 		} else {
 			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("currentCycle", currentCycle);
-			playerCfg.saveConfig();
+			name = playerCfg.getConfig().getString("name", "");
 		}
-	}
-
-	public void incrementVoteTotals() {
-
-		int newLifetime = getLifetimeVotes() + 1;
-
-		Utils.debugMessage("New total votes: " + newLifetime);
-
-		setLifetimeVotes(newLifetime);
-		setCurrentVoteCycle(getCurrentVoteCycle() + 1);
-
-		int hoursSince = getHoursSince(getLastVoteTimeStamp());
-
-		Utils.debugMessage("Hours since last vote: " + hoursSince);
-
-		if (hoursSince >= 23 && hoursSince < 48) {
-			int newVoteStreak = getCurrentVoteStreak() + 1;
-			Utils.debugMessage("New vote streak: " + newVoteStreak);
-			setCurrentVoteStreak(newVoteStreak);
-			if (newVoteStreak > getLongestVoteStreak()) {
-				Utils.debugMessage("Is now the longest");
-				setLongestVoteStreak(newVoteStreak);
-			}
-		} else
-			if (hoursSince >= 48) {
-				Utils.debugMessage("Broke vote streak");
-				setCurrentVoteStreak(1);
-			}
-	}
-
-	public boolean lastVoteWasToday() {
-
-		Calendar cal = Calendar.getInstance();
-
-		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy");
-
-		String currentTime = sdf.format(cal.getTime());
-
-		Date last = null;
-		Date current = new Date();
-
-		try {
-			last = sdf.parse(getLastVoteTimeStamp());
-			current = sdf.parse(currentTime);
-			if (current.after(last)) {
-				return false;
-			} else {
-				return true;
-			}
-		} catch (Exception e) {
-			return false;
-		}
-	}
-
-	public void updateTimedStats() {
-		if (!lastVoteWasToday()) {
-			setVotesForTheDay(0);
-		}
-	}
-
-	public void setVotesForTheDay(int count) {
-		ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-		playerCfg.getConfig().set("votesToday", count);
-		playerCfg.saveConfig();
-	}
-
-	public int getVotesForTheDay() {
-		int votesToday;
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-			votesToday = 0;
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			votesToday = playerCfg.getConfig().getInt("votesToday", 0);
-		}
-		return votesToday;
-	}
-
-	public void saveUnclaimedReward(String rewardName) {
-		if (!VoteRoulette.DISABLE_UNCLAIMED) {
-			if (VoteRoulette.USE_DATABASE) {
-				// place holder for db code
-			} else {
-				ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-				List<String> rewardsList = playerCfg.getConfig().getStringList(
-				        "unclaimedRewards");
-				rewardsList.add(rewardName);
-				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
-				playerCfg.saveConfig();
-			}
-		}
-	}
-
-	public void removeUnclaimedReward(String rewardName) {
-		if (!VoteRoulette.DISABLE_UNCLAIMED) {
-			if (VoteRoulette.USE_DATABASE) {
-				// place holder for db code
-			} else {
-				ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-				List<String> rewardsList = playerCfg.getConfig().getStringList(
-				        "unclaimedRewards");
-				rewardsList.remove(rewardName);
-				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
-				playerCfg.saveConfig();
-			}
-		}
-	}
-
-	public void removeUnclaimedRewards() {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("unclaimedRewards", null);
-			playerCfg.saveConfig();
-		}
-	}
-
-	public List<Reward> getUnclaimedRewards() {
-		List<String> rewardsList = new ArrayList<String>();
-
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			rewardsList = playerCfg.getConfig().getStringList(
-			        "unclaimedRewards");
-		}
-
-		List<Reward> rewards = new ArrayList<Reward>();
-		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		ConfigurationSection cs = awardsData.getConfig()
-		        .getConfigurationSection("Rewards");
-		if (cs != null) {
-			for (String rewardName : rewardsList) {
-				ConfigurationSection rewardOptions = cs
-				        .getConfigurationSection(rewardName);
-				if (rewardOptions != null) {
-					rewards.add(new Reward(rewardName, rewardOptions));
-				} else {
-					removeUnclaimedReward(rewardName);
-				}
-			}
-		}
-		return rewards;
-	}
-
-	public int getUnclaimedRewardCount() {
-		List<String> rewardsList = new ArrayList<String>();
-
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			rewardsList = playerCfg.getConfig().getStringList(
-			        "unclaimedRewards");
-		}
-		return rewardsList.size();
-	}
-
-	public void saveUnclaimedMilestone(String milestoneName) {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			List<String> milestonesList = playerCfg.getConfig().getStringList(
-			        "unclaimedMilestones");
-			milestonesList.add(milestoneName);
-			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
-			playerCfg.saveConfig();
-		}
-	}
-
-	public void saveUnclaimedAward(Award award) {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			if (award.getAwardType() == AwardType.REWARD) {
-				this.saveUnclaimedReward(award.getName());
-			} else {
-				this.saveUnclaimedMilestone(award.getName());
-			}
-		}
-	}
-
-	public void removeUnclaimedMilestone(String milestoneName) {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			List<String> milestonesList = playerCfg.getConfig().getStringList(
-			        "unclaimedMilestones");
-			milestonesList.remove(milestoneName);
-			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
-			playerCfg.saveConfig();
-		}
-	}
-
-	public void removeUnclaimedMilestones() {
-		if (VoteRoulette.USE_DATABASE) {
-			// place holder for db code
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
-			playerCfg.getConfig().set("unclaimedMilestones", null);
-			playerCfg.saveConfig();
-		}
+		return name;
 	}
 
 	public int getUnclaimedMilestoneCount() {
@@ -553,18 +222,346 @@ public class Voter {
 		return milestones;
 	}
 
-	private void createFile(String path, String fileName) {
-		(new File(path)).mkdirs();
-		File file = new File(path + File.separator + fileName);
+	public int getUnclaimedRewardCount() {
+		List<String> rewardsList = new ArrayList<String>();
 
-		if (!file.exists()) {
-			try {
-				file.createNewFile();
-				plugin.getLogger().info(
-				        "Created new player file: \"" + fileName + "\".");
-			} catch (IOException e) {
-				e.printStackTrace();
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			rewardsList = playerCfg.getConfig().getStringList(
+			        "unclaimedRewards");
+		}
+		return rewardsList.size();
+	}
+
+	public List<Reward> getUnclaimedRewards() {
+		List<String> rewardsList = new ArrayList<String>();
+
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			rewardsList = playerCfg.getConfig().getStringList(
+			        "unclaimedRewards");
+		}
+
+		List<Reward> rewards = new ArrayList<Reward>();
+		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
+		ConfigurationSection cs = awardsData.getConfig()
+		        .getConfigurationSection("Rewards");
+		if (cs != null) {
+			for (String rewardName : rewardsList) {
+				ConfigurationSection rewardOptions = cs
+				        .getConfigurationSection(rewardName);
+				if (rewardOptions != null) {
+					rewards.add(new Reward(rewardName, rewardOptions));
+				} else {
+					removeUnclaimedReward(rewardName);
+				}
 			}
+		}
+		return rewards;
+	}
+
+	public UUID getUUID() {
+		return uuid;
+	}
+
+	public int getVotesForTheDay() {
+		int votesToday;
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+			votesToday = 0;
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			votesToday = playerCfg.getConfig().getInt("votesToday", 0);
+		}
+		return votesToday;
+	}
+
+	public boolean hasLastVoteTimeStamp() {
+		if (VoteRoulette.USE_DATABASE)
+			return false;
+		// place holder for db code
+		else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			if (playerCfg.getConfig().contains("lastVote"))
+				return true;
+			return false;
+		}
+	}
+
+	public boolean hasntVotedInADay() {
+		String lastVoteTimeStamp = getLastVoteTimeStamp();
+		if (lastVoteTimeStamp.equals(""))
+			return false;
+		int hours = getHoursSince(lastVoteTimeStamp);
+		if (hours >= 24)
+			return true;
+		else
+			return false;
+	}
+
+	public void incrementVoteTotals() {
+
+		int newLifetime = getLifetimeVotes() + 1;
+
+		Utils.debugMessage("New total votes: " + newLifetime);
+
+		setLifetimeVotes(newLifetime);
+		setCurrentVoteCycle(getCurrentVoteCycle() + 1);
+
+		int hoursSince = getHoursSince(getLastVoteTimeStamp());
+
+		Utils.debugMessage("Hours since last vote: " + hoursSince);
+
+		if ((hoursSince >= 23) && (hoursSince < 48)) {
+			int newVoteStreak = getCurrentVoteStreak() + 1;
+			Utils.debugMessage("New vote streak: " + newVoteStreak);
+			setCurrentVoteStreak(newVoteStreak);
+			if (newVoteStreak > getLongestVoteStreak()) {
+				Utils.debugMessage("Is now the longest");
+				setLongestVoteStreak(newVoteStreak);
+			}
+		} else if (hoursSince >= 48) {
+			Utils.debugMessage("Broke vote streak");
+			setCurrentVoteStreak(1);
+		}
+	}
+
+	public boolean isReal() {
+		return isReal;
+	}
+
+	public boolean lastVoteWasToday() {
+
+		Calendar cal = Calendar.getInstance();
+
+		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy");
+
+		String currentTime = sdf.format(cal.getTime());
+
+		Date last = null;
+		Date current = new Date();
+
+		try {
+			last = sdf.parse(getLastVoteTimeStamp());
+			current = sdf.parse(currentTime);
+			if (current.after(last))
+				return false;
+			else
+				return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	public void removeUnclaimedMilestone(String milestoneName) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			List<String> milestonesList = playerCfg.getConfig().getStringList(
+			        "unclaimedMilestones");
+			milestonesList.remove(milestoneName);
+			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void removeUnclaimedMilestones() {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("unclaimedMilestones", null);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void removeUnclaimedReward(String rewardName) {
+		if (!VoteRoulette.DISABLE_UNCLAIMED) {
+			if (VoteRoulette.USE_DATABASE) {
+				// place holder for db code
+			} else {
+				ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+				List<String> rewardsList = playerCfg.getConfig().getStringList(
+				        "unclaimedRewards");
+				rewardsList.remove(rewardName);
+				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
+				playerCfg.saveConfig();
+			}
+		}
+	}
+
+	public void removeUnclaimedRewards() {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("unclaimedRewards", null);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void saveLastVoteTimeStamp() {
+		String timeStamp = Utils.getTime();
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("lastVote", timeStamp);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void saveUnclaimedAward(Award award) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			if (award.getAwardType() == AwardType.REWARD) {
+				this.saveUnclaimedReward(award.getName());
+			} else {
+				this.saveUnclaimedMilestone(award.getName());
+			}
+		}
+	}
+
+	public void saveUnclaimedMilestone(String milestoneName) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			List<String> milestonesList = playerCfg.getConfig().getStringList(
+			        "unclaimedMilestones");
+			milestonesList.add(milestoneName);
+			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void saveUnclaimedReward(String rewardName) {
+		if (!VoteRoulette.DISABLE_UNCLAIMED) {
+			if (VoteRoulette.USE_DATABASE) {
+				// place holder for db code
+			} else {
+				ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+				List<String> rewardsList = playerCfg.getConfig().getStringList(
+				        "unclaimedRewards");
+				rewardsList.add(rewardName);
+				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
+				playerCfg.saveConfig();
+			}
+		}
+	}
+
+	public void setCurrentVoteCycle(int currentCycle) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("currentCycle", currentCycle);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void setCurrentVoteStreak(int voteStreak) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("currentVoteStreak", voteStreak);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void setLastVoteTimeStamp(String timeStamp) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("lastVote", timeStamp);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void setLifetimeVotes(int lifetimeVotes) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("lifetimeVotes", lifetimeVotes);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void setLongestVoteStreak(int voteStreak) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("longestVoteStreak", voteStreak);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void setPlayerName(String name) {
+		if (VoteRoulette.USE_DATABASE) {
+			// place holder for db code
+		} else {
+			ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+			playerCfg.getConfig().set("name", name);
+			playerCfg.saveConfig();
+		}
+	}
+
+	public void setVotesForTheDay(int count) {
+		ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+		playerCfg.getConfig().set("votesToday", count);
+		playerCfg.saveConfig();
+	}
+
+	public void updateTimedStats() {
+		if (!lastVoteWasToday()) {
+			setVotesForTheDay(0);
+		}
+	}
+
+	public void wipeStat(Stat stat) {
+		switch (stat) {
+			case ALL:
+				setCurrentVoteCycle(0);
+				setCurrentVoteStreak(0);
+				setLongestVoteStreak(0);
+				setLastVoteTimeStamp(null);
+				setLifetimeVotes(0);
+				removeUnclaimedMilestones();
+				removeUnclaimedRewards();
+				break;
+			case CURRENT_VOTE_CYCLE:
+				setCurrentVoteCycle(0);
+				break;
+			case CURRENT_VOTE_STREAK:
+				setCurrentVoteStreak(0);
+				break;
+			case LAST_VOTE:
+				setLastVoteTimeStamp(null);
+				break;
+			case LIFETIME_VOTES:
+				setLifetimeVotes(0);
+				break;
+			case LONGEST_VOTE_STREAK:
+				setLongestVoteStreak(0);
+				break;
+			case UNCLAIMED_MILSTONES:
+				removeUnclaimedMilestones();
+				break;
+			case UNCLAIMED_REWARDS:
+				removeUnclaimedRewards();
+				break;
+			default:
+				break;
 		}
 	}
 }

@@ -27,6 +27,13 @@ public class ConfigAccessor {
 		configFile = new File(folderPath + File.separator + fileName);
 	}
 
+	public FileConfiguration getConfig() {
+		if (fileConfiguration == null) {
+			this.reloadConfig();
+		}
+		return fileConfiguration;
+	}
+
 	@SuppressWarnings("deprecation")
 	public void reloadConfig() {
 		fileConfiguration = YamlConfiguration.loadConfiguration(configFile);
@@ -44,17 +51,10 @@ public class ConfigAccessor {
 		}
 	}
 
-	public FileConfiguration getConfig() {
-		if (fileConfiguration == null) {
-			this.reloadConfig();
-		}
-		return fileConfiguration;
-	}
-
 	public void saveConfig() {
-		if (fileConfiguration == null || configFile == null) {
+		if ((fileConfiguration == null) || (configFile == null))
 			return;
-		} else {
+		else {
 			try {
 				getConfig().save(configFile);
 			} catch (IOException ex) {

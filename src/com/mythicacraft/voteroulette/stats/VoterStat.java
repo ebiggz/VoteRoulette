@@ -10,12 +10,12 @@ public class VoterStat {
 		this.count = statCount;
 	}
 
-	public int getStatCount() {
-		return count;
-	}
-
 	public String getPlayerName() {
 		return playerName;
+	}
+
+	public int getStatCount() {
+		return count;
 	}
 
 }

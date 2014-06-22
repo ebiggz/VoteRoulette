@@ -20,8 +20,7 @@ public class AwardListener implements Listener {
 
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onJoin(PlayerReceivedAwardEvent event) {
-		if (event.getAward().getAwardType() == AwardType.MILESTONE
-		        && plugin.FIREWORK_ON_MILESTONE) {
+		if ((event.getAward().getAwardType() == AwardType.MILESTONE) && plugin.FIREWORK_ON_MILESTONE) {
 			Location fireworkLoc = event.getPlayer().getLocation();
 			fireworkLoc.setY(fireworkLoc.getY() + 2);
 			Utils.randomFireWork(fireworkLoc);

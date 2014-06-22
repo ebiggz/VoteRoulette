@@ -22,8 +22,8 @@ class StatUpdater implements Runnable {
 
 	@Override
 	public void run() {
-		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator
-		        + "stats.yml");
+		ConfigAccessor statsData = new ConfigAccessor(
+		        "data" + File.separator + "stats.yml");
 		List<VoteStat> stats = new ArrayList<VoteStat>();
 		if (VoteRoulette.USE_DATABASE) {
 
@@ -39,11 +39,12 @@ class StatUpdater implements Runnable {
 			}
 			File[] files = new File(pluginFolder + File.separator + filePath)
 			        .listFiles();
-			if (files != null && files.length != 0) {
+			if ((files != null) && (files.length != 0)) {
 				for (File file : files) {
 					if (file.isFile()) {
-						if (file.isHidden())
+						if (file.isHidden()) {
 							continue;
+						}
 						if (file.getName().endsWith(".yml")) {
 							String fileID = file.getName();
 							ConfigAccessor playerCfg = new ConfigAccessor(

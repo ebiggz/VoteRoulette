@@ -17,8 +17,8 @@ import com.vexsoftware.votifier.model.VotifierEvent;
 
 public class VoteListener implements Listener {
 
-	static ConfigAccessor playerCfg = new ConfigAccessor("data"
-	        + File.separator + "players.yml");
+	static ConfigAccessor playerCfg = new ConfigAccessor(
+	        "data" + File.separator + "players.yml");
 	static FileConfiguration playerData = playerCfg.getConfig();
 	static AwardManager rm = VoteRoulette.getAwardManager();
 	static VoterManager vm = VoteRoulette.getVoterManager();
@@ -34,9 +34,8 @@ public class VoteListener implements Listener {
 
 		Vote vote = event.getVote();
 
-		Utils.debugMessage("Recieved vote from Votifier. Username: \""
-		        + vote.getUsername() + "\", Website: \""
-		        + vote.getServiceName() + "\"");
+		Utils.debugMessage("Recieved vote from Votifier. Username: \"" + vote
+		        .getUsername() + "\", Website: \"" + vote.getServiceName() + "\"");
 
 		if (!vote.getUsername().trim().isEmpty()) {
 			new Thread(new VoteProcessor(vote.getUsername(), plugin, false,

@@ -20,6 +20,14 @@ public class DelayedCommand extends BukkitRunnable {
 		this.runOnShutdown = runOnShutdown;
 	}
 
+	public String getCommand() {
+		return command;
+	}
+
+	public String getPlayer() {
+		return player;
+	}
+
 	@Override
 	public void run() {
 		Bukkit.getServer().dispatchCommand(
@@ -28,14 +36,6 @@ public class DelayedCommand extends BukkitRunnable {
 		if (VoteRoulette.delayedCommands.contains(this)) {
 			VoteRoulette.delayedCommands.remove(this);
 		}
-	}
-
-	public String getCommand() {
-		return command;
-	}
-
-	public String getPlayer() {
-		return player;
 	}
 
 	public boolean shouldRunOnLogOff() {

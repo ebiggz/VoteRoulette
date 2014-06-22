@@ -11,6 +11,10 @@ public class Milestone extends Award {
 	private boolean recurring = false;
 	private int priority = 10;
 
+	public Milestone(String name) {
+		super(name, AwardType.MILESTONE);
+	}
+
 	public Milestone(String name, ConfigurationSection cs) {
 
 		super(name, cs, AwardType.MILESTONE);
@@ -19,8 +23,7 @@ public class Milestone extends Award {
 		try {
 			this.votes = Integer.parseInt(votes);
 		} catch (Exception e) {
-			log.warning("[VoteRoulette] Milestone \"" + name
-			        + "\" votes format invalid! Ignoring Milestone...");
+			log.warning("[VoteRoulette] Milestone \"" + name + "\" votes format invalid! Ignoring Milestone...");
 			try {
 				this.finalize();
 			} catch (Throwable t) {
@@ -32,8 +35,7 @@ public class Milestone extends Award {
 				boolean tmp = Boolean.parseBoolean(cs.getString("recurring"));
 				this.recurring = tmp;
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid recurring format for milestone: "
-				        + name + ", Recurring defaulting to false...");
+				log.warning("[VoteRoulette] Invalid recurring format for milestone: " + name + ", Recurring defaulting to false...");
 			}
 		}
 		if (cs.contains("priority")) {
@@ -41,32 +43,25 @@ public class Milestone extends Award {
 				String prior = cs.getString("priority");
 				this.priority = Integer.parseInt(prior);
 				if (this.priority < 1) {
-					log.warning("[VoteRoulette] Invalid priority format for milestone: "
-					        + name
-					        + ", Priority can't be less than 1! Setting priorty to default of 10...");
+					log.warning("[VoteRoulette] Invalid priority format for milestone: " + name + ", Priority can't be less than 1! Setting priorty to default of 10...");
 					this.priority = 10;
 				}
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid priority format for milestone: "
-				        + name + ", Setting priorty to default of 10...");
+				log.warning("[VoteRoulette] Invalid priority format for milestone: " + name + ", Setting priorty to default of 10...");
 			}
 		}
 	}
 
-	public Milestone(String name) {
-		super(name, AwardType.MILESTONE);
+	public int getPriority() {
+		return priority;
 	}
 
 	public int getVotes() {
 		return votes;
 	}
 
-	public void setVotes(int votes) {
-		this.votes = votes;
-	}
-
 	public boolean hasOptions() {
-		if (this.hasAwardOptions() || this.getPriority() != 10)
+		if (this.hasAwardOptions() || (this.getPriority() != 10))
 			return true;
 		return false;
 	}
@@ -75,15 +70,15 @@ public class Milestone extends Award {
 		return recurring;
 	}
 
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+
 	public void setRecurring(boolean recurring) {
 		this.recurring = recurring;
 	}
 
-	public int getPriority() {
-		return priority;
-	}
-
-	public void setPriority(int priority) {
-		this.priority = priority;
+	public void setVotes(int votes) {
+		this.votes = votes;
 	}
 }

@@ -10,11 +10,20 @@ import org.bukkit.configuration.ConfigurationSection;
 
 public class Reward extends Award {
 
+	public enum VoteStreakModifier {
+		OR_LESS, OR_MORE, RANGE, NONE
+	}
+
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private List<String> websites = new ArrayList<String>();
 	private int voteStreak = 0;
 	private int voteStreakMax = 0;
+
 	private VoteStreakModifier vsModifier = VoteStreakModifier.NONE;
+
+	public Reward(String name) {
+		super(name, AwardType.REWARD);
+	}
 
 	public Reward(String name, ConfigurationSection cs) {
 
@@ -28,22 +37,20 @@ public class Reward extends Award {
 					websites.add(website.trim());
 				}
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading websites for reward:"
-						+ name + ", Skipping websites.");
+				log.warning("[VoteRoulette] Error loading websites for reward:" + name + ", Skipping websites.");
 			}
 		}
 		if (cs.contains("voteStreak")) {
 			String voteStringInfo = cs.getString("voteStreak").toLowerCase();
 
-			if(voteStringInfo.contains("-")) {
+			if (voteStringInfo.contains("-")) {
 				String[] split = voteStringInfo.split("-");
 				try {
 					voteStreak = Integer.parseInt(split[0].trim());
 					voteStreakMax = Integer.parseInt(split[1].trim());
 					vsModifier = VoteStreakModifier.RANGE;
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] Error loading vote streak settings for reward:"
-							+ name + ", Skipping vote streak.");
+					log.warning("[VoteRoulette] Error loading vote streak settings for reward:" + name + ", Skipping vote streak.");
 				}
 			} else {
 
@@ -54,77 +61,67 @@ public class Reward extends Award {
 						voteStreak = Integer.parseInt(m.group());
 						if (voteStringInfo.contains("or more")) {
 							vsModifier = VoteStreakModifier.OR_MORE;
-						} else
-							if (voteStringInfo.contains("or less")) {
-								vsModifier = VoteStreakModifier.OR_LESS;
-							}
+						} else if (voteStringInfo.contains("or less")) {
+							vsModifier = VoteStreakModifier.OR_LESS;
+						}
 					} catch (Exception e) {
-						log.warning("[VoteRoulette] Error loading vote streak settings for reward:"
-								+ name + ", Skipping vote streak.");
+						log.warning("[VoteRoulette] Error loading vote streak settings for reward:" + name + ", Skipping vote streak.");
 					}
 				}
 			}
 		}
 	}
 
-	public Reward(String name) {
-		super(name, AwardType.REWARD);
-	}
-
-	public enum VoteStreakModifier {
-		OR_LESS, OR_MORE, RANGE, NONE
-	}
-
-	public boolean hasWebsites() {
-		if (websites == null || websites.isEmpty())
-			return false;
-		return true;
-	}
-
-	public List<String> getWebsites() {
-		return websites;
-	}
-
-	public void setWebsites(List<String> websites) {
-		this.websites = websites;
-	}
-
-	public void setVoteStreak(int streak) {
-		voteStreak = streak;
-	}
-
 	public int getVoteStreak() {
 		return voteStreak;
-	}
-
-	public boolean hasOptions() {
-		if (this.hasAwardOptions() || this.hasVoteStreak()
-				|| this.hasWebsites())
-			return true;
-		return false;
-	}
-
-	public boolean hasVoteStreakModifier() {
-		return vsModifier != VoteStreakModifier.NONE;
-	}
-
-	public void setVoteStreakModifier(VoteStreakModifier VSM) {
-		vsModifier = VSM;
-	}
-
-	public VoteStreakModifier getVoteStreakModifier() {
-		return vsModifier;
-	}
-
-	public boolean hasVoteStreak() {
-		return voteStreak > 0;
 	}
 
 	public int getVoteStreakMax() {
 		return voteStreakMax;
 	}
 
+	public VoteStreakModifier getVoteStreakModifier() {
+		return vsModifier;
+	}
+
+	public List<String> getWebsites() {
+		return websites;
+	}
+
+	public boolean hasOptions() {
+		if (this.hasAwardOptions() || this.hasVoteStreak() || this
+		        .hasWebsites())
+			return true;
+		return false;
+	}
+
+	public boolean hasVoteStreak() {
+		return voteStreak > 0;
+	}
+
+	public boolean hasVoteStreakModifier() {
+		return vsModifier != VoteStreakModifier.NONE;
+	}
+
+	public boolean hasWebsites() {
+		if ((websites == null) || websites.isEmpty())
+			return false;
+		return true;
+	}
+
+	public void setVoteStreak(int streak) {
+		voteStreak = streak;
+	}
+
 	public void setVoteStreakMax(int voteStreakMax) {
 		this.voteStreakMax = voteStreakMax;
+	}
+
+	public void setVoteStreakModifier(VoteStreakModifier VSM) {
+		vsModifier = VSM;
+	}
+
+	public void setWebsites(List<String> websites) {
+		this.websites = websites;
 	}
 }

@@ -20,6 +20,10 @@ import com.mythicacraft.voteroulette.utils.Utils;
 
 public class Award {
 
+	public enum AwardType {
+		REWARD, MILESTONE
+	}
+
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private double currency = 0;
 	private int xpLevels = 0;
@@ -35,25 +39,28 @@ public class Award {
 	private String message;
 	private String description;
 	private String reroll;
+
 	private AwardType type;
+
+	protected Award(String name, AwardType type) {
+		this.name = name;
+		this.type = type;
+	}
 
 	protected Award(String name, ConfigurationSection cs, AwardType type) {
 		this.setName(name);
 		this.setAwardType(type);
 		if (cs.contains("currency")) {
 			if (!VoteRoulette.hasEconPlugin()) {
-				log.warning("[VoteRoulette] Reward \""
-				        + name
-				        + "\" contains currency settings but Vault is not installed or there is no economy plugin, Skipping currency.");
+				log.warning("[VoteRoulette] Reward \"" + name + "\" contains currency settings but Vault is not installed or there is no economy plugin, Skipping currency.");
 			} else {
 				try {
 					String currency = cs.getString("currency");
 					currency = currency.replace("$", "");
 					this.currency = Double.parseDouble(currency);
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] Invalid currency format for "
-					        + type.toString().toLowerCase() + ": " + name
-					        + ", Skipping currency.");
+					log.warning("[VoteRoulette] Invalid currency format for " + type
+					        .toString().toLowerCase() + ": " + name + ", Skipping currency.");
 				}
 			}
 		}
@@ -62,8 +69,7 @@ public class Award {
 				String xp = cs.getString("xpLevels");
 				this.xpLevels = Integer.parseInt(xp);
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid xpLevel format for reward: "
-				        + name + ", Skipping xpLevels.");
+				log.warning("[VoteRoulette] Invalid xpLevel format for reward: " + name + ", Skipping xpLevels.");
 			}
 		}
 		if (cs.contains("chance")) {
@@ -79,16 +85,14 @@ public class Award {
 					this.hasChance = true;
 				}
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Invalid chance format for reward: "
-				        + name + ", Skipping chance.");
+				log.warning("[VoteRoulette] Invalid chance format for reward: " + name + ", Skipping chance.");
 			}
 		}
 		if (cs.contains("commands")) {
 			try {
 				commands = cs.getStringList("commands");
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading commands for reward:"
-				        + name + ", Skipping commands.");
+				log.warning("[VoteRoulette] Error loading commands for reward:" + name + ", Skipping commands.");
 			}
 		}
 		if (cs.contains("worlds")) {
@@ -99,16 +103,14 @@ public class Award {
 					worlds.add(worldName.trim());
 				}
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading worlds for reward:"
-				        + name + ", Skipping worlds.");
+				log.warning("[VoteRoulette] Error loading worlds for reward:" + name + ", Skipping worlds.");
 			}
 		}
 		if (cs.contains("message")) {
 			try {
 				message = Utils.transcribeColorCodes(cs.getString("message"));
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading custom message for reward:"
-				        + name + ", Skipping message.");
+				log.warning("[VoteRoulette] Error loading custom message for reward:" + name + ", Skipping message.");
 			}
 		}
 		if (cs.contains("description")) {
@@ -116,16 +118,14 @@ public class Award {
 				description = Utils.transcribeColorCodes(cs
 				        .getString("description"));
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading custom description for reward:"
-				        + name + ", Skipping description.");
+				log.warning("[VoteRoulette] Error loading custom description for reward:" + name + ", Skipping description.");
 			}
 		}
 		if (cs.contains("reroll")) {
 			try {
 				reroll = cs.getString("reroll");
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading reroll for reward:"
-				        + name + ", Skipping reroll.");
+				log.warning("[VoteRoulette] Error loading reroll for reward:" + name + ", Skipping reroll.");
 			}
 		}
 		if (cs.contains("items")) {
@@ -136,8 +136,8 @@ public class Award {
 					try {
 						id = Integer.parseInt(itemID);
 					} catch (Exception e) {
-						System.out.println("[VoteRoulette] \"" + itemID
-						        + "\" is not a valid itemID, Skipping!");
+						System.out
+						        .println("[VoteRoulette] \"" + itemID + "\" is not a valid itemID, Skipping!");
 						continue;
 					}
 					ConfigurationSection itemData = items
@@ -170,9 +170,7 @@ public class Award {
 		}
 		if (cs.contains("permGroups")) {
 			if (!VoteRoulette.hasPermPlugin()) {
-				log.warning("[VoteRoulette] Reward \""
-				        + name
-				        + "\" contains perm group settings but Vault is not installed or there is no permission plugin, Skipping perm groups.");
+				log.warning("[VoteRoulette] Reward \"" + name + "\" contains perm group settings but Vault is not installed or there is no permission plugin, Skipping perm groups.");
 			} else {
 				permGroups = cs.getString("permGroups").split(",");
 				for (int i = 0; i < permGroups.length; i++) {
@@ -186,92 +184,18 @@ public class Award {
 				players[i] = players[i].trim();
 			}
 		}
-		if (!this.hasCurrency() && !this.hasItems() && !this.hasXpLevels()
-		        && !this.hasCommands()) {
-			log.warning("[VoteRoulette] The Reward \"" + this.getName()
-			        + "\" appears to be empty. Check your config settings!");
+		if (!this.hasCurrency() && !this.hasItems() && !this.hasXpLevels() && !this
+		        .hasCommands()) {
+			log.warning("[VoteRoulette] The Reward \"" + this.getName() + "\" appears to be empty. Check your config settings!");
 		}
-	}
-
-	protected Award(String name, AwardType type) {
-		this.name = name;
-		this.type = type;
-	}
-
-	public enum AwardType {
-		REWARD, MILESTONE
-	}
-
-	public double getCurrency() {
-		return currency;
-	}
-
-	public void setCurrency(double currency) {
-		this.currency = currency;
-	}
-
-	public int getXpLevels() {
-		return xpLevels;
-	}
-
-	public void clearItems() {
-		items.clear();
 	}
 
 	public void addItem(ItemStack item) {
 		items.add(item);
 	}
 
-	public void setXpLevels(int xpLevels) {
-		this.xpLevels = xpLevels;
-	}
-
-	public String[] getPermGroups() {
-		return permGroups;
-	}
-
-	public void setPermGroups(String[] permGroups) {
-		this.permGroups = permGroups;
-	}
-
-	public String[] getPlayers() {
-		return players;
-	}
-
-	public void setPlayers(String[] players) {
-		this.players = players;
-	}
-
-	public boolean hasPlayers() {
-		if (players == null)
-			return false;
-		return true;
-	}
-
-	public boolean containsPlayer(String playerName) {
-		for (String player : players) {
-			if (player.equals(playerName))
-				return true;
-		}
-		return false;
-	}
-
-	public void setWorlds(List<String> worlds) {
-		this.worlds = worlds;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public boolean hasPermissionGroups() {
-		if (permGroups == null)
-			return false;
-		return true;
+	public void clearItems() {
+		items.clear();
 	}
 
 	public boolean containsPermGroup(String permGroup) {
@@ -282,31 +206,36 @@ public class Award {
 		return false;
 	}
 
-	public boolean hasItems() {
-		if (items.isEmpty())
-			return false;
-		return true;
-	}
-
-	public boolean hasCurrency() {
-		if (currency == 0)
-			return false;
-		return true;
-	}
-
-	public boolean hasXpLevels() {
-		if (xpLevels == 0)
-			return false;
-		return true;
-	}
-
-	public boolean hasAwardOptions() {
-		if (this.hasChance || this.hasWorlds() || this.hasPermissionGroups()
-		        || this.hasReroll() || this.hasPlayers() || this.hasMessage()
-		        || this.hasDescription()) {
-			return true;
+	public boolean containsPlayer(String playerName) {
+		for (String player : players) {
+			if (player.equals(playerName))
+				return true;
 		}
 		return false;
+	}
+
+	public AwardType getAwardType() {
+		return type;
+	}
+
+	public int getChanceMax() {
+		return chanceMax;
+	}
+
+	public int getChanceMin() {
+		return chanceMin;
+	}
+
+	public List<String> getCommands() {
+		return commands;
+	}
+
+	public double getCurrency() {
+		return currency;
+	}
+
+	public String getDescription() {
+		return description;
 	}
 
 	public ItemStack[] getItems() {
@@ -317,11 +246,27 @@ public class Award {
 		return itemStacks;
 	}
 
+	public String getMessage() {
+		return message;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String[] getPermGroups() {
+		return permGroups;
+	}
+
+	public String[] getPlayers() {
+		return players;
+	}
+
 	public int getRequiredSlots() {
 		int totalSlots = 0;
 		for (int i = 0; i < items.size(); i++) {
 			int itemSlots = items.get(i).getAmount() / 64;
-			if (items.get(i).getAmount() % 64 != 0) {
+			if ((items.get(i).getAmount() % 64) != 0) {
 				itemSlots = itemSlots + 1;
 			}
 			totalSlots = totalSlots + itemSlots;
@@ -329,108 +274,99 @@ public class Award {
 		return totalSlots;
 	}
 
-	public boolean isEmpty() {
-		if (currency == 0 && xpLevels == 0 && items.isEmpty()
-		        && commands.isEmpty()) {
-			return true;
-		}
-		return false;
-	}
-
-	public void setReroll(String reroll) {
-		this.reroll = reroll;
-	}
-
-	public List<String> getCommands() {
-		return commands;
-	}
-
-	public void setCommands(List<String> commands) {
-		this.commands = commands;
-	}
-
-	public boolean hasCommands() {
-		if (commands == null || commands.isEmpty())
-			return false;
-		return true;
-	}
-
-	public boolean hasWorlds() {
-		if (worlds == null || worlds.isEmpty())
-			return false;
-		return true;
+	public String getReroll() {
+		return reroll;
 	}
 
 	public List<String> getWorlds() {
 		return worlds;
 	}
 
-	public boolean hasMessage() {
-		if (message == null || message.length() == 0)
-			return false;
-		return true;
+	public int getXpLevels() {
+		return xpLevels;
 	}
 
-	public String getMessage() {
-		return message;
-	}
-
-	public void setMessage(String message) {
-		this.message = message;
-	}
-
-	public boolean hasDescription() {
-		if (description == null || description.length() == 0)
-			return false;
-		return true;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public boolean hasReroll() {
-		if (reroll == null || reroll.length() == 0)
-			return false;
-		return true;
-	}
-
-	public String getReroll() {
-		return reroll;
-	}
-
-	public int getChanceMin() {
-		return chanceMin;
-	}
-
-	public int getChanceMax() {
-		return chanceMax;
-	}
-
-	public void setChanceMin(int chanceMin) {
-		this.chanceMin = chanceMin;
-		this.hasChance = true;
-	}
-
-	public void setChanceMax(int chanceMax) {
-		this.chanceMax = chanceMax;
+	public boolean hasAwardOptions() {
+		if (this.hasChance || this.hasWorlds() || this.hasPermissionGroups() || this
+		        .hasReroll() || this.hasPlayers() || this.hasMessage() || this
+		        .hasDescription())
+			return true;
+		return false;
 	}
 
 	public boolean hasChance() {
 		return hasChance;
 	}
 
-	public void setHasChance(boolean hasChance) {
-		this.hasChance = hasChance;
+	public boolean hasCommands() {
+		if ((commands == null) || commands.isEmpty())
+			return false;
+		return true;
+	}
+
+	public boolean hasCurrency() {
+		if (currency == 0)
+			return false;
+		return true;
+	}
+
+	public boolean hasDescription() {
+		if ((description == null) || (description.length() == 0))
+			return false;
+		return true;
+	}
+
+	public boolean hasItems() {
+		if (items.isEmpty())
+			return false;
+		return true;
+	}
+
+	public boolean hasMessage() {
+		if ((message == null) || (message.length() == 0))
+			return false;
+		return true;
+	}
+
+	public boolean hasPermissionGroups() {
+		if (permGroups == null)
+			return false;
+		return true;
+	}
+
+	public boolean hasPlayers() {
+		if (players == null)
+			return false;
+		return true;
+	}
+
+	public boolean hasReroll() {
+		if ((reroll == null) || (reroll.length() == 0))
+			return false;
+		return true;
+	}
+
+	public boolean hasWorlds() {
+		if ((worlds == null) || worlds.isEmpty())
+			return false;
+		return true;
+	}
+
+	public boolean hasXpLevels() {
+		if (xpLevels == 0)
+			return false;
+		return true;
+	}
+
+	public boolean isEmpty() {
+		if ((currency == 0) && (xpLevels == 0) && items.isEmpty() && commands
+		        .isEmpty())
+			return true;
+		return false;
 	}
 
 	@SuppressWarnings("deprecation")
-	private ItemStack parseConfigItemData(int itemID,
-	        ConfigurationSection itemData) {
+	private ItemStack parseConfigItemData(int itemID, ConfigurationSection itemData) {
 		ItemStack item = null;
 		ItemMeta itemMeta;
 		if (itemData != null) {
@@ -441,23 +377,20 @@ public class Award {
 					dataID = Short.parseShort(dataIDStr);
 				} catch (Exception e) {
 					dataID = 1;
-					log.warning("[VoteRoulette] \"" + dataIDStr
-					        + "\" is not a valid dataID, Defaulting to 1!");
+					log.warning("[VoteRoulette] \"" + dataIDStr + "\" is not a valid dataID, Defaulting to 1!");
 				}
 				try {
 					item = new ItemStack(Material.getMaterial(itemID), 1,
 					        dataID);
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] \"" + itemID
-					        + "\" is not a recognized itemID, skipping item!");
+					log.warning("[VoteRoulette] \"" + itemID + "\" is not a recognized itemID, skipping item!");
 					return null;
 				}
 			} else {
 				try {
 					item = new ItemStack(Material.getMaterial(itemID), 1);
 				} catch (Exception e) {
-					log.warning("[VoteRoulette] \"" + itemID
-					        + "\" is not a recognized itemID, skipping item!");
+					log.warning("[VoteRoulette] \"" + itemID + "\" is not a recognized itemID, skipping item!");
 					return null;
 				}
 			}
@@ -472,11 +405,9 @@ public class Award {
 				Color color = null;
 				if (testForInt.matches("[0-9]")) {
 					String[] colorValues = colorStr.split(",");
-					if (colorValues.length < 3 || colorValues.length > 3) {
+					if ((colorValues.length < 3) || (colorValues.length > 3)) {
 						System.out
-						        .println("[VoteRoulette] Couldn't add the color for the item: "
-						                + itemID
-						                + "! Invalid amount of numbers.");
+						        .println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid amount of numbers.");
 					} else {
 						int red, green, blue;
 						try {
@@ -486,9 +417,7 @@ public class Award {
 							color = Color.fromRGB(red, green, blue);
 						} catch (Exception e) {
 							System.out
-							        .println("[VoteRoulette] Couldn't add the color for the item: "
-							                + itemID
-							                + "! Invalid number format.");
+							        .println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid number format.");
 						}
 					}
 				} else {
@@ -497,42 +426,35 @@ public class Award {
 						color = newColor;
 					} else {
 						System.out
-						        .println("[VoteRoulette] Couldn't add the color for the item: "
-						                + itemID + "! Invalid color name.");
+						        .println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid color name.");
 					}
 				}
 				if (color == null) {
 					System.out
-					        .println("[VoteRoulette] Couldn't add the color for the item: "
-					                + itemID + "! Invalid color format.");
-				} else
-					if (item.getType() == Material.LEATHER_BOOTS
-					        || item.getType() == Material.LEATHER_CHESTPLATE
-					        || item.getType() == Material.LEATHER_HELMET
-					        || item.getType() == Material.LEATHER_LEGGINGS) {
-						LeatherArmorMeta wim = (LeatherArmorMeta) itemMeta;
-						wim.setColor(color);
-						itemMeta = wim;
-					} else {
-						System.out
-						        .println("[VoteRoulette] Couldn't add the color for the item: "
-						                + itemID + "! Item not leather armor.");
-					}
+					        .println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid color format.");
+				} else if ((item.getType() == Material.LEATHER_BOOTS) || (item
+				        .getType() == Material.LEATHER_CHESTPLATE) || (item
+				        .getType() == Material.LEATHER_HELMET) || (item
+				        .getType() == Material.LEATHER_LEGGINGS)) {
+					LeatherArmorMeta wim = (LeatherArmorMeta) itemMeta;
+					wim.setColor(color);
+					itemMeta = wim;
+				} else {
+					System.out
+					        .println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Item not leather armor.");
+				}
 			}
 			if (itemData.contains("skullOwner")) {
 				String skullOwner = itemData.getString("skullOwner");
-				if (item.getType() == Material.SKULL_ITEM
-				        && item.getDurability() == 3 /* playerhead */) {
+				if ((item.getType() == Material.SKULL_ITEM) && (item
+				        .getDurability() == 3 /* playerhead */)) {
 					SkullMeta sim = (SkullMeta) itemMeta;
 					sim.setOwner(skullOwner);
 					itemMeta = sim;
 				} else {
 					System.out
-					        .println("[VoteRoulette] Couldn't add skullOwner for the item: "
-					                + itemID
-					                + ":"
-					                + item.getDurability()
-					                + "! Item not a player head.");
+					        .println("[VoteRoulette] Couldn't add skullOwner for the item: " + itemID + ":" + item
+					                .getDurability() + "! Item not a player head.");
 				}
 			}
 			if (itemData.contains("enchants")) {
@@ -545,8 +467,9 @@ public class Award {
 				String[] tmp = itemData.getString("enchants").split(",");
 				for (String enchantName : tmp) {
 					String level = "1";
-					if (enchantName.equals(""))
+					if (enchantName.equals("")) {
 						continue;
+					}
 					if (enchantName.contains("(")) {
 						String[] enchantAndLevel = enchantName.split("\\(");
 						enchantName = enchantAndLevel[0].trim();
@@ -558,10 +481,7 @@ public class Award {
 						int iLevel = Integer.parseInt(level);
 						if (enchant == null) {
 							System.out
-							        .println("[VoteRoulette] Couldn't find enchant with the name \""
-							                + enchantName
-							                + "\" for the item: "
-							                + itemID + "!");
+							        .println("[VoteRoulette] Couldn't find enchant with the name \"" + enchantName + "\" for the item: " + itemID + "!");
 							continue;
 						}
 						if (useStorage) {
@@ -571,10 +491,7 @@ public class Award {
 						}
 					} catch (Exception e) {
 						System.out
-						        .println("[VoteRoulette] Invalid enchant level for \""
-						                + enchantName
-						                + "\" for the item: "
-						                + itemID + "!");
+						        .println("[VoteRoulette] Invalid enchant level for \"" + enchantName + "\" for the item: " + itemID + "!");
 					}
 					if (useStorage) {
 						itemMeta = esm;
@@ -589,13 +506,11 @@ public class Award {
 			if (itemData.contains("lore")) {
 				List<String> lore = new ArrayList<String>();
 				lore = itemData.getStringList("lore");
-				if (lore == null || lore.isEmpty()) {
+				if ((lore == null) || lore.isEmpty()) {
 					String loreStr = itemData.getString("lore");
 					if (loreStr.isEmpty()) {
 						System.out
-						        .println("[VoteRoulette] The lore for item \""
-						                + itemID
-						                + "\" is empty or formatted incorrectly!");
+						        .println("[VoteRoulette] The lore for item \"" + itemID + "\" is empty or formatted incorrectly!");
 					} else {
 						String[] loreLines = loreStr.split(",");
 						for (String loreLine : loreLines) {
@@ -618,21 +533,68 @@ public class Award {
 		return item;
 	}
 
-	public AwardType getAwardType() {
-		return type;
-	}
-
 	public void setAwardType(AwardType type) {
 		this.type = type;
 	}
 
+	public void setChanceMax(int chanceMax) {
+		this.chanceMax = chanceMax;
+	}
+
+	public void setChanceMin(int chanceMin) {
+		this.chanceMin = chanceMin;
+		this.hasChance = true;
+	}
+
+	public void setCommands(List<String> commands) {
+		this.commands = commands;
+	}
+
+	public void setCurrency(double currency) {
+		this.currency = currency;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public void setHasChance(boolean hasChance) {
+		this.hasChance = hasChance;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setPermGroups(String[] permGroups) {
+		this.permGroups = permGroups;
+	}
+
+	public void setPlayers(String[] players) {
+		this.players = players;
+	}
+
+	public void setReroll(String reroll) {
+		this.reroll = reroll;
+	}
+
+	public void setWorlds(List<String> worlds) {
+		this.worlds = worlds;
+	}
+
+	public void setXpLevels(int xpLevels) {
+		this.xpLevels = xpLevels;
+	}
+
 	public String typeString() {
-		if (type == AwardType.REWARD) {
+		if (type == AwardType.REWARD)
 			return "Reward";
-		}
-		if (type == AwardType.MILESTONE) {
+		if (type == AwardType.MILESTONE)
 			return "Milestone";
-		}
 		return "";
 	}
 }
