@@ -903,7 +903,8 @@ public class Utils {
 		}
 		if(player.hasPermission("voteroulette.createawards")) {
 			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "create" + ChatColor.GRAY + " - Create a new award.\n");
-			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "edit" + ChatColor.GRAY + " - Edit a current award.\n");
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "editreward [#]" + ChatColor.GRAY + " - Edit a reward.\n");
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "editmilestone [#]" + ChatColor.GRAY + " - Edit a milestone.\n");
 		}
 		if(player.hasPermission("voteroulette.deleteawards")) {
 			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "deletereward [#]" + ChatColor.GRAY + " - Delete a reward.\n");

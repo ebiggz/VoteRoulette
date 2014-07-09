@@ -408,6 +408,7 @@ public class AwardManager {
 	}
 
 	private boolean rerollReward(String reroll, Player player, Award origAward) {
+		Utils.debugMessage("Entered reroll processing...");
 		int chanceMin = 0;
 		int chanceMax = 100;
 		boolean useCustomChance = false;
@@ -438,17 +439,21 @@ public class AwardManager {
 
 		Award award;
 		if(name.equals("ANY")) {
+			Utils.debugMessage("Has ANY modifier");
 			Random rand = new Random();
 			if(origAward.getAwardType() == AwardType.REWARD) {
+				Utils.debugMessage("Original award is a reward, ignoring original");
 				ArrayList<Reward> tempRewards = new ArrayList<Reward>();
 				Reward origReward = (Reward) origAward;
 				for(Reward reward : rewards) {
 					if(reward == origReward) continue;
 					tempRewards.add(reward);
 				}
+				Utils.debugMessage("there are " + tempRewards.size() + " eligible rewards, choosing random");
 				award = tempRewards.get(rand.nextInt(tempRewards.size()));
 			} else {
 				award = rewards.get(rand.nextInt(rewards.size()));
+				Utils.debugMessage("there are " + rewards.size() + " eligible rewards, choosing a random one...");
 			}
 		} else {
 			award = getAwardByName(name, AwardType.REWARD);
@@ -456,8 +461,11 @@ public class AwardManager {
 
 		if(award == null) return false;
 
+		Utils.debugMessage("Chose: " + award.getName());
+
 		if(!useCustomChance) {
 			if(award.hasChance()) {
+				Utils.debugMessage("\"" + award.getName() + "\" has chance (" + award.getChanceMin() + "/" + award.getChanceMax() + "), doing a chance check...");
 				chanceMin = award.getChanceMin();
 				chanceMax = award.getChanceMax();
 			} else {
@@ -466,15 +474,19 @@ public class AwardManager {
 		}
 
 		int random = 1 + (int)(Math.random() * ((chanceMax - 1) + 1));
+
 		if(random <= chanceMin) {
+			Utils.debugMessage("Reroll success (" + random + "), administering to player...");
 			PlayerEarnedAwardEvent event = new PlayerEarnedAwardEvent(player.getName(), award);
 			Bukkit.getServer().getPluginManager().callEvent(event);
 			if (!event.isCancelled()) {
 				administerAwardContents(event.getAward(), event.getPlayerName());
 			}
 		} else {
+			Utils.debugMessage("Reroll failed (" + random + ").");
 			player.sendMessage(plugin.REROLL_FAILED_NOTIFICATION);
 		}
+		Utils.debugMessage("Exited reroll processing");
 		return true;
 	}
 

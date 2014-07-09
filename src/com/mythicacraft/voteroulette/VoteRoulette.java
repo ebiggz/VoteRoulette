@@ -206,6 +206,17 @@ public class VoteRoulette extends JavaPlugin {
 	//Called when the plugin is booting up.
 	public void onEnable() {
 
+		//check for votifier
+		if(!setupVotifier()) {
+			getServer().getPluginManager().disablePlugin(this);
+			return;
+		}
+
+		//check for and setup vault
+		if(setupVault()) {
+			vaultEnabled = true;
+		}
+
 		//instantiate the utils
 		new Utils(this);
 
@@ -219,16 +230,6 @@ public class VoteRoulette extends JavaPlugin {
 		rm = new AwardManager(this);
 		sm = StatManager.getInstance();
 
-		//check for votifier
-		if(!setupVotifier()) {
-			getServer().getPluginManager().disablePlugin(this);
-			return;
-		}
-
-		//check for and setup vault
-		if(setupVault()) {
-			vaultEnabled = true;
-		}
 
 		//register events and commands
 		getServer().getPluginManager().registerEvents(new VoteListener(this), this);

@@ -16,7 +16,6 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.Voter;
-import com.mythicacraft.voteroulette.VoterManager;
 import com.mythicacraft.voteroulette.awards.DelayedCommand;
 import com.mythicacraft.voteroulette.awards.Milestone;
 import com.mythicacraft.voteroulette.awards.Reward;
@@ -34,9 +33,7 @@ public class LoginListener implements Listener {
 	@EventHandler (priority = EventPriority.MONITOR)
 	public void onJoin(PlayerJoinEvent event) {
 
-		VoterManager vm = VoteRoulette.getVoterManager();
 		Player player = event.getPlayer();
-		Voter voter = vm.getVoter(player.getName());
 
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
 		scheduler.runTaskLaterAsynchronously(plugin, new Runnable() {
@@ -46,6 +43,7 @@ public class LoginListener implements Listener {
 
 			@Override
 			public void run() {
+				voter = VoteRoulette.getVoterManager().getVoter(player.getName());
 				if(!VoteRoulette.DISABLE_UNCLAIMED) {
 					int unclaimedRewardsCount = voter.getUnclaimedRewardCount();
 					int unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
@@ -90,12 +88,11 @@ public class LoginListener implements Listener {
 					}
 				}
 			}
-			private Runnable init(Player player, Voter voter){
+			private Runnable init(Player player){
 				this.player = player;
-				this.voter = voter;
 				return this;
 			}
-		}.init(player, voter), 20L);
+		}.init(player), 20L);
 
 	}
 
@@ -136,11 +133,5 @@ public class LoginListener implements Listener {
 			VoteRoulette.lookingAtMilestones.remove(e.getPlayer());
 		}
 	}
-
-	/*@EventHandler(priority=EventPriority.HIGHEST)
-	public void onCommand(PlayerCommandPreprocessEvent e) {
-		if(Bukkit.getCommandAliases()) {
-		e.getMessage()
-	}*/
 }
 
