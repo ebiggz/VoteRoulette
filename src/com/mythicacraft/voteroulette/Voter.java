@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import com.mythicacraft.voteroulette.awards.Award;
@@ -30,30 +31,78 @@ public class Voter {
 	private boolean isReal;
 	private String filePath;
 
+	@SuppressWarnings("deprecation")
 	public Voter(String playerName) {
+		Utils.debugMessage("Getting voter data for: " + playerName);
 		if(VoteRoulette.USE_UUIDS) {
+			Utils.debugMessage("VoteRoulette is using UUIDs");
+
+			Utils.debugMessage("Attemping to get uuid from online player... ");
+			//if the player is online, get the uuid from that
+			Player player = Bukkit.getPlayerExact(playerName);
+			if(player != null) {
+				Utils.debugMessage("Success!");
+				this.uuid = player.getUniqueId();
+				isReal = true;
+				filePath = "data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml";
+				createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata", uuid.toString() + ".yml");
+				this.setPlayerName(playerName);
+				return;
+			}
+
+			Utils.debugMessage("Player is offline. Attempting to get uuid from local cache...");
+			//if not, check to see if the uuid has been cached locally
+			UUID cachedID = Utils.searchCacheForID(playerName);
+			if(cachedID != null) {
+				Utils.debugMessage("Success!");
+				this.uuid = cachedID;
+				isReal = true;
+				filePath = "data" + File.separator + "playerdata" + File.separator + uuid.toString() + ".yml";
+				createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata", uuid.toString() + ".yml");
+				this.setPlayerName(playerName);
+				return;
+			}
+
+			Utils.debugMessage("Cache is empty. Attempting to get uuid from Mojang server...");
+			//as a last resort, attempt to contact Mojang for the UUID.
 			UUID id;
 			try {
 				id = UUIDFetcher.getUUIDOf(playerName);
 			} catch (Exception e) {
+				Utils.debugMessage("Failed! Could not get a uuid for the player at all.");
 				isReal = false;
 				return;
 			}
 			if(id != null) {
+				Utils.debugMessage("Success!");
 				this.uuid = id;
 				isReal = true;
 				filePath = "data" + File.separator + "playerdata" + File.separator + id.toString() + ".yml";
 				createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata", id.toString() + ".yml");
 				this.setPlayerName(playerName);
+				Utils.saveKnownNameUUID(playerName, id);
 				return;
 			}
 			isReal = false;
 		} else {
+			Utils.debugMessage("VoteRoulette is not using UUIDs, using playername.");
 			filePath = "data" + File.separator + "players" + File.separator + playerName + ".yml";
 			createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "players", playerName + ".yml");
 			this.setPlayerName(playerName);
 			isReal = true;
 		}
+	}
+
+	public Voter(UUID id, String playerName) {
+		if(id != null) {
+			this.uuid = id;
+			isReal = true;
+			filePath = "data" + File.separator + "playerdata" + File.separator + id.toString() + ".yml";
+			createFile(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata", id.toString() + ".yml");
+			this.setPlayerName(playerName);
+			return;
+		}
+		isReal = false;
 	}
 
 
@@ -71,38 +120,38 @@ public class Voter {
 
 	public void wipeStat(Stat stat) {
 		switch(stat) {
-		case ALL:
-			setCurrentVoteCycle(0);
-			setCurrentVoteStreak(0);
-			setLongestVoteStreak(0);
-			setLastVoteTimeStamp(null);
-			setLifetimeVotes(0);
-			removeUnclaimedMilestones();
-			removeUnclaimedRewards();
-			break;
-		case CURRENT_VOTE_CYCLE:
-			setCurrentVoteCycle(0);
-			break;
-		case CURRENT_VOTE_STREAK:
-			setCurrentVoteStreak(0);
-			break;
-		case LAST_VOTE:
-			setLastVoteTimeStamp(null);
-			break;
-		case LIFETIME_VOTES:
-			setLifetimeVotes(0);
-			break;
-		case LONGEST_VOTE_STREAK:
-			setLongestVoteStreak(0);
-			break;
-		case UNCLAIMED_MILSTONES:
-			removeUnclaimedMilestones();
-			break;
-		case UNCLAIMED_REWARDS:
-			removeUnclaimedRewards();
-			break;
-		default:
-			break;
+			case ALL:
+				setCurrentVoteCycle(0);
+				setCurrentVoteStreak(0);
+				setLongestVoteStreak(0);
+				setLastVoteTimeStamp(null);
+				setLifetimeVotes(0);
+				removeUnclaimedMilestones();
+				removeUnclaimedRewards();
+				break;
+			case CURRENT_VOTE_CYCLE:
+				setCurrentVoteCycle(0);
+				break;
+			case CURRENT_VOTE_STREAK:
+				setCurrentVoteStreak(0);
+				break;
+			case LAST_VOTE:
+				setLastVoteTimeStamp(null);
+				break;
+			case LIFETIME_VOTES:
+				setLifetimeVotes(0);
+				break;
+			case LONGEST_VOTE_STREAK:
+				setLongestVoteStreak(0);
+				break;
+			case UNCLAIMED_MILSTONES:
+				removeUnclaimedMilestones();
+				break;
+			case UNCLAIMED_REWARDS:
+				removeUnclaimedRewards();
+				break;
+			default:
+				break;
 		}
 	}
 

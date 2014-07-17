@@ -85,7 +85,7 @@ public class VoteProcessor implements Runnable {
 			}
 		}
 		//now check if a player has reached a milestone
-		Milestone[] reachedMils = rm.getReachedMilestones(playerName);
+		Milestone[] reachedMils = rm.getReachedMilestones(voter);
 		if(reachedMils.length != 0) {
 			Utils.debugMessage(playerName + " reached milestone(s).");
 			//if player has reached one, check if it should be a random
@@ -99,14 +99,14 @@ public class VoteProcessor implements Runnable {
 					if(sameP.length > 1) {
 						giveRandomMilestone(playerName, sameP);
 					} else {
-						rm.administerAwardContents(reachedMils[0], playerName);
+						rm.administerAwardContents(reachedMils[0], voter);
 						if(!website.equals("forcevote")) {
 							Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(reachedMils[0], playerName, website), playerName);
 						}
 					}
 				} else {
 					//give highest priority milestone
-					rm.administerAwardContents(reachedMils[0], playerName);
+					rm.administerAwardContents(reachedMils[0], voter);
 					if(!website.equals("forcevote")) {
 						Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(reachedMils[0], playerName, website), playerName);
 					}
@@ -135,7 +135,7 @@ public class VoteProcessor implements Runnable {
 
 		}
 		//check if there is rewards the player is qualified to receive
-		Reward[] qualRewards = rm.getQualifiedRewards(playerName, false);
+		Reward[] qualRewards = rm.getQualifiedRewards(voter, false);
 		//website filter
 		if(website != null && !website.equals("forcevote")) {
 			qualRewards = websiteFilteredRewards(qualRewards, website);
@@ -148,7 +148,7 @@ public class VoteProcessor implements Runnable {
 				giveRandomReward(playerName, qualRewards);
 			} else {
 				Utils.debugMessage("Giving default reward to " + playerName);
-				playerEarnAward(playerName, rm.getDefaultReward());
+				playerEarnAward(voter, rm.getDefaultReward());
 			}
 		} else {
 			Utils.debugMessage(playerName + " qualified for no rewards. Stopped award processing.");
@@ -193,7 +193,7 @@ public class VoteProcessor implements Runnable {
 					continue;
 				}
 				Utils.debugMessage("Passed (" + random + "). Administering \"" + reward.getName() + "\" to " + playerName);
-				playerEarnAward(playerName, reward);
+				playerEarnAward(voter, reward);
 				return;
 			}
 
@@ -204,7 +204,7 @@ public class VoteProcessor implements Runnable {
 				Random rand = new Random();
 				Reward reward = rewardsNoChance.get(rand.nextInt(rewardsNoChance.size()));
 				Utils.debugMessage("Administering \"" + reward.getName() + "\" to " + playerName);
-				playerEarnAward(playerName, reward);
+				playerEarnAward(voter, reward);
 				return;
 			}
 		} else {
@@ -212,7 +212,7 @@ public class VoteProcessor implements Runnable {
 			Random rand = new Random();
 			Reward reward = qualRewards[rand.nextInt(qualRewards.length)];
 			Utils.debugMessage("Administering \"" + reward.getName() + "\" to " + playerName);
-			playerEarnAward(playerName, reward);
+			playerEarnAward(voter, reward);
 			return;
 		}
 		Utils.debugMessage("No rewards were chosen for " +  playerName +". Stopping random reward processing.");
@@ -258,14 +258,14 @@ public class VoteProcessor implements Runnable {
 			for(Milestone milestone: milestonesWithChance) {
 				int random = 1 + (int)(Math.random() * ((milestone.getChanceMax() - 1) + 1));
 				if(random > milestone.getChanceMin()) continue;
-				playerEarnAward(playerName, milestone);
+				playerEarnAward(voter, milestone);
 				return;
 			}
 
 			if(milestonesNoChance.size() > 0) {
 				Random rand = new Random();
 				Milestone milestone = milestonesNoChance.get(rand.nextInt(milestonesNoChance.size()));
-				playerEarnAward(playerName, milestone);
+				playerEarnAward(voter, milestone);
 				return;
 			}
 
@@ -273,7 +273,7 @@ public class VoteProcessor implements Runnable {
 
 			Random rand = new Random();
 			Milestone milestone = reachedMils[rand.nextInt(reachedMils.length)];
-			playerEarnAward(playerName, milestone);
+			playerEarnAward(voter, milestone);
 			return;
 
 		}
@@ -300,11 +300,11 @@ public class VoteProcessor implements Runnable {
 		return websiteRewardsArray;
 	}
 
-	void playerEarnAward(String playerName, Award award) {
+	void playerEarnAward(Voter voter, Award award) {
 		PlayerEarnedAwardEvent event = new PlayerEarnedAwardEvent(playerName, award);
 		Bukkit.getServer().getPluginManager().callEvent(event);
 		if (!event.isCancelled()) {
-			rm.administerAwardContents(event.getAward(), event.getPlayerName());
+			rm.administerAwardContents(event.getAward(), voter);
 			if(!website.equals("forcevote")) {
 				Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(event.getAward(), event.getPlayerName(), website), event.getPlayerName());
 			}

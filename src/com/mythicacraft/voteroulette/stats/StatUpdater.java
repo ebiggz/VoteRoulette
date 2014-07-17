@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 
@@ -45,7 +46,9 @@ class StatUpdater implements Runnable {
 							ConfigAccessor playerCfg = new ConfigAccessor(filePath + File.separator + fileID);
 							Voter voter;
 							if(VoteRoulette.USE_UUIDS) {
-								voter = vm.getVoter(playerCfg.getConfig().getString("name", ""));
+								UUID uuid = UUID.fromString(fileID.replace(".yml", ""));
+								String playerName = playerCfg.getConfig().getString("name", "");
+								voter = vm.getVoter(uuid, playerName);
 							} else {
 								voter = vm.getVoter(fileID.replace(".yml", ""));
 							}

@@ -8,7 +8,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
-import com.mythicacraft.voteroulette.VoterManager;
 import com.mythicacraft.voteroulette.awards.AwardManager;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.Utils;
@@ -20,7 +19,6 @@ public class VoteListener implements Listener {
 	static ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "players.yml");
 	static FileConfiguration playerData = playerCfg.getConfig();
 	static AwardManager rm = VoteRoulette.getAwardManager();
-	static VoterManager vm = VoteRoulette.getVoterManager();
 
 	private static VoteRoulette plugin;
 

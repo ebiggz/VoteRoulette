@@ -10,6 +10,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
+import com.mythicacraft.voteroulette.utils.Utils;
 
 
 public class StatManager {
@@ -63,6 +64,7 @@ public class StatManager {
 		scheduler.runTaskAsynchronously(Bukkit.getPluginManager().getPlugin("VoteRoulette"), new Runnable() {
 			@Override
 			public void run() {
+				Utils.debugMessage("Top stats update thread initiated.");
 				su.run();
 			}
 		});

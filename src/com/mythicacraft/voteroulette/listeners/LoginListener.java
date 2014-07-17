@@ -43,7 +43,18 @@ public class LoginListener implements Listener {
 
 			@Override
 			public void run() {
+
+				if(VoteRoulette.USE_UUIDS) {
+					Utils.saveKnownNameUUID(player.getName(), player.getUniqueId());
+				}
+
 				voter = VoteRoulette.getVoterManager().getVoter(player.getName());
+
+				if(!voter.isReal()) {
+					plugin.getLogger().warning(player.getName() + "\" has logged in but VoteRoulette could not find a UUID for this name! Rewards will not be given and stats will not update. Maybe there is a connectivity issue with Mojang's UUID server or this player isn't using a legitamte copy of Minecraft?");
+					return;
+				}
+
 				if(!VoteRoulette.DISABLE_UNCLAIMED) {
 					int unclaimedRewardsCount = voter.getUnclaimedRewardCount();
 					int unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
@@ -53,7 +64,7 @@ public class LoginListener implements Listener {
 							List<Reward> unclaimedRewards = voter.getUnclaimedRewards();
 							for(Reward reward : unclaimedRewards) {
 								voter.removeUnclaimedReward(reward.getName());
-								VoteRoulette.getAwardManager().administerAwardContents(reward, player.getName());
+								VoteRoulette.getAwardManager().administerAwardContents(reward, voter);
 							}
 						} else {
 							player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase()));
@@ -65,7 +76,7 @@ public class LoginListener implements Listener {
 							List<Milestone> unclaimedMilestones = voter.getUnclaimedMilestones();
 							for(Milestone milestone : unclaimedMilestones) {
 								voter.removeUnclaimedMilestone(milestone.getName());
-								VoteRoulette.getAwardManager().administerAwardContents(milestone, player.getName());
+								VoteRoulette.getAwardManager().administerAwardContents(milestone, voter);
 							}
 						} else {
 							player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase()));

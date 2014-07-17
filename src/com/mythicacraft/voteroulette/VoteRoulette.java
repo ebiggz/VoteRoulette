@@ -249,9 +249,6 @@ public class VoteRoulette extends JavaPlugin {
 			covertPlayersFolderToUUID();
 		}
 
-		if(getServer().getOnlineMode() == false && VoteRoulette.USE_UUIDS){
-			getLogger().warning("Your server is in offline mode and VoteRoulette is tracking UUIDs. Players with illegitimate copies of Minecraft will not get their stats tracked. Consider setting \"useUUIDs\" to false in the config.yml.");
-		}
 
 		//check file versions
 		if(CONFIG_VERSION != 2.2) {
@@ -392,8 +389,15 @@ public class VoteRoulette extends JavaPlugin {
 		loadKnownSitesFile();
 		//load stats.yml
 		loadStatsFile();
+		//load UUIDCache.yml
+		loadUUIDCache();
 
 		this.getLogger().info("...finished loading files and data!");
+
+		if(getServer().getOnlineMode() == false && VoteRoulette.USE_UUIDS){
+			getLogger().warning("Your server is in offline mode but VoteRoulette is set to use UUIDs. Players with illegitimate copies of Minecraft will not get their stats tracked. The use of UUIDs has been automatically disabled.");
+			VoteRoulette.USE_UUIDS = false;
+		}
 
 		//schedule reminders and update checker
 		scheduleTasks();
@@ -800,6 +804,35 @@ public class VoteRoulette extends JavaPlugin {
 				playerData.reloadConfig();
 			} catch (Exception e) {
 				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/known websites.yml", e);
+				pm.disablePlugin(this);
+			}
+		}
+	}
+
+	private void loadUUIDCache() {
+		PluginManager pm = getServer().getPluginManager();
+		String pluginFolder = this.getDataFolder().getAbsolutePath();
+		(new File(pluginFolder)).mkdirs();
+		String playerFolder = pluginFolder + File.separator + "data";
+		(new File(playerFolder)).mkdirs();
+		File playerDataFile = new File(playerFolder, "UUIDCache.yml");
+		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "UUIDCache.yml");
+
+		if (!playerDataFile.exists()) {
+			try {
+				playerData.saveDefaultConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/UUIDCache.yml", e);
+				pm.disablePlugin(this);
+			}
+			return;
+		} else {
+			try {
+				playerData.getConfig().options().header("This file caches playername/uuid combos so VoteRoulette doesn't have to contact Mojang servers as often.");
+				playerData.getConfig().options().copyHeader();
+				playerData.reloadConfig();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/UUIDCache.yml", e);
 				pm.disablePlugin(this);
 			}
 		}

@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,18 +104,21 @@ public class Utils {
 
 	@SuppressWarnings("deprecation")
 	public static void showTopScoreboard(final Player player, StatType stat) {
+		Utils.debugMessage("opening top 10 in scorebord.");
 		ScoreboardManager manager = Bukkit.getScoreboardManager();
 		Scoreboard board = manager.getNewScoreboard();
 		board.registerNewObjective("TopVotes", "dummy");
 		Objective objective = board.getObjective("TopVotes");
 		objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 		if(stat == StatType.TOTAL_VOTES) {
+			Utils.debugMessage("stat type: total");
 			objective.setDisplayName(ChatColor.AQUA + plugin.TOTAL_VOTES_DEF);
 			List<VoterStat> topStats = VoteRoulette.getStatsManager().getTopLifetimeVotes();
 			if(topStats == null) {
 				player.sendMessage(ChatColor.RED + "Error: stats are empty.");
 				return;
 			}
+			Utils.debugMessage("creating scorebord");
 			for(VoterStat vs : topStats) {
 				String name = vs.getPlayerName();
 				if(name.length() > 16) {
@@ -125,12 +129,14 @@ public class Utils {
 			}
 		}
 		if(stat == StatType.LONGEST_VOTE_STREAKS) {
+			Utils.debugMessage("stat type: streak");
 			objective.setDisplayName(ChatColor.AQUA + plugin.LONGEST_VOTE_STREAK_DEF);
 			List<VoterStat> topStats = VoteRoulette.getStatsManager().getTopLongestVotestreaks();
 			if(topStats == null) {
 				player.sendMessage(ChatColor.RED + "Error: stats are empty.");
 				return;
 			}
+			Utils.debugMessage("creating scorebord");
 			for(VoterStat vs : topStats) {
 				String name = vs.getPlayerName();
 				if(name.length() > 16) {
@@ -140,6 +146,7 @@ public class Utils {
 				score.setScore(vs.getStatCount());
 			}
 		}
+		Utils.debugMessage("showing scoreboard for 5 secs");
 		player.setScoreboard(board);
 		//cancel button selection after 5 seconds
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
@@ -298,6 +305,29 @@ public class Utils {
 	public static List<String> getBlacklistPlayers() {
 		List<String> blacklistStr = plugin.getConfig().getStringList("blacklistedPlayers");
 		return blacklistStr;
+	}
+
+	public static String searchCacheForName(UUID id) {
+		ConfigAccessor uuidCache = new ConfigAccessor("data" + File.separator + "UUIDCache.yml");
+		if(uuidCache.getConfig().contains(id.toString())) {
+			return uuidCache.getConfig().getString(id.toString());
+		}
+		return null;
+	}
+
+	public static UUID searchCacheForID(String playerName) {
+		ConfigAccessor uuidCache = new ConfigAccessor("data" + File.separator + "UUIDCache.yml");
+		if(uuidCache.getConfig().contains(playerName)) {
+			return UUID.fromString(uuidCache.getConfig().getString(playerName));
+		}
+		return null;
+	}
+
+	public static void saveKnownNameUUID(String playerName, UUID id) {
+		ConfigAccessor uuidCache = new ConfigAccessor("data" + File.separator + "UUIDCache.yml");
+		uuidCache.getConfig().set(id.toString(), playerName);
+		uuidCache.getConfig().set(playerName, id.toString());
+		uuidCache.saveConfig();
 	}
 
 	public static void saveKnownWebsite(String website) {

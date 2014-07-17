@@ -1,5 +1,7 @@
 package com.mythicacraft.voteroulette;
 
+import java.util.UUID;
+
 
 
 
@@ -16,4 +18,8 @@ public class VoterManager {
 		return new Voter(playerName);
 	}
 
+	public Voter getVoter(UUID uuid, String playerName) {
+		if(uuid == null) return null;
+		return new Voter(uuid, playerName);
+	}
 }

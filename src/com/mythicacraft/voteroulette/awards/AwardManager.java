@@ -51,12 +51,19 @@ public class AwardManager {
 	 * Award Methods
 	 **/
 
-	public void administerAwardContents(Award award, String playerName) {
+	public void administerAwardContents(Award award, Voter voter) {
 
 		Utils.debugMessage("Starting award prize administering ...");
+
+		if(!voter.isReal()) {
+			plugin.getLogger().warning("VoteRoulette could not find a UUID for a player! Rewards will not be given and stats will not update. Maybe there is a connectivity issue with Mojang's UUID server or the player isn't using a legitamte copy of Minecraft?");
+			return;
+		}
+
+		String playerName = voter.getPlayerName();
+
 		@SuppressWarnings("deprecation")
 		Player player = Bukkit.getPlayerExact(playerName);
-		Voter voter = vm.getVoter(playerName);
 
 		if(player == null) {
 			Utils.debugMessage(playerName + " isnt online. Saving as unclaimed.");
@@ -180,7 +187,7 @@ public class AwardManager {
 		if(award.hasReroll()) {
 			Utils.debugMessage("Award has reroll settings, rolling");
 			player.sendMessage(plugin.REROLL_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()));
-			if(!rerollReward(award.getReroll(), player, award)) {
+			if(!rerollReward(award.getReroll(), player, award, voter)) {
 				log.warning("[VoteRoulette] There was an error when doing the reroll settings in award " + award.getName() + " for the player " + player.getName() + ", was the reroll award spelled correctly?");
 			}
 		}
@@ -269,7 +276,9 @@ public class AwardManager {
 	}
 
 
-	public Reward[] getQualifiedRewards(String playerName, boolean skipFilters) {
+	public Reward[] getQualifiedRewards(Voter voter, boolean skipFilters) {
+
+		String playerName = voter.getPlayerName();
 
 		ArrayList<Reward> qualifiedRewards = new ArrayList<Reward>();
 
@@ -364,7 +373,7 @@ public class AwardManager {
 
 		// filter out rewards that have votestreak settings that the player doesn't meet
 		if(!skipFilters) {
-			int playerVoteStreak = VoteRoulette.getVoterManager().getVoter(playerName).getCurrentVoteStreak();
+			int playerVoteStreak = voter.getCurrentVoteStreak();
 			ArrayList<Reward> qualifiedVoteStreaks = new ArrayList<Reward>();
 			ArrayList<Reward> nonVoteStreakRewards = new ArrayList<Reward>();
 			for(Reward reward : rewardsArray) {
@@ -407,7 +416,7 @@ public class AwardManager {
 		return rewardsArray;
 	}
 
-	private boolean rerollReward(String reroll, Player player, Award origAward) {
+	private boolean rerollReward(String reroll, Player player, Award origAward, Voter voter) {
 		Utils.debugMessage("Entered reroll processing...");
 		int chanceMin = 0;
 		int chanceMax = 100;
@@ -480,7 +489,11 @@ public class AwardManager {
 			PlayerEarnedAwardEvent event = new PlayerEarnedAwardEvent(player.getName(), award);
 			Bukkit.getServer().getPluginManager().callEvent(event);
 			if (!event.isCancelled()) {
-				administerAwardContents(event.getAward(), event.getPlayerName());
+				if(event.getPlayerName() == voter.getPlayerName()) {
+					administerAwardContents(event.getAward(), voter);
+				} else {
+					administerAwardContents(event.getAward(), vm.getVoter(event.getPlayerName()));
+				}
 			}
 		} else {
 			Utils.debugMessage("Reroll failed (" + random + ").");
@@ -601,9 +614,11 @@ public class AwardManager {
 		return milestonesArray;
 	}
 
-	public Milestone[] getReachedMilestones(String playerName) {
 
-		Voter voter = vm.getVoter(playerName);
+	public Milestone[] getReachedMilestones(Voter voter) {
+
+
+		String playerName = voter.getPlayerName();
 
 		List<Milestone> reachedMils = new ArrayList<Milestone>();
 		Milestone[] playerMS = getQualifiedMilestones(playerName);

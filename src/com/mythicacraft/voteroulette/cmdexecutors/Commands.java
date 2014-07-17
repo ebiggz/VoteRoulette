@@ -393,6 +393,11 @@ public class Commands implements CommandExecutor {
 							return true;
 						}
 						Voter otherVoter = vm.getVoter(otherPlayer);
+						if(!otherVoter.isReal()) {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] There was an issue getting the voting data for " + otherPlayer + ". Please contact the server administrator.");
+							plugin.getLogger().warning("There was an issue getting the UUID for " + otherPlayer + ".");
+							return true;
+						}
 						if(otherVoter.hasLastVoteTimeStamp()) {
 							String timeSince = Utils.getTimeSinceString(otherVoter.getLastVoteTimeStamp());
 							sender.sendMessage(plugin.LAST_VOTE_OTHER_CMD.replace("%player%", otherPlayer).replace("%time%", timeSince));
@@ -413,8 +418,7 @@ public class Commands implements CommandExecutor {
 					if(args.length > 1) {
 						String otherPlayer = Utils.completeName(args[1]);
 						if(otherPlayer == null) {
-							sender.sendMessage(plugin.CANT_FIND_PLAYER_NOTIFICATION.replace("%player%", args[1]));
-							return true;
+							otherPlayer = args[1];
 						}
 						sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You forced a vote to " + ChatColor.YELLOW + otherPlayer + ChatColor.AQUA +  ".");
 						Vote forceVote = new Vote();
@@ -459,7 +463,7 @@ public class Commands implements CommandExecutor {
 						}
 						Reward reward = rewards.get(rewardIndex);
 						sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You forced the reward " + ChatColor.YELLOW + reward.getName() + ChatColor.AQUA + " to " + ChatColor.YELLOW + otherPlayer + ChatColor.AQUA +  ".");
-						rm.administerAwardContents(reward, otherPlayer);
+						rm.administerAwardContents(reward, vm.getVoter(otherPlayer));
 					}
 				}
 
@@ -492,7 +496,7 @@ public class Commands implements CommandExecutor {
 						}
 						Milestone milestone = milestones.get(milestoneIndex);
 						sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You forced the milestone " + ChatColor.YELLOW + milestone.getName() + ChatColor.AQUA + " to " + ChatColor.YELLOW + otherPlayer + ChatColor.AQUA +  ".");
-						rm.administerAwardContents(milestone, otherPlayer);
+						rm.administerAwardContents(milestone, vm.getVoter(otherPlayer));
 					}
 				}
 
@@ -513,6 +517,12 @@ public class Commands implements CommandExecutor {
 						}
 						if(!sender.hasPermission("voteroulette.viewstats")) {
 							sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
+							return true;
+						}
+
+						if(!voter.isReal()) {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] There was an issue getting your voting data. Please contact the server administrator.");
+							plugin.getLogger().warning("There was an issue getting the UUID for " + sender.getName() + ".");
 							return true;
 						}
 
@@ -542,7 +552,14 @@ public class Commands implements CommandExecutor {
 							sender.sendMessage(plugin.CANT_FIND_PLAYER_NOTIFICATION.replace("%player%", args[1]));
 							return true;
 						}
+
 						Voter otherVoter = vm.getVoter(otherPlayer);
+						if(!otherVoter.isReal()) {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] There was an issue getting the voting data for " + otherPlayer + ". Please contact the server administrator.");
+							plugin.getLogger().warning("There was an issue getting the UUID for " + otherPlayer + ".");
+							return true;
+						}
+
 						lifetimeVotes = otherVoter.getLifetimeVotes();
 						String message = ChatColor.YELLOW + plugin.TOTAL_VOTES_DEF + ": " + ChatColor.AQUA + lifetimeVotes;
 						if(plugin.REWARDS_ON_THRESHOLD) {
@@ -571,6 +588,11 @@ public class Commands implements CommandExecutor {
 							return true;
 						}
 						Voter otherVoter = vm.getVoter(otherPlayer);
+						if(!otherVoter.isReal()) {
+							sender.sendMessage(ChatColor.RED + "[VoteRoulette] There was an issue getting the voting data for " + otherPlayer + ". Please contact the server administrator.");
+							plugin.getLogger().warning("There was an issue getting the UUID for " + otherPlayer + ".");
+							return true;
+						}
 						int voteNumber;
 						try {
 							voteNumber = Integer.parseInt(args[3]);
@@ -739,7 +761,7 @@ public class Commands implements CommandExecutor {
 
 					boolean seeingAll = false;
 
-					Reward[] rewards = rm.getQualifiedRewards(sender.getName(), true);
+					Reward[] rewards = rm.getQualifiedRewards(voter, true);
 
 					if(!(sender instanceof Player)) {
 						rewards = new Reward[rm.getRewards().size()];
@@ -954,6 +976,12 @@ public class Commands implements CommandExecutor {
 						return true;
 					}
 
+					if(!voter.isReal()) {
+						sender.sendMessage(ChatColor.RED + "[VoteRoulette] There was an issue getting your voting data. Please contact the server administrator.");
+						plugin.getLogger().warning("There was an issue getting the UUID for " + sender.getName() + ".");
+						return true;
+					}
+
 					int unclaimedRewardsCount = voter.getUnclaimedRewardCount();
 					int unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
 					if(args.length == 1) {
@@ -993,7 +1021,7 @@ public class Commands implements CommandExecutor {
 									if(sender.hasPermission("voteroulette.claimall")) {
 										for(Reward reward : unclaimedRewards) {
 											voter.removeUnclaimedReward(reward.getName());
-											rm.administerAwardContents(reward, sender.getName());
+											rm.administerAwardContents(reward, voter);
 										}
 									} else {
 										sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
@@ -1004,7 +1032,7 @@ public class Commands implements CommandExecutor {
 										if(rewardNumber <= unclaimedRewards.size()) {
 											Reward reward = unclaimedRewards.get(rewardNumber-1);
 											voter.removeUnclaimedReward(reward.getName());
-											rm.administerAwardContents(reward, sender.getName());
+											rm.administerAwardContents(reward, voter);
 										} else {
 											sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
 										}
@@ -1038,7 +1066,7 @@ public class Commands implements CommandExecutor {
 									if(sender.hasPermission("voteroulette.claimall")) {
 										for(Milestone milestone : unclaimedMilestones) {
 											voter.removeUnclaimedMilestone(milestone.getName());
-											rm.administerAwardContents(milestone, sender.getName());
+											rm.administerAwardContents(milestone, voter);
 										}
 									} else {
 										sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
@@ -1049,7 +1077,7 @@ public class Commands implements CommandExecutor {
 										if(rewardNumber <= unclaimedMilestones.size()) {
 											Milestone milestone = unclaimedMilestones.get(rewardNumber-1);
 											voter.removeUnclaimedMilestone(milestone.getName());
-											rm.administerAwardContents(milestone, sender.getName());
+											rm.administerAwardContents(milestone, voter);
 										} else {
 											sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
 										}
