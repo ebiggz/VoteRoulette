@@ -1,4 +1,4 @@
-v2.3.2 SNAPSHOT: https://db.tt/CCZbRtso
+Latest v2.3.2 snapshot: https://db.tt/CCZbRtso
 
 VoteRoulette
 ============
