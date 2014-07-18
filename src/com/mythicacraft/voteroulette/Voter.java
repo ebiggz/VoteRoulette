@@ -589,7 +589,7 @@ public class Voter {
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
-				plugin.getLogger().info("Created new player file: \"" + fileName + "\".");
+				Utils.debugMessage("Created new player file: \"" + fileName + "\".");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
