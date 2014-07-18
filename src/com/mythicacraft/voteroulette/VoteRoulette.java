@@ -90,6 +90,7 @@ public class VoteRoulette extends JavaPlugin {
 	public boolean REWARDS_ON_THRESHOLD;
 	public static boolean USE_DATABASE = false;
 	public static boolean USE_UUIDS;
+	private boolean FORCE_UUIDS = false;
 	public boolean HAS_VOTE_LIMIT = false;
 	public int VOTE_LIMIT;
 	public int VOTE_THRESHOLD;
@@ -394,8 +395,8 @@ public class VoteRoulette extends JavaPlugin {
 
 		this.getLogger().info("...finished loading files and data!");
 
-		if(getServer().getOnlineMode() == false && VoteRoulette.USE_UUIDS){
-			getLogger().warning("Your server is in offline mode but VoteRoulette is set to use UUIDs. Players with illegitimate copies of Minecraft will not get their stats tracked. The use of UUIDs has been automatically disabled.");
+		if(getServer().getOnlineMode() == false && VoteRoulette.USE_UUIDS && this.FORCE_UUIDS == false){
+			getLogger().warning("Your server is in offline mode but VoteRoulette is set to use UUIDs. Players with illegitimate copies of Minecraft will not get their stats tracked. The use of UUIDs has been automatically disabled. You can set \"useUUIDs\" to \"always\" to override this.");
 			VoteRoulette.USE_UUIDS = false;
 		}
 
@@ -431,7 +432,14 @@ public class VoteRoulette extends JavaPlugin {
 
 		AUTO_CLAIM = getConfig().getBoolean("autoClaimAwards", false);
 
-		USE_UUIDS = getConfig().getBoolean("useUUIDs", true);
+		String uuidOption = getConfig().getString("useUUIDs", "true").toLowerCase();
+
+		if(uuidOption.equalsIgnoreCase("always") || uuidOption.equalsIgnoreCase("force")) {
+			FORCE_UUIDS = true;
+			USE_UUIDS = true;
+		} else {
+			USE_UUIDS = Boolean.parseBoolean(uuidOption);
+		}
 
 		DISABLE_INVENTORY_PROT = getConfig().getBoolean("disableInventoryProtection", false);
 
