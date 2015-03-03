@@ -32,6 +32,7 @@ import com.mythicacraft.voteroulette.awards.Reward.VoteStreakModifier;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.Utils;
 
+@SuppressWarnings("deprecation")
 public class AwardManager {
 
 	private static final Logger log = Logger.getLogger("VoteRoulette");
@@ -62,7 +63,6 @@ public class AwardManager {
 
 		String playerName = voter.getPlayerName();
 
-		@SuppressWarnings("deprecation")
 		Player player = Bukkit.getPlayerExact(playerName);
 
 		if(player == null) {
@@ -173,7 +173,23 @@ public class AwardManager {
 					dc.runTaskLater(plugin, delay*20);
 					VoteRoulette.delayedCommands.add(dc);
 				} else {
-					Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", player.getName()));
+					BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+					scheduler.runTask(plugin, new Runnable() {
+
+						private String command;
+						private String playerName;
+
+						@Override
+						public void run() {
+							Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", playerName));
+						}
+
+						private Runnable init(String command, String playerName){
+							this.command = command;
+							this.playerName = playerName;
+							return this;
+						}
+					}.init(command, player.getName()));
 				}
 			}
 		}
@@ -193,7 +209,7 @@ public class AwardManager {
 		}
 
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
-		scheduler.scheduleSyncDelayedTask(plugin, new Runnable() {
+		scheduler.runTask(plugin, new Runnable() {
 			private Player player;
 			private Award award;
 			@Override
@@ -205,7 +221,7 @@ public class AwardManager {
 				this.award = award;
 				return this;
 			}
-		}.init(player, award), 1L);
+		}.init(player, award));
 
 	}
 
@@ -350,7 +366,6 @@ public class AwardManager {
 
 		//filter out rewards not for the world player is standing in
 		if(plugin.CONSIDER_REWARDS_FOR_CURRENT_WORLD && !skipFilters) {
-			@SuppressWarnings("deprecation")
 			OfflinePlayer op = Bukkit.getOfflinePlayer(playerName);
 			ArrayList<Reward> worldFilteredRewards = new ArrayList<Reward>();
 			if(op.isOnline()) {
@@ -519,7 +534,6 @@ public class AwardManager {
 		milestones.clear();
 	}
 
-	@SuppressWarnings("deprecation")
 	public Milestone[] getQualifiedMilestones(String playerName) {
 
 		ArrayList<Milestone> qualifiedMilestones = new ArrayList<Milestone>();
@@ -662,7 +676,6 @@ public class AwardManager {
 		awardsData.saveConfig();
 	}
 
-	@SuppressWarnings("deprecation")
 	public void saveAwardToFile(Award award) {
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
 		String awardType;
@@ -775,7 +788,6 @@ public class AwardManager {
 		awardsData.saveConfig();
 	}
 
-	@SuppressWarnings("deprecation")
 	void saveItemToPath(String itemPath, ItemStack item) {
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
 		awardsData.getConfig().set(itemPath + "amount", item.getAmount());

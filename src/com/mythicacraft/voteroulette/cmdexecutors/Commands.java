@@ -732,21 +732,20 @@ public class Commands implements CommandExecutor {
 									}
 								}
 							}
-						} else {
-							try {
-								int pageNumber = Integer.parseInt(args[1]);
-								if(plugin.isOn1dot7 && args.length >= 2 && plugin.GUI_FOR_AWARDS && (sender instanceof Player)) {
-									showClickableAwardList(sender, AwardType.MILESTONE, milestones, pageNumber, seeingAll);
-									return true;
-								}
-								if(pageNumber <= milestonePag.pageTotal()) {
-									milestonePag.sendPage(pageNumber, sender);
-								} else {
-									sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
-								}
-							} catch (Exception e) {
+						}
+						try {
+							int pageNumber = Integer.parseInt(args[1]);
+							if(plugin.isOn1dot7 && args.length >= 2 && plugin.GUI_FOR_AWARDS && (sender instanceof Player)) {
+								showClickableAwardList(sender, AwardType.MILESTONE, milestones, pageNumber, seeingAll);
+								return true;
+							}
+							if(pageNumber <= milestonePag.pageTotal()) {
+								milestonePag.sendPage(pageNumber, sender);
+							} else {
 								sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
 							}
+						} catch (Exception e) {
+							sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
 						}
 					} else {
 						milestonePag.sendPage(1, sender);

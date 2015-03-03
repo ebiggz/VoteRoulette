@@ -70,7 +70,7 @@ public class Utils {
 	}
 
 	public static void debugMessage(String message) {
-		if(plugin.DEBUG) {
+		if(VoteRoulette.DEBUG) {
 			plugin.getLogger().info("DEBUG: " + message);
 		}
 	}

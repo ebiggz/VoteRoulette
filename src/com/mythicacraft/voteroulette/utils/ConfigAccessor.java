@@ -29,6 +29,7 @@ public class ConfigAccessor {
 	@SuppressWarnings("deprecation")
 	public void reloadConfig() {
 		fileConfiguration = YamlConfiguration.loadConfiguration(configFile);
+
 		// Look for defaults in the jar
 		InputStream defConfigStream = plugin.getResource(fileName);
 		if (defConfigStream != null) {
@@ -37,6 +38,7 @@ public class ConfigAccessor {
 			try {
 				//fileConfiguration.save(configFile);
 			} catch (Exception e) {
+
 				e.printStackTrace();
 			}
 		}

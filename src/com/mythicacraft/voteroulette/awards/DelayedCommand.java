@@ -2,6 +2,7 @@ package com.mythicacraft.voteroulette.awards;
 
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
 
@@ -23,10 +24,16 @@ public class DelayedCommand extends BukkitRunnable {
 
 	@Override
 	public void run() {
-		Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", player));
-		if(VoteRoulette.delayedCommands.contains(this)) {
-			VoteRoulette.delayedCommands.remove(this);
-		}
+		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+		scheduler.runTask(VoteRoulette.getPlugin(), new Runnable() {
+			@Override
+			public void run() {
+				Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", player));
+				if(VoteRoulette.delayedCommands.contains(this)) {
+					VoteRoulette.delayedCommands.remove(this);
+				}
+			}
+		});
 	}
 
 	public String getCommand() {

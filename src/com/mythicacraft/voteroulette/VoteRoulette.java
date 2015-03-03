@@ -58,6 +58,7 @@ public class VoteRoulette extends JavaPlugin {
 
 	//plugin variables
 	private static final Logger log = Logger.getLogger("VoteRoulette");
+	private static Plugin VR = null;
 
 	public static Economy economy = null;
 	public static Permission permission = null;
@@ -99,7 +100,7 @@ public class VoteRoulette extends JavaPlugin {
 	public int BROADCAST_COOLDOWN;
 	public boolean USE_BROADCAST_COOLDOWN;
 	public boolean ONLY_BROADCAST_ONLINE;
-	public boolean DEBUG;
+	public static boolean DEBUG;
 	public boolean LOG_TO_CONSOLE;
 	public boolean ONLY_PRIMARY_GROUP;
 	public boolean GIVE_RANDOM_REWARD;
@@ -207,6 +208,16 @@ public class VoteRoulette extends JavaPlugin {
 	//Called when the plugin is booting up.
 	public void onEnable() {
 
+		VR = this;
+
+		//instantiate the utils
+		new Utils(this);
+
+		//instantiate managers
+		pm = new VoterManager(this);
+		rm = new AwardManager(this);
+		sm = StatManager.getInstance();
+
 		//check for votifier
 		if(!setupVotifier()) {
 			getServer().getPluginManager().disablePlugin(this);
@@ -218,18 +229,19 @@ public class VoteRoulette extends JavaPlugin {
 			vaultEnabled = true;
 		}
 
-		//instantiate the utils
-		new Utils(this);
+		//load configs
+		loadAllFilesAndData();
 
 		//check for 1.7
-		if(!(Bukkit.getBukkitVersion().contains("1.6") || Bukkit.getBukkitVersion().contains("1.4") || Bukkit.getBukkitVersion().contains("1.5") || Bukkit.getBukkitVersion().contains("1.4") || Bukkit.getBukkitVersion().contains("1.3") || Bukkit.getBukkitVersion().contains("1.2") || Bukkit.getBukkitVersion().contains("1.1"))) {
+		String vString = getVersion().replace("v", "");
+		double v = 0;
+		if (!vString.isEmpty()){
+			String[] array = vString.split("_");
+			v = Double.parseDouble(array[0] + "." + array[1]);
+		}
+		if(v > 1.6) {
 			isOn1dot7 = true;
 		}
-
-		//instantiate managers
-		pm = new VoterManager(this);
-		rm = new AwardManager(this);
-		sm = StatManager.getInstance();
 
 
 		//register events and commands
@@ -241,8 +253,6 @@ public class VoteRoulette extends JavaPlugin {
 		getCommand("voteroulette").setExecutor(new Commands(this));
 		getCommand("votelinks").setExecutor(new Commands(this));
 
-		//load configs
-		loadAllFilesAndData();
 
 		//convert old data, if present
 		if(VoteRoulette.USE_UUIDS) {
@@ -1114,6 +1124,10 @@ public class VoteRoulette extends JavaPlugin {
 		return hasUpdate;
 	}
 
+	public static Plugin getPlugin() {
+		return VR;
+	}
+
 	public static AwardManager getAwardManager() {
 		return rm;
 	}
@@ -1124,6 +1138,17 @@ public class VoteRoulette extends JavaPlugin {
 
 	public static StatManager getStatsManager() {
 		return sm;
+	}
+
+	/**
+	 * Determines the version string used by Craftbukkit's safeguard (e.g. 1_7_R4).
+	 * @return the version string used by Craftbukkit's safeguard
+	 */
+	private static String getVersion(){
+		String[] array = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",");
+		if (array.length == 4)
+			return array[3] + ".";
+		return "";
 	}
 
 	/*
