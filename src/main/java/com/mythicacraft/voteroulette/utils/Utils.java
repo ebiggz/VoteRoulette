@@ -35,6 +35,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.google.common.collect.Iterables.get;
+
 
 public class Utils {
 
@@ -188,7 +190,7 @@ public class Utils {
 					Utils.debugMessage(exemptPlayer + " is not in broadcast cooldown.");
 				}
 			}
-			Player[] onlinePlayers = Bukkit.getOnlinePlayers();
+			Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
 			for(Player player : onlinePlayers) {
 				if(player.getName().equals(exemptPlayer)) continue;
 				player.sendMessage(message);
@@ -360,7 +362,7 @@ public class Utils {
 	}
 
 	public static boolean playerIsOnline(String playerName) {
-		Player[] onlinePlayers = Bukkit.getOnlinePlayers();
+		Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
 		for(Player player : onlinePlayers) {
 			if(player.getName().equals(playerName)) return true;
 		}
@@ -889,10 +891,10 @@ public class Utils {
 	}
 
 	public static String completeName(String playername) {
-		Player[] onlinePlayers = Bukkit.getOnlinePlayers();
-		for(int i = 0; i < onlinePlayers.length; i++) {
-			if(onlinePlayers[i].getName().toLowerCase().startsWith(playername.toLowerCase())) {
-				return onlinePlayers[i].getName();
+		Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
+		for(int i = 0; i < onlinePlayers.size(); i++) {
+			if(get(onlinePlayers, i).getName().toLowerCase().startsWith(playername.toLowerCase())) {
+				return get(onlinePlayers, i).getName();
 			}
 		}
 		OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
