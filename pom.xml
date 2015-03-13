@@ -66,5 +66,19 @@
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.vexsoftware</groupId>
+            <artifactId>Votifier</artifactId>
+            <version>1.9</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/Votifier.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>net.milkbowl</groupId>
+            <artifactId>Vault</artifactId>
+            <version>1.5.3</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/Vault.jar</systemPath>
+        </dependency>
     </dependencies>
 </project>
