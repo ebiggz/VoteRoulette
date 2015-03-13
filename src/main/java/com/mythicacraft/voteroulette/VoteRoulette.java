@@ -1173,7 +1173,7 @@ public class VoteRoulette extends JavaPlugin {
 
 		@Override
 		public void run() {
-			Player[] onlinePlayers = Bukkit.getOnlinePlayers();
+			Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
 			for(Player player : onlinePlayers) {
 				Voter voter = VoteRoulette.getVoterManager().getVoter(player.getName());
 				if(voter.hasntVotedInADay()) {
