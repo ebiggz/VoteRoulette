@@ -190,8 +190,12 @@ public class Utils {
 					Utils.debugMessage(exemptPlayer + " is not in broadcast cooldown.");
 				}
 			}
+<<<<<<< Updated upstream:src/main/java/com/mythicacraft/voteroulette/utils/Utils.java
 			Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
 			for(Player player : onlinePlayers) {
+=======
+			for(Player player : Bukkit.getOnlinePlayers()) {
+>>>>>>> Stashed changes:src/com/mythicacraft/voteroulette/utils/Utils.java
 				if(player.getName().equals(exemptPlayer)) continue;
 				player.sendMessage(message);
 			}
@@ -362,8 +366,12 @@ public class Utils {
 	}
 
 	public static boolean playerIsOnline(String playerName) {
+<<<<<<< Updated upstream:src/main/java/com/mythicacraft/voteroulette/utils/Utils.java
 		Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
 		for(Player player : onlinePlayers) {
+=======
+		for(Player player : Bukkit.getOnlinePlayers()) {
+>>>>>>> Stashed changes:src/com/mythicacraft/voteroulette/utils/Utils.java
 			if(player.getName().equals(playerName)) return true;
 		}
 		return false;
