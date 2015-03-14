@@ -1,3 +1,5 @@
+Latest v2.3.2 snapshot: https://db.tt/CCZbRtso
+
 VoteRoulette
 ============
 by ebiggz
