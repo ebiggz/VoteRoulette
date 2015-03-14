@@ -1173,12 +1173,8 @@ public class VoteRoulette extends JavaPlugin {
 
 		@Override
 		public void run() {
-<<<<<<< Updated upstream:src/main/java/com/mythicacraft/voteroulette/VoteRoulette.java
 			Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
 			for(Player player : onlinePlayers) {
-=======
-			for(Player player : Bukkit.getOnlinePlayers()) {
->>>>>>> Stashed changes:src/com/mythicacraft/voteroulette/VoteRoulette.java
 				Voter voter = VoteRoulette.getVoterManager().getVoter(player.getName());
 				if(voter.hasntVotedInADay()) {
 					if(!VoteRoulette.notifiedPlayers.contains(player)) {
