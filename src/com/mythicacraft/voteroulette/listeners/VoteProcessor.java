@@ -66,7 +66,7 @@ public class VoteProcessor implements Runnable {
 
 		Utils.debugMessage("Beginning award processing for: " + playerName);
 
-		VoteRoulette.getStatsManager().updateStats();
+		VoteRoulette.getStatsManager().updateStatsWithPlayer(playerName);
 
 		String voteMessage = plugin.SERVER_BROADCAST_MESSAGE_NO_AWARD;
 		voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);

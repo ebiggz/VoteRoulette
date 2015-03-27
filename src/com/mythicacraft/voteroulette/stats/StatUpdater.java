@@ -15,30 +15,44 @@ import com.mythicacraft.voteroulette.VoterManager;
 import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 
 
-class StatUpdater implements Runnable {
+public class StatUpdater extends Thread {
 
 	VoterManager vm = VoteRoulette.getVoterManager();
 
-	StatUpdater() {
-	}
+	private int currentFile = 0;
+	private int totalFiles = 0;
 
-	@Override
-	public void run() {
-		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator + "stats.yml");
-		List<VoteStat> stats = new ArrayList<VoteStat>();
-		if(VoteRoulette.USE_DATABASE)  {
+	private ConfigAccessor statsData = new ConfigAccessor("data" + File.separator + "stats.yml");
+	private String pluginFolder = Bukkit.getPluginManager().getPlugin("VoteRoulette").getDataFolder().getAbsolutePath();
+	private String filePath = "";
+	private File[] files;
 
-		} else {
-			String pluginFolder = Bukkit.getPluginManager().getPlugin("VoteRoulette").getDataFolder().getAbsolutePath();
-			String filePath = "";
+	public StatUpdater() {
+		if(!VoteRoulette.USE_DATABASE)  {
 			if(VoteRoulette.USE_UUIDS) {
 				filePath = "data" + File.separator + "playerdata";
 			} else {
 				filePath = "data" + File.separator + "players";
 			}
-			File[] files = new File(pluginFolder + File.separator + filePath).listFiles();
+			files = new File(pluginFolder + File.separator + filePath).listFiles();
+			totalFiles = files.length;
+		}
+	}
+
+	@Override
+	public void run() {
+		List<VoteStat> stats = new ArrayList<VoteStat>();
+		if(VoteRoulette.USE_DATABASE)  {
+
+		} else {
 			if(files != null && files.length != 0) {
+				int previousPercent = -1;
 				for (File file : files) {
+					int percent = (currentFile * 100) / totalFiles;
+					if(previousPercent != percent && (percent % 10) == 0) {
+						Bukkit.getLogger().info("[VoteRoulette] Updating stats: " + Integer.toString(percent) + "%");
+						previousPercent = percent;
+					}
 					if (file.isFile()) {
 						if(file.isHidden()) continue;
 						if(file.getName().endsWith(".yml")) {
@@ -57,6 +71,7 @@ class StatUpdater implements Runnable {
 							}
 						}
 					}
+					currentFile++;
 				}
 			}
 		}
@@ -74,7 +89,7 @@ class StatUpdater implements Runnable {
 		//add stats for top timetime votes
 		int count = 0;
 		for(VoteStat stat : stats) {
-			if(count != 10) {
+			if(count != 20) {
 				statsData.getConfig().set("vote-totals.lifetime." + stat.getPlayerName(), stat.getLifetimeVotes());
 				count++;
 			} else {
@@ -94,7 +109,7 @@ class StatUpdater implements Runnable {
 		statsData.getConfig().set("vote-streaks.longest", null);
 		statsData.saveConfig();
 		for(VoteStat stat : stats) {
-			if(count != 10) {
+			if(count != 20) {
 				statsData.getConfig().set("vote-streaks.longest." + stat.getPlayerName(), stat.getLongestVoteStreak());
 				count++;
 			} else {
@@ -102,5 +117,6 @@ class StatUpdater implements Runnable {
 			}
 		}
 		statsData.saveConfig();
+		Bukkit.getLogger().info("[VoteRoulette] ...Stats update completed!");
 	}
 }

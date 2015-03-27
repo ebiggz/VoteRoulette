@@ -119,13 +119,16 @@ public class Utils {
 				return;
 			}
 			Utils.debugMessage("creating scorebord");
+			int count = 0;
 			for(VoterStat vs : topStats) {
+				if(count > 10) break;
 				String name = vs.getPlayerName();
 				if(name.length() > 16) {
 					name = name.substring(0, 11) + "...";
 				}
 				Score score = objective.getScore(Bukkit.getOfflinePlayer(name));
 				score.setScore(vs.getStatCount());
+				count++;
 			}
 		}
 		if(stat == StatType.LONGEST_VOTE_STREAKS) {
@@ -137,13 +140,16 @@ public class Utils {
 				return;
 			}
 			Utils.debugMessage("creating scorebord");
+			int count = 0;
 			for(VoterStat vs : topStats) {
+				if(count > 10) break;
 				String name = vs.getPlayerName();
 				if(name.length() > 16) {
 					name = name.substring(0, 11) + "...";
 				}
 				Score score = objective.getScore(Bukkit.getOfflinePlayer(name));
 				score.setScore(vs.getStatCount());
+				count++;
 			}
 		}
 		Utils.debugMessage("showing scoreboard for 5 secs");
@@ -173,7 +179,9 @@ public class Utils {
 		if(topStats != null) {
 			int count = 1;
 			String topNumber = "";
+			int counter = 0;
 			for(VoterStat vs : topStats) {
+				if(counter > 10) break;
 				String statCount = Integer.toString(vs.getStatCount());
 				if(count == 1) {
 					topNumber = statCount;
@@ -187,6 +195,7 @@ public class Utils {
 
 				player.sendMessage(message);
 				count++;
+				counter++;
 			}
 		}
 	}
@@ -1000,6 +1009,7 @@ public class Utils {
 
 
 	public static void showAwardGUI(Award award, Player p, int awardNumber, boolean showPlayers) {
+		p.closeInventory();
 		Reward reward = null;
 		Milestone milestone = null;
 		String awardType = "";

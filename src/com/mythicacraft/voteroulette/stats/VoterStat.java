@@ -15,6 +15,10 @@ public class VoterStat {
 		return count;
 	}
 
+	public void setStatCount(int newCount) {
+		this.count = newCount;
+	}
+
 	public String getPlayerName() {
 		return playerName;
 	}

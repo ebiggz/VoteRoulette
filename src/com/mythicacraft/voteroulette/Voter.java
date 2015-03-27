@@ -520,6 +520,7 @@ public class Voter {
 		}
 	}
 
+	//pragma-mark
 	public void removeUnclaimedMilestone(String milestoneName) {
 		if(VoteRoulette.USE_DATABASE) {
 			//place holder for db code
@@ -581,10 +582,13 @@ public class Voter {
 		return milestones;
 	}
 
+	private void convertKeys() {
+
+	}
+
 	private void createFile(String path, String fileName) {
 		(new File(path)).mkdirs();
 		File file = new File(path + File.separator + fileName);
-
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
@@ -592,6 +596,11 @@ public class Voter {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+		ConfigAccessor playerCfg = new ConfigAccessor(filePath);
+		double version = playerCfg.getConfig().getDouble("config-version", 1.0);
+		if(version == 1.0) {
+			convertKeys();
 		}
 	}
 }

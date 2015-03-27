@@ -121,6 +121,7 @@ public class LoginListener implements Listener {
 		}
 	}
 
+
 	@EventHandler(priority=EventPriority.MONITOR)
 	public void invClick(InventoryClickEvent e) {
 		if (!(e.getWhoClicked() instanceof Player)) return;

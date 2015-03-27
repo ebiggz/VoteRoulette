@@ -71,7 +71,6 @@ public class VoteRoulette extends JavaPlugin {
 
 	private static AwardManager rm;
 	private static VoterManager pm;
-	private static StatManager sm;
 	private BukkitRunnable periodicReminder;
 	private BukkitRunnable twentyFourHourChecker;
 	private BukkitRunnable updateChecker;
@@ -216,7 +215,6 @@ public class VoteRoulette extends JavaPlugin {
 		//instantiate managers
 		pm = new VoterManager(this);
 		rm = new AwardManager(this);
-		sm = StatManager.getInstance();
 
 		//check for votifier
 		if(!setupVotifier()) {
@@ -273,9 +271,6 @@ public class VoteRoulette extends JavaPlugin {
 		if(LOCALIZATIONS_VERSION != 1.5) {
 			log.warning("[VoteRoulette] It appears that your localizations.yml file is out of date. There may be new options! It's recommended that you take your old localizations file out to let the new one save.");
 		}
-
-		//run a stat update
-		sm.updateStats();
 
 		//submit metrics
 		try {
@@ -863,28 +858,48 @@ public class VoteRoulette extends JavaPlugin {
 		String playerFolder = pluginFolder + File.separator + "data";
 		(new File(playerFolder)).mkdirs();
 		File playerDataFile = new File(playerFolder, "stats.yml");
-		ConfigAccessor playerData = new ConfigAccessor("data" + File.separator + "stats.yml");
+		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator + "stats.yml");
 
 		if (!playerDataFile.exists()) {
 			try {
-				playerData.saveDefaultConfig();
+				statsData.saveDefaultConfig();
 			} catch (Exception e) {
 				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/stats.yml", e);
 				pm.disablePlugin(this);
 			}
-			return;
 		} else {
 			try {
-				playerData.getConfig().options().header("This file keeps track of the stats of VR. Theres no need to edit anything here.");
-				playerData.getConfig().options().copyHeader();
-				playerData.reloadConfig();
+				statsData.getConfig().options().header("This file keeps track of the stats of VR. Theres no need to edit anything here.");
+				statsData.getConfig().options().copyHeader();
+				statsData.reloadConfig();
 			} catch (Exception e) {
 				log.log(Level.SEVERE, "Exception while loading VoteRoulette/data/stats.yml", e);
 				pm.disablePlugin(this);
 			}
 		}
+		if(shouldUpdateStats()) {
+			StatManager.getInstance().updateAllStats();
+		}
 	}
 
+	private boolean shouldUpdateStats() {
+		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator + "stats.yml");
+		ConfigurationSection cs = statsData.getConfig().getConfigurationSection("vote-totals.lifetime");
+		ConfigurationSection cs2 = statsData.getConfig().getConfigurationSection("vote-streaks.longest");
+		if(cs == null || cs2 == null) {
+			return true;
+		} else {
+			Set<String> keys = cs.getKeys(false);
+			if(keys == null) {
+				return true;
+			}
+			keys = cs2.getKeys(false);
+			if(keys == null) {
+				return true;
+			}
+			return false;
+		}
+	}
 	private void covertPlayersFolderToUUID() {
 
 		String oldPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "players";
@@ -1137,7 +1152,7 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	public static StatManager getStatsManager() {
-		return sm;
+		return StatManager.getInstance();
 	}
 
 	/**

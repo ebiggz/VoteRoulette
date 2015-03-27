@@ -1,6 +1,5 @@
 package com.mythicacraft.voteroulette.cmdexecutors;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -29,7 +28,6 @@ import com.mythicacraft.voteroulette.awards.Milestone;
 import com.mythicacraft.voteroulette.awards.Reward;
 import com.mythicacraft.voteroulette.awards.Reward.VoteStreakModifier;
 import com.mythicacraft.voteroulette.stats.VoteStat.StatType;
-import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.Paginate;
 import com.mythicacraft.voteroulette.utils.Utils;
 import com.vexsoftware.votifier.model.Vote;
@@ -416,10 +414,7 @@ public class Commands implements CommandExecutor {
 						return true;
 					}
 					if(args.length > 1) {
-						String otherPlayer = Utils.completeName(args[1]);
-						if(otherPlayer == null) {
-							otherPlayer = args[1];
-						}
+						String otherPlayer = args[1];
 						sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You forced a vote to " + ChatColor.YELLOW + otherPlayer + ChatColor.AQUA +  ".");
 						Vote forceVote = new Vote();
 						forceVote.setAddress("1.2.3.4");
@@ -613,7 +608,7 @@ public class Commands implements CommandExecutor {
 							otherVoter.setCurrentVoteStreak(voteNumber);
 							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] You set " + ChatColor.YELLOW + otherPlayer + "'s " + ChatColor.AQUA +  "vote streak to " + ChatColor.YELLOW + voteNumber + ChatColor.AQUA + "!");
 						}
-						VoteRoulette.getStatsManager().updateStats();
+						VoteRoulette.getStatsManager().updateStatsWithPlayer(otherPlayer);
 					}
 					else if(args.length > 4) {
 						sender.sendMessage(ChatColor.RED + "[VoteRoulette] /" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF);
@@ -940,21 +935,9 @@ public class Commands implements CommandExecutor {
 							return true;
 						}
 						if(args[1].equalsIgnoreCase("all")) {
-							File[] files = new File(plugin.getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata").listFiles();
-							for (File file : files) {
-								if (file.isFile()) {
-									if(file.getName().endsWith(".yml")) {
-										String uuid = file.getName();
-										ConfigAccessor playerCfg = new ConfigAccessor("data" + File.separator + "playerdata" + File.separator + uuid);
-										Voter voterObj = vm.getVoter(playerCfg.getConfig().getString("name", ""));
-										if(voterObj.isReal()) {
-											voterObj.wipeStat(stat);
-										}
-									}
-								}
-							}
-
-							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] Wiped everyones stat: " + stat.toString().toLowerCase().replace("_", " "));
+							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] Wiping everyones stat: " + stat.toString().toLowerCase().replace("_", " "));
+							VoteRoulette.getStatsManager().wipeStats(stat);
+							VoteRoulette.getStatsManager().updateAllStats();
 						}
 						else {
 							String otherPlayer = Utils.completeName(args[1]);
@@ -964,10 +947,18 @@ public class Commands implements CommandExecutor {
 							}
 							vm.getVoter(otherPlayer).wipeStat(stat);
 							sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] Wiped " + otherPlayer + " stat: " + stat.toString().toLowerCase().replace("_", " "));
+							VoteRoulette.getStatsManager().updateStatsWithPlayer(otherPlayer);
 						}
-						VoteRoulette.getStatsManager().updateStats();
 					}
 					//reload configs
+				}
+				else if(args[0].equalsIgnoreCase("updatestats")) {
+					if(!sender.hasPermission("voteroulette.admin")) {
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
+						return true;
+					}
+					sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] Updating all stats (This may cause lag momentarily if you have a large player base)");
+					VoteRoulette.getStatsManager().updateAllStats();
 				}
 				else if(args[0].equalsIgnoreCase(plugin.CLAIM_DEF)) {
 					if (!(sender instanceof Player)) {
