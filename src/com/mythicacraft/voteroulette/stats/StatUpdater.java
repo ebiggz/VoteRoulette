@@ -34,14 +34,22 @@ public class StatUpdater extends Thread {
 			} else {
 				filePath = "data" + File.separator + "players";
 			}
-			files = new File(pluginFolder + File.separator + filePath).listFiles();
-			totalFiles = files.length;
+			File folderPath = new File(pluginFolder + File.separator + filePath);
+			if(!folderPath.exists()) {
+				folderPath.mkdirs();
+			}
+			files = folderPath.listFiles();
+			if(files == null) {
+				totalFiles = 0;
+			} else {
+				totalFiles = files.length;
+			}
 		}
 	}
 
 	@Override
 	public void run() {
-		List<VoteStat> stats = new ArrayList<VoteStat>();
+		List<VoterStatSheet> stats = new ArrayList<VoterStatSheet>();
 		if(VoteRoulette.USE_DATABASE)  {
 
 		} else {
@@ -67,7 +75,7 @@ public class StatUpdater extends Thread {
 								voter = vm.getVoter(fileID.replace(".yml", ""));
 							}
 							if(voter.isReal()) {
-								stats.add(new VoteStat(voter));
+								stats.add(new VoterStatSheet(voter));
 							}
 						}
 					}
@@ -76,8 +84,8 @@ public class StatUpdater extends Thread {
 			}
 		}
 
-		Collections.sort(stats, new Comparator<VoteStat>(){
-			public int compare(VoteStat v1, VoteStat v2) {
+		Collections.sort(stats, new Comparator<VoterStatSheet>(){
+			public int compare(VoterStatSheet v1, VoterStatSheet v2) {
 				return v2.getLifetimeVotes() - v1.getLifetimeVotes();
 			}
 		});
@@ -88,7 +96,7 @@ public class StatUpdater extends Thread {
 
 		//add stats for top timetime votes
 		int count = 0;
-		for(VoteStat stat : stats) {
+		for(VoterStatSheet stat : stats) {
 			if(count != 20) {
 				statsData.getConfig().set("vote-totals.lifetime." + stat.getPlayerName(), stat.getLifetimeVotes());
 				count++;
@@ -100,15 +108,15 @@ public class StatUpdater extends Thread {
 		//add stats for top longest streaks
 		count = 0;
 		statsData.saveConfig();
-		Collections.sort(stats, new Comparator<VoteStat>(){
-			public int compare(VoteStat v1, VoteStat v2) {
+		Collections.sort(stats, new Comparator<VoterStatSheet>(){
+			public int compare(VoterStatSheet v1, VoterStatSheet v2) {
 				return v2.getLongestVoteStreak() - v1.getLongestVoteStreak();
 			}
 		});
 
 		statsData.getConfig().set("vote-streaks.longest", null);
 		statsData.saveConfig();
-		for(VoteStat stat : stats) {
+		for(VoterStatSheet stat : stats) {
 			if(count != 20) {
 				statsData.getConfig().set("vote-streaks.longest." + stat.getPlayerName(), stat.getLongestVoteStreak());
 				count++;

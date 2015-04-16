@@ -1,13 +1,16 @@
 package com.mythicacraft.voteroulette.utils;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -53,8 +56,9 @@ import com.mythicacraft.voteroulette.awards.Milestone;
 import com.mythicacraft.voteroulette.awards.Reward;
 import com.mythicacraft.voteroulette.awards.Reward.VoteStreakModifier;
 import com.mythicacraft.voteroulette.stats.BoardReset;
-import com.mythicacraft.voteroulette.stats.VoteStat.StatType;
 import com.mythicacraft.voteroulette.stats.VoterStat;
+import com.mythicacraft.voteroulette.stats.VoterStatSheet.StatType;
+import com.mythicacraft.voteroulette.utils.InteractiveMessageAPI.InteractiveMessageElement.ClickEvent;
 
 
 public class Utils {
@@ -206,6 +210,7 @@ public class Utils {
 		player.sendMessage(message);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static void broadcastMessageToServer(String message, String exemptPlayer) {
 		if(plugin.BROADCAST_TO_SERVER) {
 			if(plugin.ONLY_BROADCAST_ONLINE && !Utils.playerIsOnline(exemptPlayer)) return;
@@ -217,10 +222,22 @@ public class Utils {
 					Utils.debugMessage(exemptPlayer + " is not in broadcast cooldown.");
 				}
 			}
-			for(Player player : Bukkit.getOnlinePlayers()) {
-				if(player.getName().equals(exemptPlayer)) continue;
-				player.sendMessage(message);
+			try {
+				if (Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).getReturnType() == Collection.class)
+					for(Player player : ((Collection<? extends Player>)Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+						if(player.getName().equals(exemptPlayer)) continue;
+						player.sendMessage(message);
+					}
+				else
+					for(Player player : ((Player[])Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+						if(player.getName().equals(exemptPlayer)) continue;
+						player.sendMessage(message);
+					}
 			}
+			catch (NoSuchMethodException ex){} // can never happen
+			catch (InvocationTargetException ex){} // can also never happen
+			catch (IllegalAccessException ex){} // can still never happen
+
 			if(plugin.USE_BROADCAST_COOLDOWN) {
 				if(!VoteRoulette.cooldownPlayers.contains(exemptPlayer)) {
 					VoteRoulette.cooldownPlayers.add(exemptPlayer);
@@ -284,6 +301,126 @@ public class Utils {
 			return Utils.transcribeColorCodes(award.getMessage().replace("%player%", playerName));
 		}
 	}
+
+	public static List<Award> convertRewardListToAward(List<Reward> rewards) {
+		List<Award> awards = new ArrayList<Award>();
+		for(Reward reward : rewards) {
+			awards.add(reward);
+		}
+		return awards;
+	}
+	public static List<Award> convertMilestoneListToAward(List<Milestone> milestones) {
+		List<Award> awards = new ArrayList<Award>();
+		for(Milestone milestone : milestones) {
+			awards.add(milestone);
+		}
+		return awards;
+	}
+
+	public static String getSummarizedAwardsMessage(List<Award> awards, String playerName) {
+
+		HashMap<Award, Integer> awardCounts = new HashMap<Award,Integer>();
+		for(Award award : awards) {
+			if(!awardCounts.containsKey(award)) {
+				awardCounts.put(award, 1);
+			} else {
+				awardCounts.put(award, awardCounts.get(award)+1);
+			}
+		}
+		StringBuilder sb = new StringBuilder();
+		int counter = 0;
+		for(Award award : awardCounts.keySet()) {
+			int count = awardCounts.get(award);
+			if(count > 1) {
+				sb.append(award.getName() + "(x" + count + ")");
+			} else {
+				sb.append(award.getName());
+			}
+			int lastIndex = awardCounts.size()-1;
+			if(counter < lastIndex-1) {
+				sb.append(", ");
+			}
+			if(counter == lastIndex-1) {
+				sb.append(", " + plugin.AND_DEF + " ");
+			}
+			counter++;
+		}
+		String awardsListStr = sb.toString();
+		String summerizeMessage = plugin.PLAYER_AWARDS_SUMMARY_MESSAGE;
+
+		summerizeMessage = summerizeMessage
+				.replace("%names%", awardsListStr)
+				.replace("%player%", playerName)
+				.replace("%server%", Bukkit.getServerName())
+				.replace("%prizes%", getSummarizedAwardPrizesString(awards));
+
+		if(awards.get(0) instanceof Milestone) {
+			if(awards.size() > 1) {
+				summerizeMessage = summerizeMessage.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase());
+			} else {
+				summerizeMessage = summerizeMessage.replace("%type%", plugin.MILESTONE_DEF.toLowerCase());
+			}
+		} else {
+			if(awards.size() > 0) {
+				summerizeMessage = summerizeMessage.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase());
+			} else {
+				summerizeMessage = summerizeMessage.replace("%type%", plugin.REWARD_DEF.toLowerCase());
+			}
+		}
+		return summerizeMessage;
+	}
+
+	private static String getSummarizedAwardPrizesString(List<Award> awards) {
+		Inventory tempInv = Bukkit.createInventory(null, 999);
+		double totalMoney = 0.0;
+		int totalXp = 0;
+		StringBuilder sb = new StringBuilder();
+		for(Award award : awards) {
+			if(award.hasDescription()) {
+				sb.append(award.getDescription());
+			} else {
+				if(award.hasCurrency()) {
+					totalMoney += award.getCurrency();
+				}
+				if(award.hasXpLevels()) {
+					totalXp += award.getXpLevels();
+				}
+				if(award.hasItems()) {
+					for(ItemStack item : award.getItems()) {
+						tempInv.addItem(item);
+					}
+				}
+			}
+		}
+		if(totalMoney > 0) {
+			sb.append(plugin.CURRENCY_SYMBOL + totalMoney);
+		}
+		if(totalXp > 0) {
+			if(totalMoney > 0) {
+				sb.append(", ");
+			}
+			sb.append(totalXp + " " + plugin.XPLEVELS_DEF.toLowerCase());
+		}
+		if(tempInv.getContents().length > 0) {
+			if(totalMoney > 0 || totalXp > 0) {
+				sb.append(", ");
+			}
+			sb.append(Utils.getItemListSentance(stripNullIndexes(tempInv.getContents())));
+		}
+		return sb.toString();
+	}
+
+	private static ItemStack[] stripNullIndexes(ItemStack[] items) {
+		List<ItemStack> cleanItemList = new ArrayList<ItemStack>();
+		for(ItemStack item : items) {
+			if(item == null) continue;
+			cleanItemList.add(item);
+		}
+		ItemStack[] cleanItemArray = new ItemStack[cleanItemList.size()];
+		cleanItemList.toArray(cleanItemArray);
+		return cleanItemArray;
+	}
+
 
 	private static String getAwardPrizesString(Award award) {
 		StringBuilder sb = new StringBuilder();
@@ -387,10 +524,21 @@ public class Utils {
 		return false;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static boolean playerIsOnline(String playerName) {
-		for(Player player : Bukkit.getOnlinePlayers()) {
-			if(player.getName().equals(playerName)) return true;
+		try {
+			if (Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).getReturnType() == Collection.class)
+				for(Player player : ((Collection<? extends Player>)Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+					if(player.getName().equals(playerName)) return true;
+				}
+			else
+				for(Player player : ((Player[])Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+					if(player.getName().equals(playerName)) return true;
+				}
 		}
+		catch (NoSuchMethodException ex){} // can never happen
+		catch (InvocationTargetException ex){} // can also never happen
+		catch (IllegalAccessException ex){} // can still never happen
 		return false;
 	}
 
@@ -477,7 +625,7 @@ public class Utils {
 
 		String currentTime = getTime();
 
-		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a", Locale.ENGLISH);
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
 		Date date1 = sdf.parse(time);
 		Date date2 = sdf.parse(currentTime);
 
@@ -500,7 +648,7 @@ public class Utils {
 
 	public static String getTime() {
 		Calendar cal = Calendar.getInstance();
-		SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy h:mm a");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String time = sdf.format(cal.getTime());
 		return time;
 	}
@@ -625,6 +773,7 @@ public class Utils {
 		//int count = 0;
 		for(int i = 0; i < items.length; i++) {
 			ItemStack is = items[i];
+			if(is == null || is.getType() == Material.AIR) continue;
 			sb.append(is.getAmount() + " ");
 			String itemName = is.getType().toString().toLowerCase().replace("_", " ");
 			if(itemName.equals("monster egg")) {
@@ -915,12 +1064,26 @@ public class Utils {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static String completeName(String playername) {
-		for(Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-			if(onlinePlayer.getName().toLowerCase().startsWith(playername.toLowerCase())) {
-				return onlinePlayer.getName();
-			}
+		try {
+			if (Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).getReturnType() == Collection.class)
+				for(Player onlinePlayer : ((Collection<? extends Player>)Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+					if(onlinePlayer.getName().toLowerCase().startsWith(playername.toLowerCase())) {
+						return onlinePlayer.getName();
+					}
+				}
+			else
+				for(Player onlinePlayer : ((Player[])Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+					if(onlinePlayer.getName().toLowerCase().startsWith(playername.toLowerCase())) {
+						return onlinePlayer.getName();
+					}
+				}
 		}
+		catch (NoSuchMethodException ex){} // can never happen
+		catch (InvocationTargetException ex){} // can also never happen
+		catch (IllegalAccessException ex){} // can still never happen
+
 		OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
 		for(int i = 0; i < offlinePlayers.length; i++) {
 			if(offlinePlayers[i].getName().toLowerCase().startsWith(playername.toLowerCase())) {
@@ -1001,6 +1164,82 @@ public class Utils {
 			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.RELOAD_DEF + ChatColor.GRAY + " - Reloads the config file.\n");
 		}
 		return sb.toString().toLowerCase();
+	}
+
+	public static FancyMenu fancyHelpMenu(CommandSender player, String commandLabel) {
+		FancyMenu fancyMenu = new FancyMenu("VoteRoulette Commands", commandLabel);
+		fancyMenu.addText(ChatColor.GRAY + "" + ChatColor.ITALIC + "(Hover over a " + ChatColor.GREEN +""+ ChatColor.ITALIC + "command" + ChatColor.GRAY +""+ ChatColor.ITALIC + " for info, click to run it.)");
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " ?", "This help menu.", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " ?");
+
+		if(player.hasPermission("voteroulette.votecommand")) {
+			fancyMenu.addCommand("/vote", "View the links to vote on.", ClickEvent.RUN_COMMAND, "/vote");
+		}
+		if(player.hasPermission("voteroulette.createawards")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "create", "Create a new award", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "create");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "editreward [#]", "Edit a reward", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "editreward ");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "editmilestone [#]", "Edit a milestone", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "editmilestone ");
+		}
+		if(player.hasPermission("voteroulette.deleteawards")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "deletereward [#]", "Delete a reward", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "deletereward ");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "deletemilestone [#]", "Delete a milestone", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "deletemilestone ");
+		}
+		if(player.hasPermission("voteroulette.edititems")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "setname [text]", "Set a custom name for item in hand", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "setname ");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "setlore [text]", "Set a custom lore for item in hand", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "setlore ");
+		}
+		if(player.hasPermission("voteroulette.colors")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "colors", "See the colorcodes", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "colors");
+		}
+		if(player.hasPermission("voteroulette.viewrewards")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase(), "See rewards you are eligible to get", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase());
+		}
+		if(player.hasPermission("voteroulette.viewmilestones")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase(), "See milestones you are eligible to get", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase());
+		}
+		if(player.hasPermission("voteroulette.viewallawards")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " -a", "See all the rewards, regardless of if you are eligable.", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " -a");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " -a", "See all the milestones, regardless of if you are eligable.", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " -a");
+		}
+		if(player.hasPermission("voteroulette.top10")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + "10 " + plugin.TOTAL_DEF.toLowerCase().replace(" ", ""), "See the top 10 players for lifetime votes", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + "10 " + plugin.TOTAL_DEF.toLowerCase().replace(" ", ""));
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + "10 " + plugin.VOTE_STREAK_DEF.toLowerCase().replace(" ", ""), "See the top 10 players for consecutive days voting", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + "10 " + plugin.VOTE_STREAK_DEF.toLowerCase().replace(" ", ""));
+		}
+		if(player.hasPermission("voteroulette.lastvote")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.LASTVOTE_DEF.toLowerCase(), "See how long ago your last vote was", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.LASTVOTE_DEF.toLowerCase());
+		}
+		if(player.hasPermission("voteroulette.lastvoteothers")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.LASTVOTE_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "]", "Shows how long ago the given players last vote was", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.LASTVOTE_DEF.toLowerCase() + " ");
+		}
+		if(player.hasPermission("voteroulette.viewstats")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase(), "See your voting stats", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase());
+		}
+		if(player.hasPermission("voteroulette.viewotherstats")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "]", "See the stats of another player", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " ");
+		}
+		if(player.hasPermission("voteroulette.editstats")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETTOTAL_DEF + " [#]", "Set a players total votes", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETTOTAL_DEF + " [#]");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETCYCLE_DEF + " [#]", "Set a players current vote cycle", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETCYCLE_DEF + " [#]");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETSTREAK_DEF + " [#]", "Set a players current vote streak", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETSTREAK_DEF + " [#]");
+		}
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF, "Tells you if you have any unclaimed rewards or\nmilestones you received while offline", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF);
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase(), "Lists any of your unclaimed rewards", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase());
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]", "Claims the reward with the given # or all of them", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]");
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase(), "Lists any of your unclaimed milestones", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase());
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]", "Claims the milestone with the given # or all of them", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]");
+		if(player.hasPermission("voteroulette.forcevote")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEVOTE_DEF + " [" + plugin.PLAYER_DEF + "]", "Make it as if the given player just voted,\nthis will update their stats and give\n them an applicable reward/milestone.", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEVOTE_DEF + " [" + plugin.PLAYER_DEF + "]");
+		}
+		if(player.hasPermission("voteroulette.forceawards")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEREWARD_DEF + "  " + "[reward#] " + "[" + plugin.PLAYER_DEF.toLowerCase()+ "]", "Award a player the given reward.\nThe number corresponds with the full rewards list.", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEREWARD_DEF + "  " + "[reward#] " + "[" + plugin.PLAYER_DEF.toLowerCase()+ "]");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEMILESTONE_DEF + "  " + "[milestone#] " + "[" + plugin.PLAYER_DEF.toLowerCase()+ "]", "Award a player the given milestone.\nThe number corresponds with the full milestones list.", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEMILESTONE_DEF + "  " + "[reward#] " + "[" + plugin.PLAYER_DEF.toLowerCase()+ "]");
+		}
+		if(player.hasPermission("voteroulette.wipestats")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.WIPESTATS_DEF + " [" + plugin.PLAYER_DEF + "/" + plugin.ALL_DEF + "] [" + plugin.STATS_DEF +"/" + plugin.ALL_DEF + "]", "Wipes the given stat (or all stats)\nof a particular player (or all of them)", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.WIPESTATS_DEF + " [" + plugin.PLAYER_DEF + "/" + plugin.ALL_DEF + "] [" + plugin.STATS_DEF +"/" + plugin.ALL_DEF + "]");
+		}
+		if(player.hasPermission("voteroulette.admin")) {
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.RELOAD_DEF, "Reloads the config files", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.RELOAD_DEF);
+		}
+		return fancyMenu;
 	}
 
 	public static void showAwardGUI(Award award, Player p, int awardNumber) {
