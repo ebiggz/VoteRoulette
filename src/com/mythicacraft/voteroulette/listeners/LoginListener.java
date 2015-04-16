@@ -10,15 +10,15 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.Voter;
+import com.mythicacraft.voteroulette.awards.Award.AwardType;
 import com.mythicacraft.voteroulette.awards.DelayedCommand;
-import com.mythicacraft.voteroulette.awards.Milestone;
-import com.mythicacraft.voteroulette.awards.Reward;
 import com.mythicacraft.voteroulette.utils.Utils;
 
 
@@ -51,7 +51,7 @@ public class LoginListener implements Listener {
 				voter = VoteRoulette.getVoterManager().getVoter(player.getName());
 
 				if(!voter.isReal()) {
-					plugin.getLogger().warning(player.getName() + "\" has logged in but VoteRoulette could not find a UUID for this name! Rewards will not be given and stats will not update. Maybe there is a connectivity issue with Mojang's UUID server or this player isn't using a legitamte copy of Minecraft?");
+					plugin.getLogger().warning(player.getName() + "\" has logged in but VoteRoulette could not find a UUID for this name! Awards will not be given and stats will not update. Maybe there is a connectivity issue with Mojang's UUID server or this player isn't using a legitamte copy of Minecraft?");
 					return;
 				}
 
@@ -61,11 +61,7 @@ public class LoginListener implements Listener {
 
 					if(unclaimedRewardsCount > 0) {
 						if(VoteRoulette.AUTO_CLAIM) {
-							List<Reward> unclaimedRewards = voter.getUnclaimedRewards();
-							for(Reward reward : unclaimedRewards) {
-								voter.removeUnclaimedReward(reward.getName());
-								VoteRoulette.getAwardManager().administerAwardContents(reward, voter);
-							}
+							VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.REWARD);
 						} else {
 							player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase()));
 						}
@@ -73,11 +69,7 @@ public class LoginListener implements Listener {
 
 					if(unclaimedMilestonesCount > 0) {
 						if(VoteRoulette.AUTO_CLAIM) {
-							List<Milestone> unclaimedMilestones = voter.getUnclaimedMilestones();
-							for(Milestone milestone : unclaimedMilestones) {
-								voter.removeUnclaimedMilestone(milestone.getName());
-								VoteRoulette.getAwardManager().administerAwardContents(milestone, voter);
-							}
+							VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.MILESTONE);
 						} else {
 							player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase()));
 						}
@@ -104,8 +96,15 @@ public class LoginListener implements Listener {
 				return this;
 			}
 		}.init(player), 20L);
-
 	}
+
+	@EventHandler (priority = EventPriority.MONITOR)
+	public void onWorldChange(PlayerChangedWorldEvent event) {
+		Voter voter = VoteRoulette.getVoterManager().getVoter(event.getPlayer().getName());
+		VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.REWARD);
+		VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.MILESTONE);
+	}
+
 
 	@EventHandler (priority = EventPriority.MONITOR)
 	public void onQuit(PlayerQuitEvent event) {

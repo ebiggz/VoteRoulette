@@ -27,7 +27,8 @@ import com.mythicacraft.voteroulette.awards.AwardManager;
 import com.mythicacraft.voteroulette.awards.Milestone;
 import com.mythicacraft.voteroulette.awards.Reward;
 import com.mythicacraft.voteroulette.awards.Reward.VoteStreakModifier;
-import com.mythicacraft.voteroulette.stats.VoteStat.StatType;
+import com.mythicacraft.voteroulette.stats.VoterStatSheet.StatType;
+import com.mythicacraft.voteroulette.utils.FancyMenu;
 import com.mythicacraft.voteroulette.utils.Paginate;
 import com.mythicacraft.voteroulette.utils.Utils;
 import com.vexsoftware.votifier.model.Vote;
@@ -347,20 +348,34 @@ public class Commands implements CommandExecutor {
 					}
 				}
 				else if(args[0].equalsIgnoreCase("?") || args[0].equalsIgnoreCase("help")) {
-					Paginate helpMenuPag = new Paginate(Utils.helpMenu(sender), "Help Menu", commandLabel + " " + args[0]);
-					if(args.length >= 2) {
-						try {
-							int pageNumber = Integer.parseInt(args[1]);
-							if(pageNumber <= helpMenuPag.pageTotal()) {
-								helpMenuPag.sendPage(pageNumber, sender);
-							} else {
+					if(plugin.isOn1dot7) {
+						FancyMenu fancyMenu = Utils.fancyHelpMenu(sender, commandLabel + " " + args[0]);
+						if(args.length >= 2) {
+							try {
+								int pageNumber = Integer.parseInt(args[1]);
+								fancyMenu.sendPage(pageNumber, sender);
+							} catch (Exception e) {
 								sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
 							}
-						} catch (Exception e) {
-							sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
+						} else {
+							fancyMenu.sendPage(1, sender);
 						}
 					} else {
-						helpMenuPag.sendPage(1, sender);
+						Paginate helpMenuPag = new Paginate(Utils.helpMenu(sender), "Help Menu", commandLabel + " " + args[0]);
+						if(args.length >= 2) {
+							try {
+								int pageNumber = Integer.parseInt(args[1]);
+								if(pageNumber <= helpMenuPag.pageTotal()) {
+									helpMenuPag.sendPage(pageNumber, sender);
+								} else {
+									sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
+								}
+							} catch (Exception e) {
+								sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
+							}
+						} else {
+							helpMenuPag.sendPage(1, sender);
+						}
 					}
 				}
 				else if(args[0].equalsIgnoreCase(plugin.LASTVOTE_DEF)) {
@@ -957,8 +972,24 @@ public class Commands implements CommandExecutor {
 						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 						return true;
 					}
+					if(VoteRoulette.USE_DATABASE) {
+						sender.sendMessage(ChatColor.RED + "This feature is disabled when a database is in use!");
+						return true;
+					}
 					sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] Updating all stats (This may cause lag momentarily if you have a large player base)");
 					VoteRoulette.getStatsManager().updateAllStats();
+				}
+				else if(args[0].equalsIgnoreCase("importstats")) {
+					if(!sender.hasPermission("voteroulette.admin")) {
+						sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
+						return true;
+					}
+					if(!VoteRoulette.USE_DATABASE) {
+						sender.sendMessage(ChatColor.RED + "This feature is not available when a database isnt enabled!");
+						return true;
+					}
+					sender.sendMessage(ChatColor.AQUA + "[VoteRoulette] Importing stats to database. View the console to see progress. (This may cause lag momentarily if you have a large player base)");
+					VoteRoulette.getStatsManager().importStatsToDatabase();
 				}
 				else if(args[0].equalsIgnoreCase(plugin.CLAIM_DEF)) {
 					if (!(sender instanceof Player)) {
@@ -976,12 +1007,12 @@ public class Commands implements CommandExecutor {
 					int unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
 					if(args.length == 1) {
 						if(unclaimedRewardsCount > 0) {
-							sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase()));
+							sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase()));
 						} else {
 							sender.sendMessage(plugin.NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase()));
 						}
 						if(unclaimedMilestonesCount > 0) {
-							sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase()));
+							sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase()));
 						} else {
 							sender.sendMessage(plugin.NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase()));
 						}
@@ -1004,15 +1035,11 @@ public class Commands implements CommandExecutor {
 								sender.sendMessage(ChatColor.AQUA + "-----[Unclaimed " + plugin.REWARDS_PURAL_DEF + "]-----");
 								sender.sendMessage(rewardMessages);
 								sender.sendMessage(ChatColor.AQUA + "Type " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " #" + ChatColor.AQUA + " or " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS +" " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " " + plugin.ALL_DEF.toLowerCase());
-
 							}
 							else if(args.length == 3) {
 								if(args[2].equalsIgnoreCase(plugin.ALL_DEF)) {
 									if(sender.hasPermission("voteroulette.claimall")) {
-										for(Reward reward : unclaimedRewards) {
-											voter.removeUnclaimedReward(reward.getName());
-											rm.administerAwardContents(reward, voter);
-										}
+										VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.REWARD);
 									} else {
 										sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 									}
@@ -1054,10 +1081,7 @@ public class Commands implements CommandExecutor {
 							else if(args.length == 3) {
 								if(args[2].equalsIgnoreCase(plugin.ALL_DEF)) {
 									if(sender.hasPermission("voteroulette.claimall")) {
-										for(Milestone milestone : unclaimedMilestones) {
-											voter.removeUnclaimedMilestone(milestone.getName());
-											rm.administerAwardContents(milestone, voter);
-										}
+										VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.MILESTONE);
 									} else {
 										sender.sendMessage(plugin.NO_PERM_NOTIFICATION);
 									}

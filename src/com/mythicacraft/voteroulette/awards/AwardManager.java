@@ -38,6 +38,7 @@ public class AwardManager {
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private ArrayList<Reward> rewards = new ArrayList<Reward>();
 	private ArrayList<Milestone> milestones = new ArrayList<Milestone>();
+	private List<DelayedCommand> delayedCommands = new ArrayList<DelayedCommand>();
 	private Reward defaultReward = null;
 	private VoterManager vm;
 
@@ -52,13 +53,74 @@ public class AwardManager {
 	 * Award Methods
 	 **/
 
-	public void administerAwardContents(Award award, Voter voter) {
+	public void administerAllUnclaimedAwards(Voter voter, AwardType awardType) {
+		Player player = voter.getPlayer();
+		if(player == null || !player.isOnline()) return;
+
+		if(Utils.worldIsBlacklisted(player.getWorld().getName())) {
+			Utils.debugMessage(player.getName() + " is in blacklisted world. Saving as unclaimed.");
+			player.sendMessage(plugin.BLACKLISTED_WORLD_NOTIFICATION.replace("%type%", awardType.toString().toLowerCase()));
+			return;
+		}
+
+		List<Award> awards;
+		if(awardType == AwardType.REWARD) {
+			awards = Utils.convertRewardListToAward(voter.getUnclaimedRewards());
+		} else {
+			awards = Utils.convertMilestoneListToAward(voter.getUnclaimedMilestones());
+		}
+
+		List<Award> worldFilter = new ArrayList<Award>();
+		for(Award award : awards) {
+			if(!award.hasWorlds()) continue;
+			if(!award.getWorlds().contains(player.getWorld().getName())) {
+				worldFilter.add(award);
+			}
+		}
+		for(Award award : worldFilter) {
+			awards.remove(award);
+		}
+
+		List<Award> successful = new ArrayList<Award> ();
+		for(Award award : awards) {
+			voter.removeUnclaimedAward(award);
+			if(VoteRoulette.getAwardManager().administerAwardContents(award, voter, true)) successful.add(award);
+		}
+		if(successful.size() > 0) {
+			player.sendMessage(Utils.getSummarizedAwardsMessage(successful, player.getName()));
+		}
+		if(worldFilter.size() > 0) {
+			List<String> worldNames = new ArrayList<String>();
+			StringBuilder sb = new StringBuilder();
+			for(Award award : worldFilter) {
+				for(String world : award.getWorlds()) {
+					if(worldNames.contains(world)) continue;
+					worldNames.add(world);
+				}
+			}
+			for(String world : worldNames) {
+				sb.append(world + ", ");
+			}
+			if(sb.length() > 2) {
+				sb.delete(sb.length()-2, sb.length()-1);
+			}
+
+			player.sendMessage(plugin.WRONG_AWARD_WORLD_AUTOCLAIM_NOTIFICATION
+					.replace("%type%", awardType == AwardType.REWARD ? plugin.REWARDS_PURAL_DEF.toLowerCase() : plugin.MILESTONE_PURAL_DEF.toLowerCase())
+					.replace("%worlds%", sb.toString()));
+		}
+	}
+	public boolean administerAwardContents(Award award, Voter voter) {
+		return administerAwardContents(award, voter, false);
+	}
+
+	public boolean administerAwardContents(Award award, Voter voter, boolean muteMessage) {
 
 		Utils.debugMessage("Starting award prize administering ...");
 
 		if(!voter.isReal()) {
 			plugin.getLogger().warning("VoteRoulette could not find a UUID for a player! Rewards will not be given and stats will not update. Maybe there is a connectivity issue with Mojang's UUID server or the player isn't using a legitamte copy of Minecraft?");
-			return;
+			return false;
 		}
 
 		String playerName = voter.getPlayerName();
@@ -68,7 +130,7 @@ public class AwardManager {
 		if(player == null) {
 			Utils.debugMessage(playerName + " isnt online. Saving as unclaimed.");
 			voter.saveUnclaimedAward(award);
-			return;
+			return false;
 		}
 
 		String worldName = player.getWorld().getName();
@@ -77,14 +139,14 @@ public class AwardManager {
 			Utils.debugMessage(playerName + " is in blacklisted world. Saving as unclaimed.");
 			voter.saveUnclaimedAward(award);
 			player.sendMessage(plugin.BLACKLISTED_WORLD_NOTIFICATION.replace("%type%", "award"));
-			return;
+			return false;
 		}
 		if(award.hasWorlds()) {
 			if(!award.getWorlds().contains(worldName)) {
 				Utils.debugMessage(playerName + " isn't in specific award world. Saving as unclaimed.");
 				voter.saveUnclaimedAward(award);
 				player.sendMessage(plugin.WRONG_AWARD_WORLD_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()).replace("%worlds%", Utils.worldsString(award.getWorlds())));
-				return;
+				return false;
 			}
 		}
 		if(award.hasItems()) {
@@ -121,7 +183,7 @@ public class AwardManager {
 				} else {
 					voter.saveUnclaimedAward(award);
 					player.sendMessage(plugin.INVENTORY_FULL_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()).replace("%slots%", Integer.toString(award.getRequiredSlots())));
-					return;
+					return false;
 				}
 			}
 		}
@@ -169,7 +231,7 @@ public class AwardManager {
 					} else {
 						delay = Integer.parseInt(delayedCommandData[0].trim());
 					}
-					DelayedCommand dc = new DelayedCommand(delayedCommand, playerName, runOnLogOff, runOnShutdown);
+					DelayedCommand dc = new DelayedCommand(delayedCommand, delay, playerName, runOnLogOff, runOnShutdown);
 					dc.runTaskLater(plugin, delay*20);
 					VoteRoulette.delayedCommands.add(dc);
 				} else {
@@ -194,10 +256,12 @@ public class AwardManager {
 			}
 		}
 		if(plugin.MESSAGE_PLAYER) {
-			if(award.hasMessage()) {
-				player.sendMessage(Utils.transcribeColorCodes(award.getMessage().replace("%player%", player.getName())));
-			} else {
-				player.sendMessage(Utils.getAwardMessage(plugin.PLAYER_VOTE_MESSAGE, award, player.getName()));
+			if(!muteMessage) {
+				if(award.hasMessage()) {
+					player.sendMessage(Utils.transcribeColorCodes(award.getMessage().replace("%player%", player.getName())));
+				} else {
+					player.sendMessage(Utils.getAwardMessage(plugin.PLAYER_VOTE_MESSAGE, award, player.getName()));
+				}
 			}
 		}
 		if(award.hasReroll()) {
@@ -222,7 +286,7 @@ public class AwardManager {
 				return this;
 			}
 		}.init(player, award));
-
+		return true;
 	}
 
 	public Award getAwardByName(String awardName, AwardType awardType) {
@@ -864,4 +928,11 @@ public class AwardManager {
 		return returnedItems;
 	}
 
+	/*
+	 * Delayed Commands
+	 */
+
+	public List<DelayedCommand> getDelayedCommands() {
+		return delayedCommands;
+	}
 }
