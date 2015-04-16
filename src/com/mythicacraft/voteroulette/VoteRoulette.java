@@ -4,10 +4,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +48,8 @@ import com.mythicacraft.voteroulette.utils.ConfigAccessor;
 import com.mythicacraft.voteroulette.utils.Metrics;
 import com.mythicacraft.voteroulette.utils.UUIDFetcher;
 import com.mythicacraft.voteroulette.utils.Utils;
+import com.mythicacraft.voteroulette.utils.database.Database;
+import com.mythicacraft.voteroulette.utils.database.MySQL;
 
 public class VoteRoulette extends JavaPlugin {
 
@@ -59,6 +63,7 @@ public class VoteRoulette extends JavaPlugin {
 	//plugin variables
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private static Plugin VR = null;
+	private static VoteRoulette instance = null;
 
 	public static Economy economy = null;
 	public static Permission permission = null;
@@ -71,6 +76,7 @@ public class VoteRoulette extends JavaPlugin {
 
 	private static AwardManager rm;
 	private static VoterManager pm;
+	private static Database database;
 	private BukkitRunnable periodicReminder;
 	private BukkitRunnable twentyFourHourChecker;
 	private BukkitRunnable updateChecker;
@@ -88,7 +94,7 @@ public class VoteRoulette extends JavaPlugin {
 
 	//config.yml constants
 	public boolean REWARDS_ON_THRESHOLD;
-	public static boolean USE_DATABASE = false;
+	public static boolean USE_DATABASE;
 	public static boolean USE_UUIDS;
 	private boolean FORCE_UUIDS = false;
 	public boolean HAS_VOTE_LIMIT = false;
@@ -132,6 +138,7 @@ public class VoteRoulette extends JavaPlugin {
 	public String SERVER_BROADCAST_MESSAGE_NO_AWARD;
 	public String PLAYER_VOTE_MESSAGE;
 	public String PLAYER_VOTE_MESSAGE_NO_AWARD;
+	public String PLAYER_AWARDS_SUMMARY_MESSAGE;
 	public String PERIODIC_REMINDER;
 	public String TWENTYFOUR_REMINDER;
 	public List<String> VOTE_WEBSITES;
@@ -142,6 +149,7 @@ public class VoteRoulette extends JavaPlugin {
 	public String NO_UNCLAIMED_AWARDS_NOTIFICATION;
 	public String BLACKLISTED_WORLD_NOTIFICATION;
 	public String WRONG_AWARD_WORLD_NOTIFICATION;
+	public String WRONG_AWARD_WORLD_AUTOCLAIM_NOTIFICATION;
 	public String INVENTORY_FULL_NOTIFICATION;
 	public String NO_PERM_NOTIFICATION;
 	public String BASE_CMD_NOTIFICATION;
@@ -208,6 +216,7 @@ public class VoteRoulette extends JavaPlugin {
 	public void onEnable() {
 
 		VR = this;
+		instance = this;
 
 		//instantiate the utils
 		new Utils(this);
@@ -260,17 +269,20 @@ public class VoteRoulette extends JavaPlugin {
 
 
 		//check file versions
-		if(CONFIG_VERSION != 2.2) {
+		if(CONFIG_VERSION != 2.3) {
 			log.warning("[VoteRoulette] It appears that your config is out of date. There may be new options! It's recommended that you take your old config out to let the new one save.");
 		}
 
-		if(MESSAGES_VERSION != 1.2) {
+		if(MESSAGES_VERSION != 1.3) {
 			log.warning("[VoteRoulette] It appears that your messages.yml file is out of date. There may be new options! It's recommended that you take your old messages file out to let the new one save.");
 		}
 
-		if(LOCALIZATIONS_VERSION != 1.5) {
+		if(LOCALIZATIONS_VERSION != 1.6) {
 			log.warning("[VoteRoulette] It appears that your localizations.yml file is out of date. There may be new options! It's recommended that you take your old localizations file out to let the new one save.");
 		}
+
+		//load saved delayed commands
+		this.loadDelayedCommands();
 
 		//submit metrics
 		try {
@@ -298,13 +310,7 @@ public class VoteRoulette extends JavaPlugin {
 		}
 
 		//run delayed commands
-		for(int i = 0; i < delayedCommands.size(); i++) {
-			DelayedCommand dCmd = delayedCommands.get(i);
-			if(dCmd.shouldRunOnShutdown()) {
-				dCmd.run();
-				dCmd.cancel();
-			}
-		}
+		this.saveDelayedCommands();
 
 		//close any open reward/milestone inventory views
 		Set<Player> rewardKeys = lookingAtRewards.keySet();
@@ -405,6 +411,21 @@ public class VoteRoulette extends JavaPlugin {
 			VoteRoulette.USE_UUIDS = false;
 		}
 
+		if(USE_DATABASE) {
+			try {
+				database.openConnection();
+				if(!database.checkConnection()) {
+					USE_DATABASE = false;
+					Bukkit.getPluginManager().getPlugin("VoteRoulette").getLogger().severe("Unable to connect to database. Please check your settings. Defaulting flat file saves.");
+				} else {
+					Bukkit.getPluginManager().getPlugin("VoteRoulette").getLogger().info("Sucessfully connected to the database!");
+				}
+			} catch (Exception e) {
+				USE_DATABASE = false;
+				Bukkit.getPluginManager().getPlugin("VoteRoulette").getLogger().severe("Unable to connect to the database, defaulting to flat file saves. Please check your database settings.");
+			}
+		}
+
 		//schedule reminders and update checker
 		scheduleTasks();
 
@@ -436,6 +457,10 @@ public class VoteRoulette extends JavaPlugin {
 		DISABLE_UNCLAIMED = getConfig().getBoolean("disableUnclaimedAwards", false);
 
 		AUTO_CLAIM = getConfig().getBoolean("autoClaimAwards", false);
+
+		USE_DATABASE = getConfig().getBoolean("database.enabled", false);
+
+		database = new MySQL(this, getConfig().getString("database.host", "127.0.0.1"), getConfig().getString("database.port", "3306"), getConfig().getString("database.database", "someName"), getConfig().getString("database.user", "user"), getConfig().getString("database.password", "password"));
 
 		String uuidOption = getConfig().getString("useUUIDs", "true").toLowerCase();
 
@@ -671,6 +696,7 @@ public class VoteRoulette extends JavaPlugin {
 
 		PLAYER_VOTE_MESSAGE_NO_AWARD = Utils.transcribeColorCodes(messageData.getConfig().getString("player-no-reward-message", "&bThanks for voting for &e%server% &bon %site%, &e%player%&b!"));
 
+		PLAYER_AWARDS_SUMMARY_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("player-awards-summary-message", "&bYou have received the %type% &e%names% &bwhich gave you, combined:&e %prizes%"));
 
 		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("periodic-reminder").replace("%server%", Bukkit.getServerName()));
 
@@ -685,6 +711,49 @@ public class VoteRoulette extends JavaPlugin {
 		VOTE_WEBSITES = voteSites;
 
 		MESSAGES_VERSION = messageData.getConfig().getDouble("config-version", 1.0);
+	}
+
+	private void saveDelayedCommands() {
+		if(delayedCommands == null || delayedCommands.isEmpty()) return;
+		String pluginFolder = this.getDataFolder().getAbsolutePath() + File.separator + "data";
+		(new File(pluginFolder)).mkdirs();
+		File delayedCommandsFile = new File(pluginFolder, "cachedcommands.yml");
+		ConfigAccessor delayedCommandsData = new ConfigAccessor("data" + File.separator + "cachedcommands.yml");
+		if(!delayedCommandsFile.exists()) {
+			saveResource("data" + File.separator + "cachedcommands.yml", true);
+			List<String> commandList = new ArrayList<String>();
+			for(int i = 0; i < delayedCommands.size(); i++) {
+				DelayedCommand dCmd = delayedCommands.get(i);
+				if(dCmd.shouldRunOnShutdown()) {
+					dCmd.run();
+					dCmd.cancel();
+				} else {
+					commandList.add(dCmd.getCommand() + ">>>" + Long.toString(dCmd.getSecondsRemaining()) + ">>>" + dCmd.getPlayer());
+				}
+			}
+			delayedCommandsData.getConfig().set("commands", commandList);
+			delayedCommandsData.saveConfig();
+		}
+	}
+
+	private void loadDelayedCommands() {
+		String pluginFolder = this.getDataFolder().getAbsolutePath() + File.separator + "data";
+		(new File(pluginFolder)).mkdirs();
+		File delayedCommandsFile = new File(pluginFolder, "cachedcommands.yml");
+		if(delayedCommandsFile.exists()) {
+			ConfigAccessor delayedCommandsData = new ConfigAccessor("data" + File.separator + "cachedcommands.yml");
+			List<String> commands = delayedCommandsData.getConfig().getStringList("commands");
+			if(commands != null && !commands.isEmpty()) {
+				for(String commandStr : commands) {
+					String[] commandDat = commandStr.split(">>>");
+					int delay = Integer.parseInt(commandDat[1])*20;
+					DelayedCommand dc = new DelayedCommand(commandDat[0], delay, commandDat[2], false, false);
+					dc.runTaskLater(this, delay);
+					delayedCommands.add(dc);
+				}
+			}
+			delayedCommandsFile.delete();
+		}
 	}
 
 	private void loadLocalizationsFile() {
@@ -718,6 +787,8 @@ public class VoteRoulette extends JavaPlugin {
 		REACHED_LIMIT_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("reached-vote-limit", "%red%[VoteRoulette] You have reached the vote limit for today!"));
 
 		WRONG_AWARD_WORLD_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("award-wrong-world"));
+
+		WRONG_AWARD_WORLD_AUTOCLAIM_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("autoclaim-award-wrong-world", "%red%[VoteRoulette] There are still unclaimed %type% that need to be claimed in the worlds: %worlds%."));
 
 		INVENTORY_FULL_NOTIFICATION = Utils.transcribeColorCodes(localeData.getConfig().getString("award-inventory-full"));
 
@@ -852,6 +923,7 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	private void loadStatsFile() {
+		if(VoteRoulette.USE_DATABASE) return;
 		PluginManager pm = getServer().getPluginManager();
 		String pluginFolder = this.getDataFolder().getAbsolutePath();
 		(new File(pluginFolder)).mkdirs();
@@ -883,6 +955,7 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	private boolean shouldUpdateStats() {
+		if(VoteRoulette.USE_DATABASE) return false;
 		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator + "stats.yml");
 		ConfigurationSection cs = statsData.getConfig().getConfigurationSection("vote-totals.lifetime");
 		ConfigurationSection cs2 = statsData.getConfig().getConfigurationSection("vote-streaks.longest");
@@ -1106,7 +1179,7 @@ public class VoteRoulette extends JavaPlugin {
 
 		if(USE_TWENTYFOUR_REMINDER) {
 			twentyFourHourChecker = new TwentyFourHourCheck(TWENTYFOUR_REMINDER);
-			twentyFourHourChecker.runTaskTimer(this, 12000, 12000);
+			twentyFourHourChecker.runTaskTimer(this, 24000, 24000);
 		}
 
 		if (CHECK_UPDATES) {
@@ -1143,6 +1216,10 @@ public class VoteRoulette extends JavaPlugin {
 		return VR;
 	}
 
+	public static VoteRoulette getInstance() {
+		return instance;
+	}
+
 	public static AwardManager getAwardManager() {
 		return rm;
 	}
@@ -1154,6 +1231,11 @@ public class VoteRoulette extends JavaPlugin {
 	public static StatManager getStatsManager() {
 		return StatManager.getInstance();
 	}
+
+	public static Database getVRDatabase() {
+		return database;
+	}
+
 
 	/**
 	 * Determines the version string used by Craftbukkit's safeguard (e.g. 1_7_R4).
@@ -1194,17 +1276,34 @@ public class VoteRoulette extends JavaPlugin {
 			this.message = message;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public void run() {
-			for(Player player : Bukkit.getOnlinePlayers()) {
-				Voter voter = VoteRoulette.getVoterManager().getVoter(player.getName());
-				if(voter.hasntVotedInADay()) {
-					if(!VoteRoulette.notifiedPlayers.contains(player)) {
-						player.sendMessage(message.replace("%player%", player.getName()));
-						VoteRoulette.notifiedPlayers.add(player);
+			try {
+				if (Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).getReturnType() == Collection.class)
+					for(Player player : ((Collection<? extends Player>)Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+						Voter voter = VoteRoulette.getVoterManager().getVoter(player.getName());
+						if(voter.hasntVotedInADay()) {
+							if(!VoteRoulette.notifiedPlayers.contains(player)) {
+								player.sendMessage(message.replace("%player%", player.getName()));
+								VoteRoulette.notifiedPlayers.add(player);
+							}
+						}
 					}
-				}
+				else
+					for(Player player : ((Player[])Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+						Voter voter = VoteRoulette.getVoterManager().getVoter(player.getName());
+						if(voter.hasntVotedInADay()) {
+							if(!VoteRoulette.notifiedPlayers.contains(player)) {
+								player.sendMessage(message.replace("%player%", player.getName()));
+								VoteRoulette.notifiedPlayers.add(player);
+							}
+						}
+					}
 			}
+			catch (NoSuchMethodException ex){} // can never happen
+			catch (InvocationTargetException ex){} // can also never happen
+			catch (IllegalAccessException ex){} // can still never happen
 		}
 	}
 
