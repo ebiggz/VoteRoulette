@@ -93,12 +93,18 @@ blacklisted-world: "%red%[VoteRoulette] You cannot claim %type% in this world!"
 # %worlds% - The worlds the award can be claimed in.
 award-wrong-world: "%red%You must claim the %type% \"%name%\" in the world(s): %worlds%"
 
+## This message is sent when award(s) from autoclaiming fail to go to the player because they are in the wrong world.
+# Variables:
+# %type% - The type of award (Rewards or Milestones)
+# %worlds% - The worlds the award can be claimed in. (This will add all the worlds for all awards together)
+autoclaim-award-wrong-world: "%red%[VoteRoulette] There are still unclaimed %type% that need to be claimed in the worlds: %worlds%."
+
 ## This message is sent when a player receives an award but their inventory is too full to receive the award.
 # Variables:
 # %type% - The type of award (Reward or Milestone)
 # %name% - Name of the award
 # %slots% - The number of open inventory slots required for this award.
-award-inventory-full: "%red%You don't have the required space in your inventory for this %type% (%slots% slots). Please type \"/vr claim\" once you have cleared enough room in your inventory."
+award-inventory-full: "%red%You don't have the required space in your inventory for the %type% named %name% (%slots% slots req.) Please type \"/vr claim\" once you have cleared enough room in your inventory."
 
 ## This message is sent when a player votes but has reached the vote limit for the day.
 reached-vote-limit: "%red%[VoteRoulette] You have reached the vote limit for today!"
@@ -107,7 +113,6 @@ reached-vote-limit: "%red%[VoteRoulette] You have reached the vote limit for tod
 # Variables:
 # %time% - puts how many days, hours, and minutes since the last vote.
 last-vote-self: "%aqua%[VoteRoulette] Time since your last vote: %time%"
-
 
 ## This message is sent when a player types /vr lastvote [player]
 # Variables:
@@ -120,7 +125,8 @@ last-vote-other: "%aqua%[VoteRoulette] Time since %player% last vote: %time%"
 last-vote-none-saved: "%red%[VoteRoulette] A last vote time stamp has not been saved yet!"
 
 ## This message is sent when a player types one of the /vr top commands
-## yet.
+# Variables:
+# %stat% - type of stat that will show
 top-10: "%aqua%[VoteRoulette] Showing top 10 players for %yellow%%stat%"
 
 ## This message is sent when a player attempts to run a command that uses a players name
@@ -149,4 +155,4 @@ base-command-text: "%red%[VoteRoulette] Type \"/%alias% ?\" for help."
 
 ####################################################################################
 # No need to touch this.
-config-version: 1.5
+config-version: 1.6

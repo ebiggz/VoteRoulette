@@ -55,6 +55,18 @@ player-reward-message: "&bYou have received the %type% &e%name% &bwhich gave you
 
 player-no-reward-message: "&bThanks for voting for &e%server% &bon %site%, &e%player%&b!"
 
+## The following is the message sent to players when they claim all awards or have awards
+# auto claimed during log in. This is similar to the "player-reward-message" but
+# summarizes multiple awards into one message.
+# Available variables:
+# %names%    - Name of the Rewards or Milestones
+# %player%  - Player who is receiving the reward
+# %server%  - Name of the server (Taken from the server.properties file)
+# %type%    - The type of award, Rewards/Milestones
+# %prizes%  - The stuff in the reward (money, xp levels, items)
+
+player-awards-summary-message: "&bYou have received the %type% &e%names% &bwhich gave you, combined:&e %prizes%"
+
 ## The following is the message that is broadcasted if usePeriodicReminder is set to true
 # in the config.yml file. You can also set how often it broadcasts there.
 # Available variables:
@@ -92,4 +104,4 @@ vote-websites:
 
 #########################################
 # No need to touch this
-config-version: 1.2
+config-version: 1.3
