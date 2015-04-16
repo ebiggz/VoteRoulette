@@ -47,13 +47,13 @@ public class VoteProcessor implements Runnable {
 		}
 
 		voter.updateTimedStats();
-		voter.setVotesForTheDay(voter.getVotesForTheDay()+1);
+		int votesForTheDay = voter.getVotesForTheDay()+1;
 
 
 		if(plugin.HAS_VOTE_LIMIT) {
 			Utils.debugMessage("There is a vote limit...");
-			if(voter.getVotesForTheDay() >= plugin.VOTE_LIMIT) {
-				Utils.debugMessage(playerName + " has met the limit. Stopped vote processing.");
+			if(votesForTheDay > plugin.VOTE_LIMIT) {
+				Utils.debugMessage(playerName + " is over the limit. Stopped vote processing.");
 				Utils.sendMessageToPlayer(plugin.REACHED_LIMIT_NOTIFICATION, playerName);
 				return;
 			}
@@ -62,6 +62,7 @@ public class VoteProcessor implements Runnable {
 		Utils.debugMessage("Incrementing " + playerName + " vote totals");
 
 		voter.incrementVoteTotals();
+		saveVoteToDB(voter, website);
 		voter.saveLastVoteTimeStamp();
 
 		Utils.debugMessage("Beginning award processing for: " + playerName);
@@ -311,5 +312,11 @@ public class VoteProcessor implements Runnable {
 		} else {
 			Utils.debugMessage("Event stopped by another pluggin. Cancelling award process.");
 		}
+	}
+
+	void saveVoteToDB(Voter voter, String website) {
+		try {
+			VoteRoulette.getVRDatabase().updateSQL("INSERT INTO vr_votes VALUES (0, \"" + voter.getIdentifier() + "\", \"" + website + "\", now()" + ")");
+		} catch (Exception e) {}
 	}
 }
