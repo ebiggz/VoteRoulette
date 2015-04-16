@@ -5,6 +5,7 @@ import java.util.Queue;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 
@@ -68,6 +69,15 @@ public class InteractiveMessage {
 	 */
 	public void sendTo(Player player) {
 		Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), this.getFormattedCommand(player.getName()));
+	}
+
+	/**
+	 * Sends the interactive message to a CommandSender
+	 * @param sender the CommandSender to send the message to. Must be a Player and not a console.
+	 */
+	public void sendTo(CommandSender sender) {
+		if(!(sender instanceof Player)) return;
+		Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), this.getFormattedCommand(sender.getName()));
 	}
 
 	/**
