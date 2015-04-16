@@ -53,6 +53,10 @@ disableUnclaimedAwards: false
 # if a players inventory is full
 disableInventoryProtection: false
 
+## If you are using a variable amount for an item in Rewards/Milestones, this is the
+# global limit that those expressions wont exceed. Set to 0 to disable.
+variableItemAmountLimit: 64
+
 ## Set a limit on the amount of votes per day a player is considered for awards.
 # Any votes past this limit will not update stats or give awards for the day.
 # This helps prevent users from racking up awards or stats illegitimately.
@@ -71,16 +75,31 @@ defaultCommandAlias: "vr"
 # update on log in) 
 checkForUpdates: true
 
-## Have VoteRoulette print various things its doing to the console.
+## Have VoteRoulette print the various things its doing to the console.
 debug: false
 
+
+#####################
+# Database Settings #
+#####################
+
+database:
+    ## Enable the use of a database for VRs backend. Currently only MySQL is supported.
+    enabled: false
+    host: 127.0.0.1
+    port: 3306
+    database: someName
+    user: user
+    password: password
+
+    
 ################
 # GUI Settings #
 ################
 
 GUI:
     awards:
-        ## Turn on or off the visual representation of rewards/milestone.
+        ## Turn on or off the visual representation of rewards/milestones.
         guiForAwards: true
         
         ## If "guiForAwards" is true, this is
@@ -118,7 +137,7 @@ GUI:
 # You can also use the in-game Award Creator (Type /vr create)!
 #
 # Visit the Setup Guide on VoteRoulettes Bukkit page for help with 
-# making Rewards and to learn what they can do.
+# making Rewards and to learn about what they can do.
 
 ## Set the following to true if you want a Reward to be chosen at random
 giveRandomReward: true
@@ -203,4 +222,4 @@ blacklistedWorlds:
 ## Only disable the following if you know what you are doing.
 useUUIDs: true
 ## No need to touch this
-configVersion: 2.2
+configVersion: 2.3

@@ -38,7 +38,6 @@ public class Award {
 	private String reroll;
 	private AwardType type;
 
-
 	protected Award(String name, ConfigurationSection cs, AwardType type) {
 		this.setName(name);
 		this.setAwardType(type);
