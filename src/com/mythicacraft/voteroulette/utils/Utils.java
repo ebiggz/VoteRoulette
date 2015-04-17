@@ -48,10 +48,12 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
+import com.mythicacraft.voteroulette.Voter;
 import com.mythicacraft.voteroulette.Voter.Stat;
 import com.mythicacraft.voteroulette.awards.Award;
 import com.mythicacraft.voteroulette.awards.Award.AwardType;
 import com.mythicacraft.voteroulette.awards.DelayedCommand;
+import com.mythicacraft.voteroulette.awards.ItemPrize;
 import com.mythicacraft.voteroulette.awards.Milestone;
 import com.mythicacraft.voteroulette.awards.Reward;
 import com.mythicacraft.voteroulette.awards.Reward.VoteStreakModifier;
@@ -106,6 +108,60 @@ public class Utils {
 		return itemsClone;
 	}
 
+	public static ItemStack[] updateLoreAndCustomNamesForItemPrizes(Voter voter, List<ItemPrize> items) {
+		ItemPrize[] itemsClone = new ItemPrize[items.size()];
+		items.toArray(itemsClone);
+		String playerName = voter.getPlayerName();
+		for(ItemPrize item: itemsClone) {
+			ItemMeta im = item.getItemMeta();
+			if(im.hasLore()) {
+				List<String> oldLore = im.getLore();
+				List<String> newLore = new ArrayList<String>();
+				for(String line: oldLore) {
+					newLore.add(line.replace("%player%", playerName));
+				}
+				im.setLore(newLore);
+			}
+			if(item.hasVariableAmount()) {
+				List<String> lore = im.getLore();
+				if(lore == null) {
+					lore = new ArrayList<String>();
+				}
+				lore.add(" ");
+				lore.add(ChatColor.GRAY + "This item has a variable amount.");
+				lore.add(ChatColor.GRAY + "At this moment, you would get:");
+				lore.add(ChatColor.GRAY + Integer.toString(item.getCalculatedAmount(voter)));
+				if(VoteRoulette.SHOW_VARIABLE_AMOUNT_EXPRESSION) {
+					lore.add(ChatColor.GRAY + "From:");
+					lore.add(ChatColor.GRAY + item.getFormattedVariableString(voter));
+					lore.add(ChatColor.GRAY+ "" + ChatColor.ITALIC + item.getAmountExpression());
+				}
+				im.setLore(lore);
+				item.setItemMeta(im);
+			}
+			if(im.hasDisplayName()) {
+				im.setDisplayName(im.getDisplayName().replace("%player%", playerName));
+			}
+			if(item.getType() == Material.SKULL_ITEM && item.getDurability() == 3 /*playerhead*/) {
+				SkullMeta sim = (SkullMeta) im;
+				if(sim.hasOwner()) {
+					sim.setOwner(sim.getOwner().replace("%player%", playerName));
+					im = sim;
+				}
+			}
+			item.setItemMeta(im);
+		}
+		List<ItemStack> calcItems = new ArrayList<ItemStack>();
+		for(ItemPrize itemP : itemsClone) {
+			for(ItemStack item : itemP.getCalculatedItem(voter)) {
+				calcItems.add(item);
+			}
+		}
+		ItemStack[] itemStacks = new ItemStack[calcItems.size()];
+		calcItems.toArray(itemStacks);
+		return itemStacks;
+	}
+
 	@SuppressWarnings("deprecation")
 	public static void showTopScoreboard(final Player player, StatType stat) {
 		Utils.debugMessage("opening top 10 in scorebord.");
@@ -118,7 +174,7 @@ public class Utils {
 			Utils.debugMessage("stat type: total");
 			objective.setDisplayName(ChatColor.AQUA + plugin.TOTAL_VOTES_DEF);
 			List<VoterStat> topStats = VoteRoulette.getStatsManager().getTopLifetimeVotes();
-			if(topStats == null) {
+			if(topStats == null || topStats.isEmpty()) {
 				player.sendMessage(ChatColor.RED + "Error: stats are empty.");
 				return;
 			}
@@ -139,7 +195,49 @@ public class Utils {
 			Utils.debugMessage("stat type: streak");
 			objective.setDisplayName(ChatColor.AQUA + plugin.LONGEST_VOTE_STREAK_DEF);
 			List<VoterStat> topStats = VoteRoulette.getStatsManager().getTopLongestVotestreaks();
-			if(topStats == null) {
+			if(topStats == null || topStats.isEmpty()) {
+				player.sendMessage(ChatColor.RED + "Error: stats are empty.");
+				return;
+			}
+			Utils.debugMessage("creating scorebord");
+			int count = 0;
+			for(VoterStat vs : topStats) {
+				if(count > 10) break;
+				String name = vs.getPlayerName();
+				if(name.length() > 16) {
+					name = name.substring(0, 11) + "...";
+				}
+				Score score = objective.getScore(Bukkit.getOfflinePlayer(name));
+				score.setScore(vs.getStatCount());
+				count++;
+			}
+		}
+		if(stat == StatType.CURRENT_MONTH_VOTES) {
+			Utils.debugMessage("stat type: current month");
+			objective.setDisplayName(ChatColor.AQUA + plugin.CURRENT_MONTHS_VOTES_DEF);
+			List<VoterStat> topStats = VoteRoulette.getStatsManager().getTopCurrentMonthVotes();
+			if(topStats == null || topStats.isEmpty()) {
+				player.sendMessage(ChatColor.RED + "Error: stats are empty.");
+				return;
+			}
+			Utils.debugMessage("creating scorebord");
+			int count = 0;
+			for(VoterStat vs : topStats) {
+				if(count > 10) break;
+				String name = vs.getPlayerName();
+				if(name.length() > 16) {
+					name = name.substring(0, 11) + "...";
+				}
+				Score score = objective.getScore(Bukkit.getOfflinePlayer(name));
+				score.setScore(vs.getStatCount());
+				count++;
+			}
+		}
+		if(stat == StatType.PREVIOUS_MONTH_VOTES) {
+			Utils.debugMessage("stat type: previous month");
+			objective.setDisplayName(ChatColor.AQUA + plugin.PREVIOUS_MONTHS_VOTES_DEF);
+			List<VoterStat> topStats = VoteRoulette.getStatsManager().getTopPreviousMonthVotes();
+			if(topStats == null || topStats.isEmpty()) {
 				player.sendMessage(ChatColor.RED + "Error: stats are empty.");
 				return;
 			}
@@ -165,13 +263,24 @@ public class Utils {
 
 	public static void showTopInChat(Player player, StatType stat) {
 		List<VoterStat> topStats = null;
+		String typeText = "";
 		if(stat == StatType.TOTAL_VOTES) {
 			topStats = VoteRoulette.getStatsManager().getTopLifetimeVotes();
+			typeText = plugin.TOTAL_VOTES_DEF;
 		}
 		if(stat == StatType.LONGEST_VOTE_STREAKS) {
 			topStats = VoteRoulette.getStatsManager().getTopLongestVotestreaks();
+			typeText = plugin.LONGEST_VOTE_STREAK_DEF;
 		}
-		if(topStats == null) {
+		if(stat == StatType.CURRENT_MONTH_VOTES) {
+			topStats = VoteRoulette.getStatsManager().getTopCurrentMonthVotes();
+			typeText = plugin.CURRENT_MONTHS_VOTES_DEF;
+		}
+		if(stat == StatType.PREVIOUS_MONTH_VOTES) {
+			topStats = VoteRoulette.getStatsManager().getTopPreviousMonthVotes();
+			typeText = plugin.PREVIOUS_MONTHS_VOTES_DEF;
+		}
+		if(topStats == null || topStats.isEmpty()) {
 			player.sendMessage(ChatColor.RED + "Error: stats are empty.");
 			return;
 		}
@@ -181,6 +290,7 @@ public class Utils {
 			}
 		});
 		if(topStats != null) {
+			player.sendMessage(ChatColor.DARK_AQUA + "------[" + ChatColor.GREEN + typeText + ChatColor.DARK_AQUA + "]------");
 			int count = 1;
 			String topNumber = "";
 			int counter = 0;
@@ -196,13 +306,27 @@ public class Utils {
 					message += " ";
 				}
 				message += ChatColor.GOLD + statCount + " " + ChatColor.WHITE + vs.getPlayerName();
-
 				player.sendMessage(message);
 				count++;
 				counter++;
 			}
 		}
 	}
+
+	/*public static String unclaimedMessage(Voter voter) {
+		int unclaimedRewardsCount = voter.getUnclaimedRewardCount();
+		int unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
+		if(unclaimedRewardsCount > 0) {
+			sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase()));
+		} else {
+			sender.sendMessage(plugin.NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase()));
+		}
+		if(unclaimedMilestonesCount > 0) {
+			sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase()));
+		} else {
+			sender.sendMessage(plugin.NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase()));
+		}
+	}*/
 
 	public static void sendMessageToPlayer(String message, String playerName) {
 		Player player = Bukkit.getPlayerExact(playerName);
@@ -264,15 +388,15 @@ public class Utils {
 		}
 	}
 
-	public static String getServerMessageWithAward(Award award, String playerName, String website) {
-		String message = getServerAwardMessage(plugin.SERVER_BROADCAST_MESSAGE, award, playerName);
+	public static String getServerMessageWithAward(Award award, Voter voter, String website) {
+		String message = getServerAwardMessage(plugin.SERVER_BROADCAST_MESSAGE, award, voter);
 		message = message.replace("%site%", website);
 		return message;
 	}
 
-	public static String getServerAwardMessage(String awardMessage, Award award, String playerName) {
+	public static String getServerAwardMessage(String awardMessage, Award award, Voter voter) {
 		awardMessage = awardMessage.replace("%name%", award.getName());
-		awardMessage = awardMessage.replace("%player%", playerName);
+		awardMessage = awardMessage.replace("%player%", voter.getPlayerName());
 		awardMessage = awardMessage.replace("%server%", Bukkit.getServerName());
 
 		if(award.getAwardType() == AwardType.MILESTONE) {
@@ -280,14 +404,14 @@ public class Utils {
 		} else {
 			awardMessage = awardMessage.replace("%type%", plugin.REWARD_DEF.toLowerCase());
 		}
-		awardMessage = awardMessage.replace("%prizes%", getAwardPrizesString(award));
+		awardMessage = awardMessage.replace("%prizes%", getAwardPrizesString(award, voter));
 		return awardMessage;
 	}
 
-	public static String getAwardMessage(String awardMessage, Award award, String playerName) {
+	public static String getAwardMessage(String awardMessage, Award award, Voter voter) {
 		if(!award.hasMessage()) {
 			awardMessage = awardMessage.replace("%name%", award.getName());
-			awardMessage = awardMessage.replace("%player%", playerName);
+			awardMessage = awardMessage.replace("%player%", voter.getPlayerName());
 			awardMessage = awardMessage.replace("%server%", Bukkit.getServerName());
 
 			if(award.getAwardType() == AwardType.MILESTONE) {
@@ -295,10 +419,10 @@ public class Utils {
 			} else {
 				awardMessage = awardMessage.replace("%type%", plugin.REWARD_DEF.toLowerCase());
 			}
-			awardMessage = awardMessage.replace("%prizes%", getAwardPrizesString(award));
+			awardMessage = awardMessage.replace("%prizes%", getAwardPrizesString(award, voter));
 			return awardMessage;
 		} else {
-			return Utils.transcribeColorCodes(award.getMessage().replace("%player%", playerName));
+			return Utils.transcribeColorCodes(award.getMessage().replace("%player%", voter.getPlayerName()));
 		}
 	}
 
@@ -317,7 +441,7 @@ public class Utils {
 		return awards;
 	}
 
-	public static String getSummarizedAwardsMessage(List<Award> awards, String playerName) {
+	public static String getSummarizedAwardsMessage(List<Award> awards, Voter voter) {
 
 		HashMap<Award, Integer> awardCounts = new HashMap<Award,Integer>();
 		for(Award award : awards) {
@@ -350,9 +474,9 @@ public class Utils {
 
 		summerizeMessage = summerizeMessage
 				.replace("%names%", awardsListStr)
-				.replace("%player%", playerName)
+				.replace("%player%", voter.getPlayerName())
 				.replace("%server%", Bukkit.getServerName())
-				.replace("%prizes%", getSummarizedAwardPrizesString(awards));
+				.replace("%prizes%", getSummarizedAwardPrizesString(awards, voter));
 
 		if(awards.get(0) instanceof Milestone) {
 			if(awards.size() > 1) {
@@ -370,7 +494,7 @@ public class Utils {
 		return summerizeMessage;
 	}
 
-	private static String getSummarizedAwardPrizesString(List<Award> awards) {
+	private static String getSummarizedAwardPrizesString(List<Award> awards, Voter voter) {
 		Inventory tempInv = Bukkit.createInventory(null, 999);
 		double totalMoney = 0.0;
 		int totalXp = 0;
@@ -386,7 +510,7 @@ public class Utils {
 					totalXp += award.getXpLevels();
 				}
 				if(award.hasItems()) {
-					for(ItemStack item : award.getItems()) {
+					for(ItemStack item : award.getItems(voter)) {
 						tempInv.addItem(item);
 					}
 				}
@@ -422,7 +546,7 @@ public class Utils {
 	}
 
 
-	private static String getAwardPrizesString(Award award) {
+	private static String getAwardPrizesString(Award award, Voter voter) {
 		StringBuilder sb = new StringBuilder();
 		if(award.hasDescription()) {
 			sb.append(award.getDescription());
@@ -440,7 +564,7 @@ public class Utils {
 				if(award.hasCurrency() || award.hasXpLevels()) {
 					sb.append(", ");
 				}
-				sb.append(Utils.getItemListSentance(award.getItems()));
+				sb.append(Utils.getItemListSentance(award.getItems(voter)));
 			}
 		}
 		return sb.toString();
@@ -1242,12 +1366,13 @@ public class Utils {
 		return fancyMenu;
 	}
 
-	public static void showAwardGUI(Award award, Player p, int awardNumber) {
-		Utils.showAwardGUI(award, p, awardNumber, false);
+	public static void showAwardGUI(Award award, Voter voter, int awardNumber) {
+		Utils.showAwardGUI(award, voter, awardNumber, false);
 	}
 
 
-	public static void showAwardGUI(Award award, Player p, int awardNumber, boolean showPlayers) {
+	public static void showAwardGUI(Award award, Voter voter, int awardNumber, boolean showPlayers) {
+		Player p = voter.getPlayer();
 		p.closeInventory();
 		Reward reward = null;
 		Milestone milestone = null;
@@ -1265,7 +1390,7 @@ public class Utils {
 			name = name.substring(0, 28) + "...";
 		}
 		int multOf9 = 9;
-		int req = award.getRequiredSlots();
+		int req = award.getRequiredSlots(voter);
 		if(award.hasCurrency()) {
 			req++;
 		}
@@ -1282,7 +1407,7 @@ public class Utils {
 			multOf9 += 9;
 		}
 		Inventory i = Bukkit.createInventory(p, multOf9, name);
-		ItemStack[] items = Utils.updateLoreAndCustomNames(p.getName(), award.getItems());
+		ItemStack[] items = Utils.updateLoreAndCustomNamesForItemPrizes(voter, award.getItemPrizes());
 		for(ItemStack item : items) {
 			i.addItem(item);
 		}

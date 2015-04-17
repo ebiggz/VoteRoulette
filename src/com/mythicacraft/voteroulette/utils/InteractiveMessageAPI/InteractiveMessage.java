@@ -13,6 +13,10 @@ public class InteractiveMessage {
 
 	private Queue<InteractiveMessageElement> elements = new LinkedList<InteractiveMessageElement>();
 
+	public InteractiveMessage() {}
+	public InteractiveMessage(InteractiveMessageElement element) {
+		elements.add(element);
+	}
 	/**
 	 * Add a new element to the InteractiveMessage with the given text.
 	 * <p>

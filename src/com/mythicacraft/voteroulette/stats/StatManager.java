@@ -29,7 +29,6 @@ public class StatManager {
 		return instance;
 	}
 
-
 	public List<VoterStat> getTopLifetimeVotes() {
 		List<VoterStat> topStats = new ArrayList<VoterStat>();
 		if(VoteRoulette.USE_DATABASE) {
@@ -89,7 +88,7 @@ public class StatManager {
 			try {
 				ResultSet rs = VoteRoulette.getVRDatabase().querySQL("SELECT player_name, longest_vote_streak FROM vr_voters ORDER BY longest_vote_streak DESC LIMIT 10");
 				while(rs.next()) {
-					topStats.add(new VoterStat(rs.getString("player_name"), rs.getInt("lifetime_votes")));
+					topStats.add(new VoterStat(rs.getString("player_name"), rs.getInt("longest_vote_streak")));
 				}
 			} catch (Exception e) {}
 		}

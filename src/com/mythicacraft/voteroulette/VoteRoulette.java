@@ -64,6 +64,7 @@ public class VoteRoulette extends JavaPlugin {
 	private static final Logger log = Logger.getLogger("VoteRoulette");
 	private static Plugin VR = null;
 	private static VoteRoulette instance = null;
+	private static boolean firstLoad = true;
 
 	public static Economy economy = null;
 	public static Permission permission = null;
@@ -103,6 +104,8 @@ public class VoteRoulette extends JavaPlugin {
 	public boolean MESSAGE_PLAYER;
 	public boolean BROADCAST_TO_SERVER;
 	public int BROADCAST_COOLDOWN;
+	public static int VARIABLE_ITEM_LIMIT;
+	public static boolean HAS_ITEM_LIMIT;
 	public boolean USE_BROADCAST_COOLDOWN;
 	public boolean ONLY_BROADCAST_ONLINE;
 	public static boolean DEBUG;
@@ -125,6 +128,7 @@ public class VoteRoulette extends JavaPlugin {
 	public boolean GUI_FOR_AWARDS;
 	public boolean SHOW_COMMANDS_IN_AWARD;
 	public boolean 	SHOW_PLAYER_AND_GROUPS;
+	public static boolean SHOW_VARIABLE_AMOUNT_EXPRESSION;
 	public boolean USE_FANCY_LINKS;
 	public boolean USE_SCOREBOARD;
 	public boolean FIREWORK_ON_MILESTONE;
@@ -191,6 +195,8 @@ public class VoteRoulette extends JavaPlugin {
 	public String STREAK_DEF;
 	public String CURRENT_VOTE_STREAK_DEF;
 	public String LONGEST_VOTE_STREAK_DEF;
+	public String CURRENT_STREAK_DEF;
+	public String LONGEST_STREAK_DEF;
 	public String SETTOTAL_DEF;
 	public String SETCYCLE_DEF;
 	public String SETSTREAK_DEF;
@@ -211,6 +217,10 @@ public class VoteRoulette extends JavaPlugin {
 	public String FORCEVOTE_DEF;
 	public String FORCEREWARD_DEF;
 	public String FORCEMILESTONE_DEF;
+	public String PREVIOUS_MONTHS_VOTES_DEF;
+	public String CURRENT_MONTHS_VOTES_DEF;
+	public String PREVIOUS_MONTH_DEF;
+	public String CURRENT_MONTH_DEF;
 
 	//Called when the plugin is booting up.
 	public void onEnable() {
@@ -382,6 +392,12 @@ public class VoteRoulette extends JavaPlugin {
 
 		this.getLogger().info("Loading all files and data...");
 
+		String pluginFolderPath = this.getDataFolder().getAbsolutePath();
+		File pluginFolder = new File(pluginFolderPath);
+		if(pluginFolder.exists()) {
+			firstLoad = false;
+		}
+
 		//load main config
 		loadConfig();
 		reloadConfig();
@@ -470,6 +486,16 @@ public class VoteRoulette extends JavaPlugin {
 		} else {
 			USE_UUIDS = Boolean.parseBoolean(uuidOption);
 		}
+
+		VARIABLE_ITEM_LIMIT = getConfig().getInt("variableItemAmountLimit", 0);
+
+		if(VARIABLE_ITEM_LIMIT < 1) {
+			HAS_ITEM_LIMIT = false;
+		} else {
+			HAS_ITEM_LIMIT = true;
+		}
+
+		SHOW_VARIABLE_AMOUNT_EXPRESSION = getConfig().getBoolean("showVariableAmountExpression", false);
 
 		DISABLE_INVENTORY_PROT = getConfig().getBoolean("disableInventoryProtection", false);
 
@@ -839,8 +865,10 @@ public class VoteRoulette extends JavaPlugin {
 		TOP_DEF = localeData.getConfig().getString("general-word-definitions.top", "top");
 		VOTE_STREAK_DEF  = localeData.getConfig().getString("general-word-definitions.vote-streak", "Votestreak");
 		STREAK_DEF  = localeData.getConfig().getString("general-word-definitions.streak", "Streak");
-		CURRENT_VOTE_STREAK_DEF = localeData.getConfig().getString("general-word-definitions.current-vote-streak", "Current Votestreak");
-		LONGEST_VOTE_STREAK_DEF = localeData.getConfig().getString("general-word-definitions.longest-vote-streak", "Longest Votestreak");
+		CURRENT_VOTE_STREAK_DEF = localeData.getConfig().getString("general-word-definitions.current-vote-streak", "Votestreaks (Current)");
+		LONGEST_VOTE_STREAK_DEF = localeData.getConfig().getString("general-word-definitions.longest-vote-streak", "Votestreaks (Longest)");
+		CURRENT_STREAK_DEF = localeData.getConfig().getString("general-word-definitions.current-streak", "currentstreak");
+		LONGEST_STREAK_DEF = localeData.getConfig().getString("general-word-definitions.longest-streak", "longeststreak");
 		SETTOTAL_DEF = localeData.getConfig().getString("general-word-definitions.settotal", "settotal");
 		SETCYCLE_DEF = localeData.getConfig().getString("general-word-definitions.setcycle", "setcycle");
 		SETSTREAK_DEF = localeData.getConfig().getString("general-word-definitions.setstreak", "setstreak");
@@ -861,7 +889,10 @@ public class VoteRoulette extends JavaPlugin {
 		FORCEVOTE_DEF = localeData.getConfig().getString("general-word-definitions.forcevote", "forcevote");
 		FORCEREWARD_DEF = localeData.getConfig().getString("general-word-definitions.forcereward", "forcereward");
 		FORCEMILESTONE_DEF = localeData.getConfig().getString("general-word-definitions.forcemilestone", "forcemilestone");
-
+		PREVIOUS_MONTHS_VOTES_DEF = localeData.getConfig().getString("general-word-definitions.previous-month-votes", "Monthly (Previous)");
+		CURRENT_MONTHS_VOTES_DEF = localeData.getConfig().getString("general-word-definitions.current-month-votes", "Monthly (Current)");
+		PREVIOUS_MONTH_DEF = localeData.getConfig().getString("general-word-definitions.previous-month", "lastmonth");
+		CURRENT_MONTH_DEF = localeData.getConfig().getString("general-word-definitions.current-month", "thismonth");
 	}
 
 	private void loadKnownSitesFile() {
@@ -941,7 +972,7 @@ public class VoteRoulette extends JavaPlugin {
 			}
 		} else {
 			try {
-				statsData.getConfig().options().header("This file keeps track of the stats of VR. Theres no need to edit anything here.");
+				statsData.getConfig().options().header("This file keeps track of the stats of VR if you are not using a database. Theres no need to edit anything here.");
 				statsData.getConfig().options().copyHeader();
 				statsData.reloadConfig();
 			} catch (Exception e) {
@@ -956,6 +987,7 @@ public class VoteRoulette extends JavaPlugin {
 
 	private boolean shouldUpdateStats() {
 		if(VoteRoulette.USE_DATABASE) return false;
+		if(firstLoad) return false;
 		ConfigAccessor statsData = new ConfigAccessor("data" + File.separator + "stats.yml");
 		ConfigurationSection cs = statsData.getConfig().getConfigurationSection("vote-totals.lifetime");
 		ConfigurationSection cs2 = statsData.getConfig().getConfigurationSection("vote-streaks.longest");
@@ -976,11 +1008,12 @@ public class VoteRoulette extends JavaPlugin {
 	private void covertPlayersFolderToUUID() {
 
 		String oldPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "players";
-		String newPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata";
-		(new File(newPlayerFilePath)).mkdirs();
 
 		File oldPlayerFolder = new File(oldPlayerFilePath);
 		if(!oldPlayerFolder.exists()) return;
+
+		String newPlayerFilePath = getDataFolder().getAbsolutePath() + File.separator + "data" + File.separator + "playerdata";
+		(new File(newPlayerFilePath)).mkdirs();
 
 		String[] oldPlayersNamesLs = oldPlayerFolder.list();
 		String[] oldPlayersNames = null;

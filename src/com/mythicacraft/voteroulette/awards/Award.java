@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
+import com.mythicacraft.voteroulette.Voter;
 import com.mythicacraft.voteroulette.utils.Utils;
 
 
@@ -27,7 +28,7 @@ public class Award {
 	private int chanceMin;
 	private int chanceMax = 100;
 	private boolean hasChance = false;
-	private ArrayList<ItemStack> items = new ArrayList<ItemStack>();
+	private ArrayList<ItemPrize> items = new ArrayList<>();
 	private String[] permGroups;
 	private String[] players;
 	private String name;
@@ -129,20 +130,17 @@ public class Award {
 						continue;
 					}
 					ConfigurationSection itemData = items.getConfigurationSection(itemID);
-					//ItemStack item;
-					//ItemMeta itemMeta;
-					//parseConfigItemData
 					if(itemData != null) {
 						if(itemData.contains("multiple")) {
 							ConfigurationSection multipleData = itemData.getConfigurationSection("multiple");
 							for(String mItemID : multipleData.getKeys(false)) {
-								ItemStack mItem = parseConfigItemData(id, multipleData.getConfigurationSection(mItemID));
+								ItemPrize mItem = parseConfigItemData(id, multipleData.getConfigurationSection(mItemID));
 								if(mItem != null) {
 									this.items.add(mItem);
 								}
 							}
 						} else {
-							ItemStack item = parseConfigItemData(id, itemData);
+							ItemPrize item = parseConfigItemData(id, itemData);
 							if(item != null) {
 								this.items.add(item);
 							}
@@ -197,6 +195,10 @@ public class Award {
 	}
 
 	public void addItem(ItemStack item) {
+		items.add(new ItemPrize(item));
+	}
+
+	public void addItemPrize(ItemPrize item) {
 		items.add(item);
 	}
 
@@ -278,19 +280,28 @@ public class Award {
 		return false;
 	}
 
-	public ItemStack[] getItems() {
-		ItemStack[] itemStacks = new ItemStack[items.size()];
-		for(int i = 0; i < items.size();i++) {
-			itemStacks[i] = items.get(i).clone();
+	public ItemStack[] getItems(Voter voter) {
+		List<ItemStack> calcItems = new ArrayList<ItemStack>();
+		for(ItemPrize itemP : items) {
+			for(ItemStack item : itemP.getCalculatedItem(voter)) {
+				calcItems.add(item);
+			}
 		}
+		ItemStack[] itemStacks = new ItemStack[calcItems.size()];
+		calcItems.toArray(itemStacks);
 		return itemStacks;
 	}
 
-	public int getRequiredSlots() {
+	public List<ItemPrize> getItemPrizes() {
+		return items;
+	}
+
+	public int getRequiredSlots(Voter voter) {
 		int totalSlots = 0;
-		for(int i = 0; i < items.size(); i++) {
-			int itemSlots = items.get(i).getAmount()/64;
-			if(items.get(i).getAmount() % 64 != 0) {
+		ItemStack[] items = this.getItems(voter);
+		for(int i = 0; i < items.length; i++) {
+			int itemSlots = items[i].getAmount()/64;
+			if(items[i].getAmount() % 64 != 0) {
 				itemSlots = itemSlots + 1;
 			}
 			totalSlots = totalSlots + itemSlots;
@@ -392,8 +403,8 @@ public class Award {
 	}
 
 	@SuppressWarnings("deprecation")
-	private ItemStack parseConfigItemData(int itemID, ConfigurationSection itemData) {
-		ItemStack item = null;
+	private ItemPrize parseConfigItemData(int itemID, ConfigurationSection itemData) {
+		ItemPrize item = null;
 		ItemMeta itemMeta;
 		if(itemData != null) {
 			if(itemData.contains("dataID")) {
@@ -406,14 +417,14 @@ public class Award {
 					log.warning("[VoteRoulette] \"" + dataIDStr + "\" is not a valid dataID, Defaulting to 1!");
 				}
 				try {
-					item = new ItemStack(Material.getMaterial(itemID), 1, dataID);
+					item = new ItemPrize(Material.getMaterial(itemID), 1, dataID);
 				} catch (Exception e) {
 					log.warning("[VoteRoulette] \"" + itemID + "\" is not a recognized itemID, skipping item!");
 					return null;
 				}
 			} else {
 				try {
-					item = new ItemStack(Material.getMaterial(itemID), 1);
+					item = new ItemPrize(Material.getMaterial(itemID), 1);
 				} catch (Exception e) {
 					log.warning("[VoteRoulette] \"" + itemID + "\" is not a recognized itemID, skipping item!");
 					return null;
@@ -421,8 +432,7 @@ public class Award {
 			}
 			itemMeta = item.getItemMeta();
 			if(itemData.contains("amount")) {
-				int amount = itemData.getInt("amount");
-				item.setAmount(amount);
+				item.setAmount(itemData.getString("amount"));
 			}
 			if(itemData.contains("armorColor")) {
 				String colorStr = itemData.getString("armorColor").trim();

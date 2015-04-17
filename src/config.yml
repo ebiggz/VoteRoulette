@@ -11,13 +11,13 @@ messagePlayer: true
 ## Whether or not to broadcast to the server when a player votes.
 broadcastToServer: true
 
-## If the above is true, should VoteRoulette only broadcast to server the votes from
-# online players?
+## If broadcastToServer is true, should VoteRoulette only 
+# broadcast to server the votes from currently online players?
 onlyBroadcastOnlinePlayerVotes: false
 
-## If broadcastToServer is set to true, this is the cooldown period (in minutes) before a 
+## If broadcastToServer is true, this is the cooldown period (in minutes) before a 
 # players votes can be broadcasted to the server again. Useful if you have
-# many voting sites and arent using a vote threshold.
+# many voting sites and are not using a vote threshold.
 # Setting to 0 disable this.
 broadcastCooldown: 0
 
@@ -39,7 +39,7 @@ useTwentyFourHourReminder: true
 onlyConsiderPlayersPrimaryGroup: true
 
 ## Set this to true to have players unclaimed Rewards/Milestones auto-claimed 
-# when they log in.
+# when they log in and change worlds.
 autoClaimAwards: false
 
 ## Disable VoteRoulette from saving unclaimed Rewards/Milestones entirely.
@@ -54,8 +54,10 @@ disableUnclaimedAwards: false
 disableInventoryProtection: false
 
 ## If you are using a variable amount for an item in Rewards/Milestones, this is the
-# global limit that those expressions wont exceed. Set to 0 to disable.
-variableItemAmountLimit: 64
+# global limit that those expressions wont exceed.
+# If an amount over 64 is calculated, the item will be split into multiple stacks.
+# Set to 0 to disable. (Will give whatever amount is calculated at the time of voting)
+variableItemAmountLimit: 0
 
 ## Set a limit on the amount of votes per day a player is considered for awards.
 # Any votes past this limit will not update stats or give awards for the day.
@@ -111,6 +113,11 @@ GUI:
         # whether or not to show the eligible players and perm groups for an award
         # when a player hovers their cursor over the details sign
         showPlayersAndGroups: false
+
+        ## If "guiForAwards" is true, this is
+        # whether or not to show the expression used for a item variable amount
+        # when a player hovers their cursor over an item that has one
+        showVariableAmountExpression: false
 
     vote-command:
         ## Turn on or off the use of fancy links for the vote command

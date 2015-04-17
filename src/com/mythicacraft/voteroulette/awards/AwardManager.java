@@ -87,7 +87,7 @@ public class AwardManager {
 			if(VoteRoulette.getAwardManager().administerAwardContents(award, voter, true)) successful.add(award);
 		}
 		if(successful.size() > 0) {
-			player.sendMessage(Utils.getSummarizedAwardsMessage(successful, player.getName()));
+			player.sendMessage(Utils.getSummarizedAwardsMessage(successful, voter));
 		}
 		if(worldFilter.size() > 0) {
 			List<String> worldNames = new ArrayList<String>();
@@ -151,8 +151,8 @@ public class AwardManager {
 		}
 		if(award.hasItems()) {
 			Utils.debugMessage("Award contains items");
-			ItemStack[] items = Utils.updateLoreAndCustomNames(player.getName(), award.getItems());
-			if(award.getRequiredSlots() <= Utils.getPlayerOpenInvSlots(player)) {
+			ItemStack[] items = Utils.updateLoreAndCustomNames(player.getName(), award.getItems(voter));
+			if(award.getRequiredSlots(voter) <= Utils.getPlayerOpenInvSlots(player)) {
 				Inventory inv = player.getInventory();
 				for(int i = 0; i < items.length; i++) {
 					inv.addItem(items[i]);
@@ -182,7 +182,7 @@ public class AwardManager {
 
 				} else {
 					voter.saveUnclaimedAward(award);
-					player.sendMessage(plugin.INVENTORY_FULL_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()).replace("%slots%", Integer.toString(award.getRequiredSlots())));
+					player.sendMessage(plugin.INVENTORY_FULL_NOTIFICATION.replace("%type%", "award").replace("%name%", award.getName()).replace("%slots%", Integer.toString(award.getRequiredSlots(voter))));
 					return false;
 				}
 			}
@@ -260,7 +260,7 @@ public class AwardManager {
 				if(award.hasMessage()) {
 					player.sendMessage(Utils.transcribeColorCodes(award.getMessage().replace("%player%", player.getName())));
 				} else {
-					player.sendMessage(Utils.getAwardMessage(plugin.PLAYER_VOTE_MESSAGE, award, player.getName()));
+					player.sendMessage(Utils.getAwardMessage(plugin.PLAYER_VOTE_MESSAGE, award, voter));
 				}
 			}
 		}
@@ -750,18 +750,16 @@ public class AwardManager {
 		}
 		String awardPath = awardType + "." + award.getName() + ".";
 		if(award.hasItems()) {
-			ItemStack[] items = award.getItems();
-
 			List<Material> handledItems = new ArrayList<Material>();
 
-			for(ItemStack item: items) {
+			for(ItemPrize item: award.getItemPrizes()) {
 				if(handledItems.contains(item.getType())) continue;
-				ItemStack[] multiples = this.getMultiples(item, items);
+				ItemPrize[] multiples = this.getMultiples(item, award.getItemPrizes());
 				if(multiples != null) {
 					handledItems.add(item.getType());
 					int count = 1;
 					String itemPath = awardPath + "items." + item.getData().getItemTypeId() + ".multiple.";
-					for(ItemStack i : multiples) {
+					for(ItemPrize i : multiples) {
 						this.saveItemToPath(itemPath + count + ".", i);
 						count++;
 					}
@@ -852,9 +850,9 @@ public class AwardManager {
 		awardsData.saveConfig();
 	}
 
-	void saveItemToPath(String itemPath, ItemStack item) {
+	void saveItemToPath(String itemPath, ItemPrize item) {
 		ConfigAccessor awardsData = new ConfigAccessor("awards.yml");
-		awardsData.getConfig().set(itemPath + "amount", item.getAmount());
+		awardsData.getConfig().set(itemPath + "amount", item.getStringAmount());
 		if(item.getData().getData() != 0) {
 			awardsData.getConfig().set(itemPath + "dataID", item.getData().getData());
 			if(item.getType() == Material.POTION) {
@@ -912,17 +910,17 @@ public class AwardManager {
 		awardsData.saveConfig();
 	}
 
-	ItemStack[] getMultiples(ItemStack item, ItemStack[] items) {
-		ItemStack[] returnedItems = null;
-		List<ItemStack> matches = new ArrayList<ItemStack>();
-		for(ItemStack i : items) {
+	ItemPrize[] getMultiples(ItemPrize item, List<ItemPrize> items) {
+		ItemPrize[] returnedItems = null;
+		List<ItemPrize> matches = new ArrayList<ItemPrize>();
+		for(ItemPrize i : items) {
 			if(i == item) continue;
 			if(i.getType() == item.getType()) {
 				matches.add(i);
 			}
 		}
 		if(!matches.isEmpty()) {
-			returnedItems = new ItemStack[matches.size()];
+			returnedItems = new ItemPrize[matches.size()];
 			matches.toArray(returnedItems);
 		}
 		return returnedItems;

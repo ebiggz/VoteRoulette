@@ -31,6 +31,11 @@ import com.mythicacraft.voteroulette.stats.VoterStatSheet.StatType;
 import com.mythicacraft.voteroulette.utils.FancyMenu;
 import com.mythicacraft.voteroulette.utils.Paginate;
 import com.mythicacraft.voteroulette.utils.Utils;
+import com.mythicacraft.voteroulette.utils.InteractiveMessageAPI.FormattedText;
+import com.mythicacraft.voteroulette.utils.InteractiveMessageAPI.InteractiveMessage;
+import com.mythicacraft.voteroulette.utils.InteractiveMessageAPI.InteractiveMessageElement;
+import com.mythicacraft.voteroulette.utils.InteractiveMessageAPI.InteractiveMessageElement.ClickEvent;
+import com.mythicacraft.voteroulette.utils.InteractiveMessageAPI.InteractiveMessageElement.HoverEvent;
 import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
 
@@ -324,27 +329,78 @@ public class Commands implements CommandExecutor {
 						return true;
 					}
 					if(args.length == 1) {
-						sender.sendMessage(ChatColor.DARK_AQUA + "------[" + ChatColor.GREEN + "Top Commands" + ChatColor.DARK_AQUA + "]------");
-						sender.sendMessage(ChatColor.GOLD+ "Total Votes: " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.TOTAL_DEF.toLowerCase().replace(" ", ""));
-						sender.sendMessage(ChatColor.GOLD + "Consecutive Days: " + ChatColor.YELLOW  + "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.STREAK_DEF.toLowerCase().replace(" ", ""));
-					} else {
-						if(args[1].equalsIgnoreCase(plugin.VOTE_STREAK_DEF.replace(" ", "")) || args[1].equalsIgnoreCase("votestreaks") || args[1].equalsIgnoreCase(plugin.STREAK_DEF)) {
-							sender.sendMessage(plugin.TOP_10_CMD.replace("%stat%", plugin.LONGEST_VOTE_STREAK_DEF));
-							if(plugin.USE_SCOREBOARD && sender instanceof Player) {
-								Utils.showTopScoreboard((Player) sender, StatType.LONGEST_VOTE_STREAKS);
-							} else {
-								Utils.showTopInChat((Player) sender, StatType.LONGEST_VOTE_STREAKS);
+						sender.sendMessage(ChatColor.DARK_AQUA + "------[" + ChatColor.GREEN + "Top Voter Stats" + ChatColor.DARK_AQUA + "]------");
+						if(plugin.isOn1dot7) {
+							sender.sendMessage(ChatColor.GRAY + "(Click one)");
+							InteractiveMessage totalVotes = new InteractiveMessage(new InteractiveMessageElement(
+									new FormattedText("- " + plugin.TOTAL_VOTES_DEF, ChatColor.YELLOW),
+									HoverEvent.SHOW_TEXT,
+									new FormattedText("Click for stats"),
+									ClickEvent.RUN_COMMAND,
+									"/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.TOTAL_DEF.toLowerCase().replace(" ", "")));
+							totalVotes.sendTo(sender);
+							if(VoteRoulette.USE_DATABASE) {
+								InteractiveMessage currentMonth = new InteractiveMessage(new InteractiveMessageElement(
+										new FormattedText("- " + plugin.CURRENT_MONTHS_VOTES_DEF, ChatColor.YELLOW),
+										HoverEvent.SHOW_TEXT,
+										new FormattedText("Click for stats"),
+										ClickEvent.RUN_COMMAND,
+										"/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.CURRENT_MONTH_DEF));
+								currentMonth.sendTo(sender);
+								InteractiveMessage previousMonth = new InteractiveMessage(new InteractiveMessageElement(
+										new FormattedText("- " + plugin.PREVIOUS_MONTHS_VOTES_DEF, ChatColor.YELLOW),
+										HoverEvent.SHOW_TEXT,
+										new FormattedText("Click for stats"),
+										ClickEvent.RUN_COMMAND,
+										"/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.PREVIOUS_MONTH_DEF));
+								previousMonth.sendTo(sender);
 							}
+							InteractiveMessage longestVotestreaks = new InteractiveMessage(new InteractiveMessageElement(
+									new FormattedText("- " + plugin.LONGEST_VOTE_STREAK_DEF, ChatColor.YELLOW),
+									HoverEvent.SHOW_TEXT,
+									new FormattedText("Click for stats"),
+									ClickEvent.RUN_COMMAND,
+									"/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.LONGEST_STREAK_DEF));
+							longestVotestreaks.sendTo(sender);
+						} else {
+							sender.sendMessage(ChatColor.GOLD + plugin.TOTAL_VOTES_DEF + ": " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.TOTAL_DEF.toLowerCase().replace(" ", ""));
+							if(VoteRoulette.USE_DATABASE) {
+								sender.sendMessage(ChatColor.GOLD + plugin.CURRENT_MONTHS_VOTES_DEF + ": " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.CURRENT_MONTH_DEF);
+								sender.sendMessage(ChatColor.GOLD + plugin.PREVIOUS_MONTHS_VOTES_DEF + ": " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.PREVIOUS_MONTH_DEF);
+							}
+							sender.sendMessage(ChatColor.GOLD + plugin.LONGEST_VOTE_STREAK_DEF + ": " + ChatColor.YELLOW  + "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + " " + plugin.LONGEST_STREAK_DEF);
+						}
+					} else {
+						StatType statType = null;
+						if(args[1].equalsIgnoreCase(plugin.LONGEST_STREAK_DEF.replace(" ", "")) || args[1].equalsIgnoreCase("votestreaks") || args[1].equalsIgnoreCase(plugin.STREAK_DEF)) {
+							statType = StatType.LONGEST_VOTE_STREAKS;
 						}
 						else if(args[1].equalsIgnoreCase(plugin.TOTAL_DEF.replace(" ", "")) || args[1].equalsIgnoreCase("lifetime")) {
-							sender.sendMessage(plugin.TOP_10_CMD.replace("%stat%", plugin.TOTAL_VOTES_DEF));
-							if(plugin.USE_SCOREBOARD && sender instanceof Player) {
-								Utils.showTopScoreboard((Player) sender, StatType.TOTAL_VOTES);
+							statType = StatType.TOTAL_VOTES;
+						}
+						else if(args[1].equalsIgnoreCase(plugin.PREVIOUS_MONTH_DEF)) {
+							if(!VoteRoulette.USE_DATABASE) {
+								sender.sendMessage(ChatColor.RED + "[VoteRoulette] This feature is unavaialble!");
 							} else {
-								Utils.showTopInChat((Player) sender, StatType.TOTAL_VOTES);
+								statType = StatType.PREVIOUS_MONTH_VOTES;
 							}
 						}
-
+						else if(args[1].equalsIgnoreCase(plugin.CURRENT_MONTH_DEF)) {
+							if(!VoteRoulette.USE_DATABASE) {
+								sender.sendMessage(ChatColor.RED + "[VoteRoulette] This feature is unavaialble!");
+							} else {
+								statType = StatType.CURRENT_MONTH_VOTES;
+							}
+						}
+						if(statType != null) {
+							if(plugin.USE_SCOREBOARD && sender instanceof Player) {
+								Utils.showTopScoreboard((Player) sender, statType);
+							} else {
+								Utils.showTopInChat((Player) sender, statType);
+							}
+						} else {
+							sender.sendMessage(plugin.BASE_CMD_NOTIFICATION);
+						}
 					}
 				}
 				else if(args[0].equalsIgnoreCase("?") || args[0].equalsIgnoreCase("help")) {
@@ -681,7 +737,7 @@ public class Commands implements CommandExecutor {
 								message += ChatColor.GOLD + plugin.XPLEVELS_DEF + ": " + ChatColor.DARK_AQUA + Integer.toString(milestones[i].getXpLevels()) + "\n";
 							}
 							if(milestones[i].hasItems()) {
-								message += ChatColor.GOLD + plugin.ITEM_PLURAL_DEF + ": " + ChatColor.DARK_AQUA + Utils.getItemListString(milestones[i].getItems()) + "\n";
+								message += ChatColor.GOLD + plugin.ITEM_PLURAL_DEF + ": " + ChatColor.DARK_AQUA + Utils.getItemListString(milestones[i].getItems(voter)) + "\n";
 							}
 							if(milestones[i].hasWorlds()) {
 								message += ChatColor.GOLD + plugin.WORLDS_DEF + ": " + ChatColor.DARK_AQUA + Utils.worldsString(milestones[i].getWorlds()) + "\n";
@@ -729,12 +785,9 @@ public class Commands implements CommandExecutor {
 											sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
 											return true;
 										} else {
-
 											Milestone milestone = milestones[milestoneNumber-1];
-											Player p = (Player) sender;
-											Utils.showAwardGUI(milestone, p, milestoneNumber-1);
+											Utils.showAwardGUI(milestone, voter, milestoneNumber-1);
 											return true;
-
 										}
 									} catch (Exception e) {
 										sender.sendMessage(plugin.INVALID_NUMBER_NOTIFICATION);
@@ -826,7 +879,7 @@ public class Commands implements CommandExecutor {
 								message += ChatColor.GOLD + plugin.XPLEVELS_DEF + ": " + ChatColor.DARK_AQUA + Integer.toString(rewards[i].getXpLevels()) + "\n";
 							}
 							if(rewards[i].hasItems()) {
-								message += ChatColor.GOLD + plugin.ITEM_DEF + ": " + ChatColor.DARK_AQUA + Utils.getItemListString(rewards[i].getItems()) + "\n";
+								message += ChatColor.GOLD + plugin.ITEM_DEF + ": " + ChatColor.DARK_AQUA + Utils.getItemListString(rewards[i].getItems(voter)) + "\n";
 							}
 							if(rewards[i].hasWorlds()) {
 								message += ChatColor.GOLD + plugin.WORLDS_DEF + ": " + ChatColor.DARK_AQUA + Utils.worldsString(rewards[i].getWorlds()) + "\n";
@@ -878,8 +931,7 @@ public class Commands implements CommandExecutor {
 											return true;
 										} else {
 											Reward reward = rewards[rewardNumber-1];
-											Player p = (Player) sender;
-											Utils.showAwardGUI(reward, p, rewardNumber-1);
+											Utils.showAwardGUI(reward, voter, rewardNumber-1);
 											return true;
 
 										}
@@ -1026,15 +1078,41 @@ public class Commands implements CommandExecutor {
 							}
 							List<Reward> unclaimedRewards = voter.getUnclaimedRewards();
 							if(args.length == 2) {
-								String[] rewardMessages = new String[unclaimedRewards.size()];
-								int count = 0;
-								for(Reward reward: unclaimedRewards) {
-									rewardMessages[count] = ChatColor.YELLOW + Integer.toString(count+1) + ") " + ChatColor.GOLD + "Name: \"" + ChatColor.YELLOW + reward.getName() + ChatColor.GOLD + "\", Required Slots: " + ChatColor.YELLOW + reward.getRequiredSlots();
-									count++;
+								sender.sendMessage(ChatColor.GOLD + "-----" + ChatColor.GREEN + "[Unclaimed " + plugin.REWARDS_PURAL_DEF + "]" + ChatColor.GOLD + "-----");
+								int count = 1;
+								if(plugin.isOn1dot7) {
+									InteractiveMessage all = new InteractiveMessage();
+									all.addElement("(Click a reward or ", ChatColor.GRAY);
+									all.addElement(new InteractiveMessageElement(
+											new FormattedText("claim all", ChatColor.AQUA),
+											HoverEvent.SHOW_TEXT,
+											new FormattedText("Click me to claim all rewards!"),
+											ClickEvent.RUN_COMMAND,
+											"/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " all"));
+									all.addElement(")", ChatColor.GRAY);
+									all.sendTo(sender);
+									for(Reward reward: unclaimedRewards) {
+										InteractiveMessage im = new InteractiveMessage();
+										im.addElement(count + ") ", ChatColor.YELLOW);
+										im.addElement(new InteractiveMessageElement(
+												new FormattedText(reward.getName(), ChatColor.AQUA),
+												HoverEvent.SHOW_TEXT,
+												new FormattedText("Required Slots: " + reward.getRequiredSlots(voter)),
+												ClickEvent.RUN_COMMAND,
+												"/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " " + count));
+										im.sendTo(sender);
+										count++;
+									}
+								} else {
+									int counter = 0;
+									String[] rewardMessages = new String[unclaimedRewards.size()];
+									for(Reward reward: unclaimedRewards) {
+										rewardMessages[counter] = ChatColor.YELLOW + Integer.toString(counter+1) + ") " + ChatColor.GOLD + "Name: \"" + ChatColor.YELLOW + reward.getName() + ChatColor.GOLD + "\", Required Slots: " + ChatColor.YELLOW + reward.getRequiredSlots(voter);
+										counter++;
+									}
+									sender.sendMessage(rewardMessages);
+									sender.sendMessage(ChatColor.AQUA + "Type " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " #" + ChatColor.AQUA + " or " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS +" " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " " + plugin.ALL_DEF.toLowerCase());
 								}
-								sender.sendMessage(ChatColor.AQUA + "-----[Unclaimed " + plugin.REWARDS_PURAL_DEF + "]-----");
-								sender.sendMessage(rewardMessages);
-								sender.sendMessage(ChatColor.AQUA + "Type " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " #" + ChatColor.AQUA + " or " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS +" " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " " + plugin.ALL_DEF.toLowerCase());
 							}
 							else if(args.length == 3) {
 								if(args[2].equalsIgnoreCase(plugin.ALL_DEF)) {
@@ -1067,16 +1145,41 @@ public class Commands implements CommandExecutor {
 							}
 							List<Milestone> unclaimedMilestones = voter.getUnclaimedMilestones();
 							if(args.length == 2) {
-								String[] milestoneMessages = new String[unclaimedMilestones.size()];
-								int count = 0;
-								for(Milestone milestone: unclaimedMilestones) {
-									milestoneMessages[count] = ChatColor.YELLOW + Integer.toString(count+1) + ") " + ChatColor.GOLD + "Name: \"" + ChatColor.YELLOW + milestone.getName() + ChatColor.GOLD + "\", Required Slots: " + ChatColor.YELLOW + milestone.getRequiredSlots();
-									count++;
+								if(plugin.isOn1dot7) {
+									int count = 1;
+									InteractiveMessage all = new InteractiveMessage();
+									all.addElement("(Click a milestone or ", ChatColor.GRAY);
+									all.addElement(new InteractiveMessageElement(
+											new FormattedText("claim all", ChatColor.AQUA),
+											HoverEvent.SHOW_TEXT,
+											new FormattedText("Click me to claim all milestones!"),
+											ClickEvent.RUN_COMMAND,
+											"/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " all"));
+									all.addElement(")", ChatColor.GRAY);
+									all.sendTo(sender);
+									for(Milestone milestone: unclaimedMilestones) {
+										InteractiveMessage im = new InteractiveMessage();
+										im.addElement(count + ") ", ChatColor.YELLOW);
+										im.addElement(new InteractiveMessageElement(
+												new FormattedText(milestone.getName(), ChatColor.AQUA),
+												HoverEvent.SHOW_TEXT,
+												new FormattedText("Required Slots: " + milestone.getRequiredSlots(voter)),
+												ClickEvent.RUN_COMMAND,
+												"/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " " + count));
+										im.sendTo(sender);
+										count++;
+									}
+								} else {
+									String[] milestoneMessages = new String[unclaimedMilestones.size()];
+									int count = 0;
+									for(Milestone milestone: unclaimedMilestones) {
+										milestoneMessages[count] = ChatColor.YELLOW + Integer.toString(count+1) + ") " + ChatColor.GOLD + "Name: \"" + ChatColor.YELLOW + milestone.getName() + ChatColor.GOLD + "\", Required Slots: " + ChatColor.YELLOW + milestone.getRequiredSlots(voter);
+										count++;
+									}
+									sender.sendMessage(ChatColor.AQUA + "-----[Unclaimed " + plugin.MILESTONE_PURAL_DEF + "]-----");
+									sender.sendMessage(milestoneMessages);
+									sender.sendMessage(ChatColor.AQUA + "Type " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " #" + ChatColor.AQUA + " or " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS +" " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " " + plugin.ALL_DEF.toLowerCase());
 								}
-								sender.sendMessage(ChatColor.AQUA + "-----[Unclaimed " + plugin.MILESTONE_PURAL_DEF + "]-----");
-								sender.sendMessage(milestoneMessages);
-								sender.sendMessage(ChatColor.AQUA + "Type " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " #" + ChatColor.AQUA + " or " + ChatColor.YELLOW + "/" + plugin.DEFAULT_ALIAS +" " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " " + plugin.ALL_DEF.toLowerCase());
-
 							}
 							else if(args.length == 3) {
 								if(args[2].equalsIgnoreCase(plugin.ALL_DEF)) {

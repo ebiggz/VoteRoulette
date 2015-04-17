@@ -102,14 +102,14 @@ public class VoteProcessor implements Runnable {
 					} else {
 						rm.administerAwardContents(reachedMils[0], voter);
 						if(!website.equals("forcevote")) {
-							Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(reachedMils[0], playerName, website), playerName);
+							Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(reachedMils[0], voter, website), playerName);
 						}
 					}
 				} else {
 					//give highest priority milestone
 					rm.administerAwardContents(reachedMils[0], voter);
 					if(!website.equals("forcevote")) {
-						Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(reachedMils[0], playerName, website), playerName);
+						Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(reachedMils[0], voter, website), playerName);
 					}
 				}
 			}
@@ -307,7 +307,7 @@ public class VoteProcessor implements Runnable {
 		if (!event.isCancelled()) {
 			rm.administerAwardContents(event.getAward(), voter);
 			if(!website.equals("forcevote")) {
-				Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(event.getAward(), event.getPlayerName(), website), event.getPlayerName());
+				Utils.broadcastMessageToServer(Utils.getServerMessageWithAward(event.getAward(), voter, website), event.getPlayerName());
 			}
 		} else {
 			Utils.debugMessage("Event stopped by another pluggin. Cancelling award process.");

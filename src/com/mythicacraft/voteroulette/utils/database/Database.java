@@ -73,7 +73,7 @@ public abstract class Database {
 			this.createTable("vr_votes", "vote_id INT AUTO_INCREMENT KEY, player_id varchar(255) NOT NULL, website varchar(255), datetime DATETIME");
 			this.createTable("vr_voters", "player_id varchar(255) NOT NULL KEY, player_name varchar(255) NOT NULL, current_cycle int, lifetime_votes int, longest_vote_streak int, current_vote_streak int");
 			this.createTable("vr_unclaimed_awards", "unclaimed_id INT AUTO_INCREMENT KEY, award_name varchar(255) NOT NULL, award_type int NOT NULL, player_id varchar(255) NOT NULL");
-			this.createTable("vr_delayed_commands", "command_id INT AUTO_INCREMENT KEY, command varchar(255) NOT NULL, player_name varchar(255), seconds_left int NOT NULL");
+			//this.createTable("vr_delayed_commands", "command_id INT AUTO_INCREMENT KEY, command varchar(255) NOT NULL, player_name varchar(255), seconds_left int NOT NULL");
 		} catch (Exception e) {
 			VoteRoulette.getPlugin().getLogger().severe("Unable to create tables in database, plugin may not function as intended!");
 		}
