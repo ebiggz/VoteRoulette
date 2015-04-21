@@ -7,21 +7,21 @@ import org.bukkit.inventory.ItemStack;
 
 public interface Prize {
 
-	public String getPrizeIdentifier();
+	public String getIdentifier();
 
-	public boolean loadContentsFromFile(ConfigurationSection configSection);
+	public boolean loadFromConfig(ConfigurationSection configSection);
 
-	public String getContentsLoadConfigFailedMessage();
+	public String loadFromConfigFailedMessage();
 
-	public boolean hasContents();
+	public boolean isEmpty();
 
-	public ConfigurationSection createContentsSave();
+	public ConfigurationSection getConfigSave();
 
-	public String getContentsDescription();
+	public String getDescription();
 
 	public boolean administerPrize(Player player);
 
-	public String getFailedAdministrationMessage();
+	public String getAdministrationFailedMessage();
 
 	public ItemStack[] getGUIIcons();
 
@@ -29,11 +29,11 @@ public interface Prize {
 
 	public boolean isAwardCreatorCompatible();
 
-	public String[] getAwardCreatorPrizeDirections();
+	public String[] getAwardCreatorDirections();
 
-	public String[] getAwardCreatorContentsDescription();
+	public String[] getAwardCreatorDescription();
 
-	public boolean loadContentsfromAwardCreatorEntry(String entryText);
+	public boolean handleAwardCreatorInput(String inputText);
 
 	public String getContentsLoadACFailedMessage();
 

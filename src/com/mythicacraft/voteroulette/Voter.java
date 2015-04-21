@@ -526,17 +526,15 @@ public class Voter {
 	public void saveUnclaimedReward(String rewardName) {
 		if(!VoteRoulette.DISABLE_UNCLAIMED) {
 			if(VoteRoulette.USE_DATABASE) {
-				if(VoteRoulette.USE_DATABASE) {
-					try {
-						VoteRoulette.getVRDatabase().updateSQL("INSERT INTO vr_unclaimed_awards VALUES (0, \""+ rewardName +"\", 0, \"" + this.getIdentifier() +"\")");
-					} catch (Exception e) {}
-				} else {
-					ConfigAccessor playerCfg = new ConfigAccessor(getFilePath());
-					List<String> rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
-					rewardsList.add(rewardName);
-					playerCfg.getConfig().set("unclaimedRewards", rewardsList);
-					playerCfg.saveConfig();
-				}
+				try {
+					VoteRoulette.getVRDatabase().updateSQL("INSERT INTO vr_unclaimed_awards VALUES (0, \""+ rewardName +"\", 0, \"" + this.getIdentifier() +"\")");
+				} catch (Exception e) {}
+			} else {
+				ConfigAccessor playerCfg = new ConfigAccessor(getFilePath());
+				List<String> rewardsList = playerCfg.getConfig().getStringList("unclaimedRewards");
+				rewardsList.add(rewardName);
+				playerCfg.getConfig().set("unclaimedRewards", rewardsList);
+				playerCfg.saveConfig();
 			}
 		}
 	}
@@ -614,29 +612,33 @@ public class Voter {
 	}
 
 	public void saveUnclaimedMilestone(String milestoneName) {
-		if(VoteRoulette.USE_DATABASE) {
-			try {
-				VoteRoulette.getVRDatabase().updateSQL("INSERT INTO vr_unclaimed_awards VALUES (0, \""+ milestoneName +"\", 1, \"" + this.getIdentifier() +"\")");
-			} catch (Exception e) {}
-		} else {
-			ConfigAccessor playerCfg = new ConfigAccessor(getFilePath());
-			List<String> milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
-			milestonesList.add(milestoneName);
-			playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
-			playerCfg.saveConfig();
+		if(!VoteRoulette.DISABLE_UNCLAIMED) {
+			if(VoteRoulette.USE_DATABASE) {
+				try {
+					VoteRoulette.getVRDatabase().updateSQL("INSERT INTO vr_unclaimed_awards VALUES (0, \""+ milestoneName +"\", 1, \"" + this.getIdentifier() +"\")");
+				} catch (Exception e) {}
+			} else {
+				ConfigAccessor playerCfg = new ConfigAccessor(getFilePath());
+				List<String> milestonesList = playerCfg.getConfig().getStringList("unclaimedMilestones");
+				milestonesList.add(milestoneName);
+				playerCfg.getConfig().set("unclaimedMilestones", milestonesList);
+				playerCfg.saveConfig();
+			}
 		}
 	}
 
 	public void saveUnclaimedAward(Award award) {
-		if(VoteRoulette.USE_DATABASE) {
-			try {
-				VoteRoulette.getVRDatabase().updateSQL("INSERT INTO vr_unclaimed_awards VALUES (0, \""+ award.getName() +"\", " + (award.getAwardType() == AwardType.REWARD ? 0 : 1)  + ", \"" + this.getIdentifier() +"\")");
-			} catch (Exception e) {}
-		} else {
-			if(award.getAwardType() == AwardType.REWARD) {
-				this.saveUnclaimedReward(award.getName());
+		if(!VoteRoulette.DISABLE_UNCLAIMED) {
+			if(VoteRoulette.USE_DATABASE) {
+				try {
+					VoteRoulette.getVRDatabase().updateSQL("INSERT INTO vr_unclaimed_awards VALUES (0, \""+ award.getName() +"\", " + (award.getAwardType() == AwardType.REWARD ? 0 : 1)  + ", \"" + this.getIdentifier() +"\")");
+				} catch (Exception e) {}
 			} else {
-				this.saveUnclaimedMilestone(award.getName());
+				if(award.getAwardType() == AwardType.REWARD) {
+					this.saveUnclaimedReward(award.getName());
+				} else {
+					this.saveUnclaimedMilestone(award.getName());
+				}
 			}
 		}
 	}
