@@ -106,7 +106,7 @@ public class DatabaseImporter extends Thread {
 				}
 				currentFile++;
 			}
-			Bukkit.getLogger().info("[VoteRoulette] Finsihed importing to database!");
+			Bukkit.getLogger().info("[VoteRoulette] Finished importing to database!");
 		}
 	}
 }
