@@ -103,7 +103,7 @@ award-wrong-world: "%red%You must claim the %type% \"%name%\" in the world(s): %
 # Variables:
 # %type% - The type of award (Rewards or Milestones)
 # %worlds% - The worlds the award can be claimed in. (This will add all the worlds for all awards together)
-autoclaim-award-wrong-world: "%red%[VoteRoulette] There are still unclaimed %type% that need to be claimed in the worlds: %worlds%."
+autoclaim-award-wrong-world: "%red%[VoteRoulette] There are still unclaimed %type% that need to be claimed in the worlds: %worlds%"
 
 ## This message is sent when a player receives an award but their inventory is too full to receive the award.
 # Variables:
