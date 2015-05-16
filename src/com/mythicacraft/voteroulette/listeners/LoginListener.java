@@ -101,8 +101,15 @@ public class LoginListener implements Listener {
 	@EventHandler (priority = EventPriority.MONITOR)
 	public void onWorldChange(PlayerChangedWorldEvent event) {
 		Voter voter = VoteRoulette.getVoterManager().getVoter(event.getPlayer().getName());
-		VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.REWARD);
-		VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.MILESTONE);
+		int unclaimedRewardsCount = voter.getUnclaimedRewardCount();
+		int unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
+
+		if(unclaimedRewardsCount > 0) {
+			VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.REWARD);
+		}
+		if(unclaimedMilestonesCount > 0) {
+			VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.MILESTONE);
+		}
 	}
 
 
