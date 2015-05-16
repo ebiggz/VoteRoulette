@@ -109,11 +109,11 @@ public class Utils {
 	}
 
 	public static ItemStack[] updateLoreAndCustomNamesForItemPrizes(Voter voter, List<ItemPrize> items) {
-		ItemPrize[] itemsClone = new ItemPrize[items.size()];
-		items.toArray(itemsClone);
 		String playerName = voter.getPlayerName();
-		for(ItemPrize item: itemsClone) {
-			ItemMeta im = item.getItemMeta();
+		List<ItemStack> calcItems = new ArrayList<ItemStack>();
+		for(ItemPrize itemP : items) { //go through all itemprize
+			//create lore for each itemprize
+			ItemMeta im = itemP.getItemMeta().clone();
 			if(im.hasLore()) {
 				List<String> oldLore = im.getLore();
 				List<String> newLore = new ArrayList<String>();
@@ -122,7 +122,7 @@ public class Utils {
 				}
 				im.setLore(newLore);
 			}
-			if(item.hasVariableAmount()) {
+			if(itemP.hasVariableAmount()) {
 				List<String> lore = im.getLore();
 				if(lore == null) {
 					lore = new ArrayList<String>();
@@ -130,31 +130,29 @@ public class Utils {
 				lore.add(" ");
 				lore.add(ChatColor.GRAY + "This item has a variable amount.");
 				lore.add(ChatColor.GRAY + "At this moment, you would get:");
-				lore.add(ChatColor.GRAY + Integer.toString(item.getCalculatedAmount(voter)));
+				lore.add(ChatColor.GRAY + Integer.toString(itemP.getCalculatedAmount(voter)));
 				if(VoteRoulette.SHOW_VARIABLE_AMOUNT_EXPRESSION) {
 					lore.add(ChatColor.GRAY + "From:");
-					lore.add(ChatColor.GRAY + item.getFormattedVariableString(voter));
-					lore.add(ChatColor.GRAY+ "" + ChatColor.ITALIC + item.getAmountExpression());
+					lore.add(ChatColor.GRAY + itemP.getFormattedVariableString(voter));
+					lore.add(ChatColor.GRAY+ "" + ChatColor.ITALIC + itemP.getAmountExpression());
 				}
 				im.setLore(lore);
-				item.setItemMeta(im);
 			}
 			if(im.hasDisplayName()) {
 				im.setDisplayName(im.getDisplayName().replace("%player%", playerName));
 			}
-			if(item.getType() == Material.SKULL_ITEM && item.getDurability() == 3 /*playerhead*/) {
+			if(itemP.getType() == Material.SKULL_ITEM && itemP.getDurability() == 3 /*playerhead*/) {
 				SkullMeta sim = (SkullMeta) im;
 				if(sim.hasOwner()) {
 					sim.setOwner(sim.getOwner().replace("%player%", playerName));
 					im = sim;
 				}
 			}
-			item.setItemMeta(im);
-		}
-		List<ItemStack> calcItems = new ArrayList<ItemStack>();
-		for(ItemPrize itemP : itemsClone) {
-			for(ItemStack item : itemP.getCalculatedItem(voter)) {
-				calcItems.add(item);
+			for(ItemStack item : itemP.getCalculatedItem(voter)) { //get calcumated itemstacks for each itemstack in itemprize
+				//clone item, apply lore, add to calcitems list
+				ItemStack itemS = item.clone();
+				itemS.setItemMeta(im);
+				calcItems.add(itemS);
 			}
 		}
 		ItemStack[] itemStacks = new ItemStack[calcItems.size()];
