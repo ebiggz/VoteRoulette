@@ -102,7 +102,7 @@ public class AwardManager {
 				sb.append(world + ", ");
 			}
 			if(sb.length() > 2) {
-				sb.delete(sb.length()-2, sb.length()-1);
+				sb.delete(sb.length()-2, sb.length());
 			}
 
 			player.sendMessage(plugin.WRONG_AWARD_WORLD_AUTOCLAIM_NOTIFICATION
