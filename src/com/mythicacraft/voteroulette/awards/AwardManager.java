@@ -19,7 +19,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
@@ -904,6 +906,18 @@ public class AwardManager {
 				SkullMeta sim = (SkullMeta) im;
 				if(sim.hasOwner()) {
 					awardsData.getConfig().set(itemPath + "skullOwner", sim.getOwner());
+				}
+			}
+			if(im instanceof PotionMeta) {
+				PotionMeta pim = (PotionMeta) im;
+				StringBuilder sb = new StringBuilder();
+				if(pim.hasCustomEffects()) {
+					for(PotionEffect potion : pim.getCustomEffects()) {
+						sb.append(potion.getType().toString() + "(" + potion.getAmplifier() + "/" + potion.getDuration() +")");
+						sb.append(", ");
+					}
+					sb.delete(sb.length()-2, sb.length());
+					awardsData.getConfig().set(itemPath + "potionEffects", sb.toString());
 				}
 			}
 		}
