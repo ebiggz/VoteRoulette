@@ -13,7 +13,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.Voter;
@@ -515,6 +518,30 @@ public class Award {
 					}
 					if(useStorage) {
 						itemMeta = esm;
+					}
+				}
+			}
+			if(itemData.contains("potionEffects")) {
+				if(item.getType() == Material.POTION) {
+					PotionMeta pim = (PotionMeta) itemMeta;
+
+					String[] tmp = itemData.getString("enchants").split(",");
+					for (String potionEffectRaw : tmp) {
+						if (potionEffectRaw.equals("")) continue;
+						if (!potionEffectRaw.contains("(") || !potionEffectRaw.contains("/")) continue;
+
+						String name, amplifier, duration;
+						String[] effectAndLevel = potionEffectRaw.split("\\(");
+						name = effectAndLevel[0].trim();
+						amplifier = effectAndLevel[1].replace(")", "").trim();
+						duration = effectAndLevel[2].replace(")", "").trim();
+
+						try {
+							PotionEffect pe = new PotionEffect(PotionEffectType.getByName(name), Integer.parseInt(duration), Integer.parseInt(amplifier));
+							pim.addCustomEffect(pe, true);
+						} catch(Exception e) {
+							System.out.println("[VoteRoulette] Invalid potion effect for \"" + name + "\" for the item: " + itemID + "!");
+						}
 					}
 				}
 			}
