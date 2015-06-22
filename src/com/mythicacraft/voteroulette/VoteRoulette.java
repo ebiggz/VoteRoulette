@@ -1212,7 +1212,7 @@ public class VoteRoulette extends JavaPlugin {
 
 		if(USE_TWENTYFOUR_REMINDER) {
 			twentyFourHourChecker = new TwentyFourHourCheck(TWENTYFOUR_REMINDER);
-			twentyFourHourChecker.runTaskTimer(this, 24000, 24000);
+			twentyFourHourChecker.runTaskTimerAsynchronously(this, 24000, 24000);
 		}
 
 		if (CHECK_UPDATES) {
