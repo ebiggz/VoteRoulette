@@ -12,7 +12,6 @@ import com.mythicacraft.voteroulette.awards.Milestone;
 import com.mythicacraft.voteroulette.awards.Reward;
 import com.mythicacraft.voteroulette.utils.Utils;
 
-
 public class AwardCreator {
 
 	private Player player;
@@ -28,7 +27,6 @@ public class AwardCreator {
 		this.player = player;
 	}
 
-
 	public enum AwardCreationStage {
 		CHOOSE_AWARD, NAME, SET_VOTES, SET_RECURRING, CHOOSE_PRIZE, ADD_ITEMS, ADD_XP, CHOOSE_XP_OPTION, ADD_CURRENCY, EDIT_COMMANDS, ADD_COMMAND, REMOVE_COMMAND, CHOOSE_OPTION, ADD_CHANCE, SET_PRIORITY, ADD_VOTESTREAK, ADD_REROLL, ADD_DESCRIPTION, ADD_MESSAGE, ADD_PERMGROUPS, ADD_PLAYERS, ADD_WEBSITES, ADD_WORLDS, FINAL_CONFIRMATION
 	}
@@ -38,7 +36,7 @@ public class AwardCreator {
 	}
 
 	public boolean hasOrigAward() {
-		if(origAward != null) {
+		if (origAward != null) {
 			return true;
 		}
 		return false;
@@ -52,47 +50,50 @@ public class AwardCreator {
 	public Award getOrigAward() {
 		return origAward;
 	}
+
 	public int getOrigIndex() {
 		return origAwardIndex;
 	}
 
 	public void goToStage(AwardCreationStage stage, boolean isGoingBack) {
-		if(currentStage != null) {
-			if(!isGoingBack) {
+		if (currentStage != null) {
+			if (!isGoingBack) {
 				previousStages.push(currentStage);
 			}
 		}
 		currentStage = stage;
-		switch(stage) {
+		switch (stage) {
 		case CHOOSE_AWARD:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " What type of award do you want to create?");
 			player.sendMessage(ChatColor.GOLD + "Reward" + ChatColor.GRAY + " - Considered for players every time they vote.");
 			player.sendMessage(ChatColor.GOLD + "Milestone" + ChatColor.GRAY + " - Given to players after they reach a set amount of votes.");
-			player.sendMessage(ChatColor.YELLOW + "Type " + ChatColor.GOLD + "reward" + ChatColor.YELLOW + " or " + ChatColor.GOLD + "milestone" + ChatColor.YELLOW + ", or "+ ChatColor.GOLD + "help" + ChatColor.YELLOW + " for help, " + ChatColor.GOLD + "cancel" + ChatColor.YELLOW + " to quit.");
-			//player.sendMessage(ChatColor.GRAY + "(or " + ChatColor.GOLD + "help" + ChatColor.GRAY + " for help, " + ChatColor.GOLD + "cancel" + ChatColor.GRAY + " to quit)");
+			player.sendMessage(ChatColor.YELLOW + "Type " + ChatColor.GOLD + "reward" + ChatColor.YELLOW + " or " + ChatColor.GOLD + "milestone" + ChatColor.YELLOW + ", or " + ChatColor.GOLD + "help" + ChatColor.YELLOW + " for help, " + ChatColor.GOLD + "cancel" + ChatColor.YELLOW + " to quit.");
+			// player.sendMessage(ChatColor.GRAY + "(or " + ChatColor.GOLD +
+			// "help" + ChatColor.GRAY + " for help, " + ChatColor.GOLD +
+			// "cancel" + ChatColor.GRAY + " to quit)");
 			break;
 		case ADD_CHANCE:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please enter the chance you want this " + awardType.toString().toLowerCase() + " to have, or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
 			player.sendMessage(ChatColor.GRAY + "- Chance can be formatted as #% or #/#. Example: 50% or 1/100");
-			if(award.hasChance()) {
+			if (award.hasChance()) {
 				player.sendMessage(ChatColor.GRAY + "Current chance: " + award.getChanceMin() + "/" + award.getChanceMax());
 			}
 			break;
 		case EDIT_COMMANDS:
-			if(!award.hasCommands()) {
+			if (!award.hasCommands()) {
 				player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Type " + ChatColor.GOLD + "add" + ChatColor.YELLOW + " to add a new command or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back.");
 			} else {
 				player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Type " + ChatColor.GOLD + "add" + ChatColor.YELLOW + " to add a new command, " + ChatColor.GOLD + "remove" + ChatColor.YELLOW + " to remove a command, or " + ChatColor.GOLD + "next" + ChatColor.YELLOW + " to continue.");
 				player.sendMessage(ChatColor.GRAY + "Current commands:");
 				int count = 1;
-				for(String command : award.getCommands()) {
-					if(command.contains("(")) {
+				for (String command : award.getCommands()) {
+					if (command.contains("(")) {
 						int index = command.indexOf(") ");
-						if(command.charAt(index+2) != '/') {
-							command = command.substring(0, index+2) + "/" + command.substring(index+2, command.length());
+						if (command.charAt(index + 2) != '/') {
+							command = command.substring(0, index + 2) + "/" + command.substring(index + 2, command.length());
 						}
 					} else {
-						if(!command.contains("/")) {
+						if (!command.contains("/")) {
 							command = "/" + command;
 						}
 					}
@@ -103,13 +104,13 @@ public class AwardCreator {
 			break;
 		case ADD_CURRENCY:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type the amount of currency you want this " + awardType.toString().toLowerCase() + " to give, or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
-			if(award.hasCurrency()) {
+			if (award.hasCurrency()) {
 				player.sendMessage(ChatColor.GRAY + "Current currency: " + award.getCurrency());
 			}
 			break;
 		case ADD_DESCRIPTION:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type a description for this " + awardType.toString().toLowerCase() + " that players can see when viewing awards, or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
-			if(award.hasDescription()) {
+			if (award.hasDescription()) {
 				player.sendMessage(ChatColor.GRAY + "Current description: " + award.getDescription());
 			}
 			break;
@@ -120,19 +121,19 @@ public class AwardCreator {
 			break;
 		case ADD_MESSAGE:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type the message that will be shown when a player wins this " + awardType.toString().toLowerCase() + ", or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
-			if(award.hasMessage()) {
+			if (award.hasMessage()) {
 				player.sendMessage(ChatColor.GRAY + "Current message: " + award.getMessage());
 			}
 			break;
 		case ADD_PERMGROUPS:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type the permission group names (seperated by commas) that are eligible for this " + awardType.toString().toLowerCase() + ", or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
-			if(award.hasPermissionGroups()) {
+			if (award.hasPermissionGroups()) {
 				player.sendMessage(ChatColor.GRAY + "Current groups: " + Utils.concatListToString(Arrays.asList(award.getPermGroups())));
 			}
 			break;
 		case ADD_PLAYERS:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type the player names (seperated by commas) that are eligible for this " + awardType.toString().toLowerCase() + ", or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
-			if(award.hasPlayers()) {
+			if (award.hasPlayers()) {
 				player.sendMessage(ChatColor.GRAY + "Current players: " + Utils.concatListToString(Arrays.asList(award.getPlayers())));
 			}
 			break;
@@ -140,50 +141,50 @@ public class AwardCreator {
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type a name of another Reward to be rerolled for when a player wins this " + awardType.toString().toLowerCase() + ", or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
 			player.sendMessage(ChatColor.GRAY + "- Include \"(#%)\" at the end of the name to set a custom chance");
 			player.sendMessage(ChatColor.GRAY + "- Use \"ANY\" instead of a name to have a Reward chosen at random.");
-			if(award.hasReroll()) {
-				player.sendMessage(ChatColor.GRAY + "Current reroll: " + award.getReroll());
+			if (award.hasReroll()) {
+				player.sendMessage(ChatColor.GRAY + "Current reroll: " + award.getRerollString());
 			}
 			break;
 		case ADD_WEBSITES:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type the website identifiers (seperated by commas) that this " + awardType.toString().toLowerCase() + " is eligible for, or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
 			Reward r = (Reward) award;
 			player.sendMessage(ChatColor.GRAY + "Known websites: " + Utils.getKnownWebsites());
-			if(r.hasWebsites()) {
+			if (r.hasWebsites()) {
 				player.sendMessage(ChatColor.GRAY + "Current websites: " + Utils.concatListToString(r.getWebsites()));
 			}
 			break;
 		case ADD_WORLDS:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type the world names (seperated by commas) that this " + awardType.toString().toLowerCase() + " can be claimed in, or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
-			if(award.hasWorlds()) {
+			if (award.hasWorlds()) {
 				player.sendMessage(ChatColor.GRAY + "Current worlds: " + Utils.concatListToString(award.getWorlds()));
 			}
 			break;
 		case ADD_XP:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Please type the number of XP levels you want this " + awardType.toString().toLowerCase() + " to give, or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back:");
-			if(award.hasXpLevels()) {
+			if (award.hasXpLevels()) {
 				player.sendMessage(ChatColor.GRAY + "Current XP: " + award.getXpLevels());
 			}
 			break;
 		case CHOOSE_OPTION:
 
-			if(Utils.awardHasOptions(award)) {
+			if (Utils.awardHasOptions(award)) {
 				player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Do you want to add/change another " + award.getAwardType().toString().toLowerCase() + " option for " + ChatColor.AQUA + award.getName() + ChatColor.YELLOW + "?");
 			} else {
 				player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Do you want to add/change a " + award.getAwardType().toString().toLowerCase() + " option for " + ChatColor.AQUA + award.getName() + ChatColor.YELLOW + "?");
 			}
-			if(award.getAwardType() == AwardType.REWARD) {
-				player.sendMessage(ChatColor.GRAY + "Options: " + ChatColor.GOLD + "permgroups" + ChatColor.GRAY + ", " + ChatColor.GOLD + "players" + ChatColor.GRAY + ", " + ChatColor.GOLD + "worlds" + ChatColor.GRAY + ", " + ChatColor.GOLD + "websites" + ChatColor.GRAY + ", "  + ChatColor.GOLD + "votestreak" + ChatColor.GRAY + ", "  + ChatColor.GOLD + "rename" + ChatColor.GRAY + ", " + ChatColor.GOLD + "chance" + ChatColor.GRAY + ", " + ChatColor.GOLD + "reroll" + ChatColor.GRAY + ", " + ChatColor.GOLD + "description" + ChatColor.GRAY + ", or " + ChatColor.GOLD + "message" + ChatColor.GRAY + ".");
+			if (award.getAwardType() == AwardType.REWARD) {
+				player.sendMessage(ChatColor.GRAY + "Options: " + ChatColor.GOLD + "permgroups" + ChatColor.GRAY + ", " + ChatColor.GOLD + "players" + ChatColor.GRAY + ", " + ChatColor.GOLD + "worlds" + ChatColor.GRAY + ", " + ChatColor.GOLD + "websites" + ChatColor.GRAY + ", " + ChatColor.GOLD + "votestreak" + ChatColor.GRAY + ", " + ChatColor.GOLD + "rename" + ChatColor.GRAY + ", " + ChatColor.GOLD + "chance" + ChatColor.GRAY + ", " + ChatColor.GOLD + "reroll" + ChatColor.GRAY + ", " + ChatColor.GOLD + "description" + ChatColor.GRAY + ", or " + ChatColor.GOLD + "message" + ChatColor.GRAY + ".");
 			} else {
-				player.sendMessage(ChatColor.GRAY + "Options: " + ChatColor.GOLD + "permgroups" + ChatColor.GRAY + ", " + ChatColor.GOLD + "players" + ChatColor.GRAY + ", " + ChatColor.GOLD + "worlds" + ChatColor.GRAY + ", " + ChatColor.GOLD + "votecount" + ChatColor.GRAY + ", "  + ChatColor.GOLD + "recurring" + ChatColor.GRAY + ", "  + ChatColor.GOLD + "priority" + ChatColor.GRAY + ", "  + ChatColor.GOLD + "rename" + ChatColor.GRAY + ", " + ChatColor.GOLD + "chance" + ChatColor.GRAY + ", " + ChatColor.GOLD + "reroll" + ChatColor.GRAY + ", " + ChatColor.GOLD + "description" + ChatColor.GRAY + ", or " + ChatColor.GOLD + "message" + ChatColor.GRAY + ".");
+				player.sendMessage(ChatColor.GRAY + "Options: " + ChatColor.GOLD + "permgroups" + ChatColor.GRAY + ", " + ChatColor.GOLD + "players" + ChatColor.GRAY + ", " + ChatColor.GOLD + "worlds" + ChatColor.GRAY + ", " + ChatColor.GOLD + "votecount" + ChatColor.GRAY + ", " + ChatColor.GOLD + "recurring" + ChatColor.GRAY + ", " + ChatColor.GOLD + "priority" + ChatColor.GRAY + ", " + ChatColor.GOLD + "rename" + ChatColor.GRAY + ", " + ChatColor.GOLD + "chance" + ChatColor.GRAY + ", " + ChatColor.GOLD + "reroll" + ChatColor.GRAY + ", " + ChatColor.GOLD + "description" + ChatColor.GRAY + ", or " + ChatColor.GOLD + "message" + ChatColor.GRAY + ".");
 			}
-			player.sendMessage(ChatColor.YELLOW + "Type an option or type " + ChatColor.GOLD + "next" + ChatColor.YELLOW + " to continue, "+ ChatColor.GOLD + "preview" + ChatColor.YELLOW + " to see the " + award.getAwardType().toString().toLowerCase() + ", " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back.");
+			player.sendMessage(ChatColor.YELLOW + "Type an option or type " + ChatColor.GOLD + "next" + ChatColor.YELLOW + " to continue, " + ChatColor.GOLD + "preview" + ChatColor.YELLOW + " to see the " + award.getAwardType().toString().toLowerCase() + ", " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back.");
 			break;
 		case CHOOSE_PRIZE:
-			if(award != null) {
-				if(!award.isEmpty()) {
+			if (award != null) {
+				if (!award.isEmpty()) {
 					player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Do you want to add another prize type for " + ChatColor.AQUA + award.getName() + ChatColor.YELLOW + "?");
 					player.sendMessage(ChatColor.GRAY + "Prizes: " + ChatColor.GOLD + "items" + ChatColor.GRAY + ", " + ChatColor.GOLD + "xp" + ChatColor.GRAY + ", " + ChatColor.GOLD + "currency" + ChatColor.GRAY + ", or " + ChatColor.GOLD + "commands" + ChatColor.GRAY + ".");
-					player.sendMessage(ChatColor.YELLOW + "Enter a prize type or type "  + ChatColor.GOLD + "next" + ChatColor.YELLOW + " to continue, "+ ChatColor.GOLD + "preview" + ChatColor.YELLOW + " to see the " + award.getAwardType().toString().toLowerCase() + ", or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back.");
+					player.sendMessage(ChatColor.YELLOW + "Enter a prize type or type " + ChatColor.GOLD + "next" + ChatColor.YELLOW + " to continue, " + ChatColor.GOLD + "preview" + ChatColor.YELLOW + " to see the " + award.getAwardType().toString().toLowerCase() + ", or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back.");
 					return;
 				}
 			}
@@ -204,15 +205,15 @@ public class AwardCreator {
 			player.sendMessage(ChatColor.GRAY + "- Can be any number, 1 being the highest. (Think first priority)");
 			player.sendMessage(ChatColor.GRAY + "- If no priority is set, 10 is used.");
 			Milestone m = (Milestone) award;
-			if(m.getPriority() != 10) {
+			if (m.getPriority() != 10) {
 				player.sendMessage(ChatColor.GRAY + "Current priority: " + m.getPriority());
 			}
 			break;
 		case SET_RECURRING:
 			Milestone ms = (Milestone) award;
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Do you want " + ChatColor.AQUA + award.getName() + ChatColor.YELLOW + " to be recurring?");
-			player.sendMessage(ChatColor.GRAY + " - Meaning the Milestone would occur every " + ms.getVotes() + " votes. (" + ms.getVotes() + ", " + (ms.getVotes() + ms.getVotes()) + ", " + (ms.getVotes() + ms.getVotes()*2) + ", etc)");
-			if(ms.isRecurring()) {
+			player.sendMessage(ChatColor.GRAY + " - Meaning the Milestone would occur every " + ms.getVotes() + " votes. (" + ms.getVotes() + ", " + (ms.getVotes() + ms.getVotes()) + ", " + (ms.getVotes() + ms.getVotes() * 2) + ", etc)");
+			if (ms.isRecurring()) {
 				player.sendMessage(ChatColor.GRAY + "Current recurring setting: true");
 			}
 			player.sendMessage(ChatColor.YELLOW + "Type " + ChatColor.GOLD + "yes" + ChatColor.YELLOW + " or " + ChatColor.GOLD + "no" + ChatColor.YELLOW + ", or type " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back.");
@@ -220,7 +221,7 @@ public class AwardCreator {
 		case SET_VOTES:
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Enter the number of votes required to reach " + ChatColor.AQUA + award.getName() + ChatColor.YELLOW + ":");
 			Milestone milestone = (Milestone) award;
-			if(milestone.getVotes() != 0) {
+			if (milestone.getVotes() != 0) {
 				player.sendMessage(ChatColor.GRAY + "Current votes: " + milestone.getVotes());
 			}
 			break;
@@ -236,14 +237,14 @@ public class AwardCreator {
 			player.sendMessage(ChatColor.AQUA + "*" + ChatColor.YELLOW + " Type the " + ChatColor.GOLD + "#" + ChatColor.YELLOW + " of the command you wish to remove or " + ChatColor.GOLD + "back" + ChatColor.YELLOW + " to go back.");
 			player.sendMessage(ChatColor.GRAY + "Current commands:");
 			int count = 1;
-			for(String command : award.getCommands()) {
-				if(command.contains("(")) {
+			for (String command : award.getCommands()) {
+				if (command.contains("(")) {
 					int index = command.indexOf(") ");
-					if(command.charAt(index+2) != '/') {
-						command = command.substring(0, index+2) + "/" + command.substring(index+2, command.length());
+					if (command.charAt(index + 2) != '/') {
+						command = command.substring(0, index + 2) + "/" + command.substring(index + 2, command.length());
 					}
 				} else {
-					if(!command.contains("/")) {
+					if (!command.contains("/")) {
 						command = "/" + command;
 					}
 				}
@@ -254,7 +255,8 @@ public class AwardCreator {
 		default:
 			break;
 		}
-		//player.sendMessage(ChatColor.GRAY + "(Type " + ChatColor.GOLD + "cancel" + ChatColor.GRAY + " to exit the Award Creator)");
+		// player.sendMessage(ChatColor.GRAY + "(Type " + ChatColor.GOLD +
+		// "cancel" + ChatColor.GRAY + " to exit the Award Creator)");
 	}
 
 	public Stack<AwardCreationStage> getPreviousStages() {
@@ -284,6 +286,7 @@ public class AwardCreator {
 	public AwardType getAwardType() {
 		return this.awardType;
 	}
+
 	public void setAwardType(AwardType type) {
 		this.awardType = type;
 	}

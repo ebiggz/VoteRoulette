@@ -22,7 +22,6 @@ import com.mythicacraft.voteroulette.VoteRoulette;
 import com.mythicacraft.voteroulette.Voter;
 import com.mythicacraft.voteroulette.utils.Utils;
 
-
 public class Award {
 
 	private static final Logger log = Logger.getLogger("VoteRoulette");
@@ -39,14 +38,16 @@ public class Award {
 	private List<String> worlds = new ArrayList<String>();
 	private String message;
 	private String description;
-	private String reroll;
+	private List<RerollEntry> rerollEntries = new ArrayList<RerollEntry>();
+	private RerollType rerollType = RerollType.NONE;
+	private String rerollString;
 	private AwardType type;
 
 	protected Award(String name, ConfigurationSection cs, AwardType type) {
 		this.setName(name);
 		this.setAwardType(type);
-		if(cs.contains("currency")) {
-			if(!VoteRoulette.hasEconPlugin()) {
+		if (cs.contains("currency")) {
+			if (!VoteRoulette.hasEconPlugin()) {
 				log.warning("[VoteRoulette] Reward \"" + name + "\" contains currency settings but Vault is not installed or there is no economy plugin, Skipping currency.");
 			} else {
 				try {
@@ -58,7 +59,7 @@ public class Award {
 				}
 			}
 		}
-		if(cs.contains("xpLevels")) {
+		if (cs.contains("xpLevels")) {
 			try {
 				String xp = cs.getString("xpLevels");
 				this.xpLevels = Integer.parseInt(xp);
@@ -66,10 +67,10 @@ public class Award {
 				log.warning("[VoteRoulette] Invalid xpLevel format for reward: " + name + ", Skipping xpLevels.");
 			}
 		}
-		if(cs.contains("chance")) {
+		if (cs.contains("chance")) {
 			try {
 				String chanceStr = cs.getString("chance").replace("%", "");
-				if(chanceStr.contains("/")) {
+				if (chanceStr.contains("/")) {
 					String[] chances = chanceStr.split("/");
 					this.chanceMin = Integer.parseInt(chances[0]);
 					this.chanceMax = Integer.parseInt(chances[1]);
@@ -82,49 +83,75 @@ public class Award {
 				log.warning("[VoteRoulette] Invalid chance format for reward: " + name + ", Skipping chance.");
 			}
 		}
-		if(cs.contains("commands")) {
+		if (cs.contains("commands")) {
 			try {
 				commands = cs.getStringList("commands");
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Error loading commands for reward:" + name + ", Skipping commands.");
 			}
 		}
-		if(cs.contains("worlds")) {
+		if (cs.contains("worlds")) {
 			try {
 				String worldsStr = cs.getString("worlds");
 				String[] worldArray = worldsStr.split(",");
-				for(String worldName: worldArray) {
+				for (String worldName : worldArray) {
 					worlds.add(worldName.trim());
 				}
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Error loading worlds for reward:" + name + ", Skipping worlds.");
 			}
 		}
-		if(cs.contains("message")) {
+		if (cs.contains("message")) {
 			try {
 				message = Utils.transcribeColorCodes(cs.getString("message"));
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Error loading custom message for reward:" + name + ", Skipping message.");
 			}
 		}
-		if(cs.contains("description")) {
+		if (cs.contains("description")) {
 			try {
 				description = Utils.transcribeColorCodes(cs.getString("description"));
 			} catch (Exception e) {
 				log.warning("[VoteRoulette] Error loading custom description for reward:" + name + ", Skipping description.");
 			}
 		}
-		if(cs.contains("reroll")) {
+		if (cs.contains("reroll")) {
 			try {
-				reroll = cs.getString("reroll");
+				String rerollData = cs.getString("reroll");
+				if (rerollData.startsWith("ALL")) {
+					if (rerollData.contains("[")) {
+						rerollData = rerollData.replace("[", "").replace("]", "").trim();
+						String[] rewardsData = rerollData.split(",");
+						for (String rewardData : rewardsData) {
+							String[] parsedRerollData = this.parseRerollRewardData(rewardData);
+							this.rerollEntries.add(new RerollEntry(parsedRerollData[0], Integer.parseInt(parsedRerollData[1]), Integer.parseInt(parsedRerollData[2])));
+						}
+					}
+					this.rerollType = RerollType.ALL;
+				} else if (rerollData.startsWith("RANDOM") || rerollData.startsWith("ANY")) {
+					if (rerollData.contains("[")) {
+						rerollData = rerollData.replace("[", "").replace("]", "").trim();
+						String[] rewardsData = rerollData.split(",");
+						for (String rewardData : rewardsData) {
+							String[] parsedRerollData = this.parseRerollRewardData(rewardData);
+							this.rerollEntries.add(new RerollEntry(parsedRerollData[0], Integer.parseInt(parsedRerollData[1]), Integer.parseInt(parsedRerollData[2])));
+						}
+					}
+					this.rerollType = RerollType.RANDOM;
+				} else {
+					String[] parsedRerollData = this.parseRerollRewardData(rerollData);
+					this.rerollEntries.add(new RerollEntry(parsedRerollData[0], Integer.parseInt(parsedRerollData[1]), Integer.parseInt(parsedRerollData[2])));
+					this.rerollType = RerollType.SINGLE;
+				}
+				this.rerollString = cs.getString("reroll");
 			} catch (Exception e) {
-				log.warning("[VoteRoulette] Error loading reroll for reward:" + name + ", Skipping reroll.");
+				log.warning("[VoteRoulette] Error loading reroll settings for reward:" + name + ", Skipping reroll.");
 			}
 		}
-		if(cs.contains("items")) {
+		if (cs.contains("items")) {
 			ConfigurationSection items = cs.getConfigurationSection("items");
-			if(items != null) {
-				for(String itemID : items.getKeys(false)) {
+			if (items != null) {
+				for (String itemID : items.getKeys(false)) {
 					int id;
 					try {
 						id = Integer.parseInt(itemID);
@@ -133,18 +160,18 @@ public class Award {
 						continue;
 					}
 					ConfigurationSection itemData = items.getConfigurationSection(itemID);
-					if(itemData != null) {
-						if(itemData.contains("multiple")) {
+					if (itemData != null) {
+						if (itemData.contains("multiple")) {
 							ConfigurationSection multipleData = itemData.getConfigurationSection("multiple");
-							for(String mItemID : multipleData.getKeys(false)) {
+							for (String mItemID : multipleData.getKeys(false)) {
 								ItemPrize mItem = parseConfigItemData(id, multipleData.getConfigurationSection(mItemID));
-								if(mItem != null) {
+								if (mItem != null) {
 									this.items.add(mItem);
 								}
 							}
 						} else {
 							ItemPrize item = parseConfigItemData(id, itemData);
-							if(item != null) {
+							if (item != null) {
 								this.items.add(item);
 							}
 						}
@@ -152,23 +179,23 @@ public class Award {
 				}
 			}
 		}
-		if(cs.contains("permGroups")) {
-			if(!VoteRoulette.hasPermPlugin()) {
+		if (cs.contains("permGroups")) {
+			if (!VoteRoulette.hasPermPlugin()) {
 				log.warning("[VoteRoulette] Reward \"" + name + "\" contains perm group settings but Vault is not installed or there is no permission plugin, Skipping perm groups.");
 			} else {
 				permGroups = cs.getString("permGroups").split(",");
-				for(int i = 0; i < permGroups.length; i++) {
+				for (int i = 0; i < permGroups.length; i++) {
 					permGroups[i] = permGroups[i].trim();
 				}
 			}
 		}
-		if(cs.contains("players")) {
+		if (cs.contains("players")) {
 			players = cs.getString("players").split(",");
-			for(int i = 0; i < players.length; i++) {
+			for (int i = 0; i < players.length; i++) {
 				players[i] = players[i].trim();
 			}
 		}
-		if(!this.hasCurrency() && !this.hasItems() && !this.hasXpLevels() && !this.hasCommands()) {
+		if (!this.hasCurrency() && !this.hasItems() && !this.hasXpLevels() && !this.hasCommands()) {
 			log.warning("[VoteRoulette] The Reward \"" + this.getName() + "\" appears to be empty. Check your config settings!");
 		}
 	}
@@ -181,6 +208,7 @@ public class Award {
 	public enum AwardType {
 		REWARD, MILESTONE, VOTESTREAK
 	}
+
 	public double getCurrency() {
 		return currency;
 	}
@@ -226,13 +254,15 @@ public class Award {
 	}
 
 	public boolean hasPlayers() {
-		if(players == null) return false;
+		if (players == null)
+			return false;
 		return true;
 	}
 
 	public boolean containsPlayer(String playerName) {
-		for(String player: players) {
-			if(player.equals(playerName)) return true;
+		for (String player : players) {
+			if (player.equals(playerName))
+				return true;
 		}
 		return false;
 	}
@@ -250,34 +280,39 @@ public class Award {
 	}
 
 	public boolean hasPermissionGroups() {
-		if(permGroups == null) return false;
+		if (permGroups == null)
+			return false;
 		return true;
 	}
 
 	public boolean containsPermGroup(String permGroup) {
-		for(String group: permGroups) {
-			if(group.equals(permGroup)) return true;
+		for (String group : permGroups) {
+			if (group.equals(permGroup))
+				return true;
 		}
 		return false;
 	}
 
 	public boolean hasItems() {
-		if(items.isEmpty()) return false;
+		if (items.isEmpty())
+			return false;
 		return true;
 	}
 
 	public boolean hasCurrency() {
-		if(currency == 0) return false;
+		if (currency == 0)
+			return false;
 		return true;
 	}
 
 	public boolean hasXpLevels() {
-		if(xpLevels == 0) return false;
+		if (xpLevels == 0)
+			return false;
 		return true;
 	}
 
 	public boolean hasAwardOptions() {
-		if(this.hasChance || this.hasWorlds() || this.hasPermissionGroups() || this.hasReroll() || this.hasPlayers() || this.hasMessage() || this.hasDescription()) {
+		if (this.hasChance || this.hasWorlds() || this.hasPermissionGroups() || this.hasReroll() || this.hasPlayers() || this.hasMessage() || this.hasDescription()) {
 			return true;
 		}
 		return false;
@@ -285,8 +320,8 @@ public class Award {
 
 	public ItemStack[] getItems(Voter voter) {
 		List<ItemStack> calcItems = new ArrayList<ItemStack>();
-		for(ItemPrize itemP : items) {
-			for(ItemStack item : itemP.getCalculatedItem(voter)) {
+		for (ItemPrize itemP : items) {
+			for (ItemStack item : itemP.getCalculatedItem(voter)) {
 				calcItems.add(item);
 			}
 		}
@@ -302,9 +337,9 @@ public class Award {
 	public int getRequiredSlots(Voter voter) {
 		int totalSlots = 0;
 		ItemStack[] items = this.getItems(voter);
-		for(int i = 0; i < items.length; i++) {
-			int itemSlots = items[i].getAmount()/64;
-			if(items[i].getAmount() % 64 != 0) {
+		for (int i = 0; i < items.length; i++) {
+			int itemSlots = items[i].getAmount() / 64;
+			if (items[i].getAmount() % 64 != 0) {
 				itemSlots = itemSlots + 1;
 			}
 			totalSlots = totalSlots + itemSlots;
@@ -313,14 +348,10 @@ public class Award {
 	}
 
 	public boolean isEmpty() {
-		if(currency == 0 && xpLevels == 0 && items.isEmpty() && commands.isEmpty()) {
+		if (currency == 0 && xpLevels == 0 && items.isEmpty() && commands.isEmpty()) {
 			return true;
 		}
 		return false;
-	}
-
-	public void setReroll(String reroll) {
-		this.reroll = reroll;
 	}
 
 	public List<String> getCommands() {
@@ -332,12 +363,14 @@ public class Award {
 	}
 
 	public boolean hasCommands() {
-		if(commands == null || commands.isEmpty()) return false;
+		if (commands == null || commands.isEmpty())
+			return false;
 		return true;
 	}
 
 	public boolean hasWorlds() {
-		if(worlds == null || worlds.isEmpty()) return false;
+		if (worlds == null || worlds.isEmpty())
+			return false;
 		return true;
 	}
 
@@ -346,7 +379,8 @@ public class Award {
 	}
 
 	public boolean hasMessage() {
-		if(message == null || message.length() == 0) return false;
+		if (message == null || message.length() == 0)
+			return false;
 		return true;
 	}
 
@@ -359,7 +393,8 @@ public class Award {
 	}
 
 	public boolean hasDescription() {
-		if(description == null || description.length() == 0) return false;
+		if (description == null || description.length() == 0)
+			return false;
 		return true;
 	}
 
@@ -372,12 +407,58 @@ public class Award {
 	}
 
 	public boolean hasReroll() {
-		if(reroll == null || reroll.length() == 0) return false;
-		return true;
+		return rerollType != RerollType.NONE;
 	}
 
-	public String getReroll() {
-		return reroll;
+	public RerollType getRerollType() {
+		return rerollType;
+	}
+
+	public List<RerollEntry> getRerollEntries() {
+		return rerollEntries;
+	}
+
+	public String getRerollString() {
+		return rerollString;
+	}
+
+	public void setReroll(String rerollData) {
+		this.rerollEntries.clear();
+		this.chanceMax = 0;
+		this.chanceMin = 0;
+		this.rerollType = RerollType.NONE;
+		if (rerollData == null)
+			return;
+		try {
+			this.rerollString = rerollData;
+			if (rerollData.startsWith("ALL")) {
+				if (rerollData.contains("[")) {
+					rerollData = rerollData.replace("[", "").replace("]", "").trim();
+					String[] rewardsData = rerollData.split(",");
+					for (String rewardData : rewardsData) {
+						String[] parsedRerollData = this.parseRerollRewardData(rewardData);
+						this.rerollEntries.add(new RerollEntry(parsedRerollData[0], Integer.parseInt(parsedRerollData[1]), Integer.parseInt(parsedRerollData[2])));
+					}
+				}
+				this.rerollType = RerollType.ALL;
+			} else if (rerollData.startsWith("RANDOM") || rerollData.startsWith("ANY")) {
+				if (rerollData.contains("[")) {
+					rerollData = rerollData.replace("[", "").replace("]", "").trim();
+					String[] rewardsData = rerollData.split(",");
+					for (String rewardData : rewardsData) {
+						String[] parsedRerollData = this.parseRerollRewardData(rewardData);
+						this.rerollEntries.add(new RerollEntry(parsedRerollData[0], Integer.parseInt(parsedRerollData[1]), Integer.parseInt(parsedRerollData[2])));
+					}
+				}
+				this.rerollType = RerollType.RANDOM;
+			} else {
+				String[] parsedRerollData = this.parseRerollRewardData(rerollData);
+				this.rerollEntries.add(new RerollEntry(parsedRerollData[0], Integer.parseInt(parsedRerollData[1]), Integer.parseInt(parsedRerollData[2])));
+				this.rerollType = RerollType.SINGLE;
+			}
+		} catch (Exception e) {
+			log.warning("[VoteRoulette] Error loading reroll settings for reward:" + name + ", Skipping reroll.");
+		}
 	}
 
 	public int getChanceMin() {
@@ -406,11 +487,12 @@ public class Award {
 	}
 
 	@SuppressWarnings("deprecation")
-	private ItemPrize parseConfigItemData(int itemID, ConfigurationSection itemData) {
+	private ItemPrize parseConfigItemData(int itemID,
+			ConfigurationSection itemData) {
 		ItemPrize item = null;
 		ItemMeta itemMeta;
-		if(itemData != null) {
-			if(itemData.contains("dataID")) {
+		if (itemData != null) {
+			if (itemData.contains("dataID")) {
 				String dataIDStr = itemData.getString("dataID");
 				short dataID;
 				try {
@@ -434,16 +516,16 @@ public class Award {
 				}
 			}
 			itemMeta = item.getItemMeta();
-			if(itemData.contains("amount")) {
+			if (itemData.contains("amount")) {
 				item.setAmount(itemData.getString("amount"));
 			}
-			if(itemData.contains("armorColor")) {
+			if (itemData.contains("armorColor")) {
 				String colorStr = itemData.getString("armorColor").trim();
 				String testForInt = colorStr.substring(0, 1);
 				Color color = null;
-				if(testForInt.matches("[0-9]")) {
+				if (testForInt.matches("[0-9]")) {
 					String[] colorValues = colorStr.split(",");
-					if(colorValues.length < 3 || colorValues.length > 3) {
+					if (colorValues.length < 3 || colorValues.length > 3) {
 						System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid amount of numbers.");
 					} else {
 						int red, green, blue;
@@ -458,16 +540,15 @@ public class Award {
 					}
 				} else {
 					Color newColor = Utils.getColorEnumFromName(colorStr);
-					if(newColor != null) {
+					if (newColor != null) {
 						color = newColor;
 					} else {
 						System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid color name.");
 					}
 				}
-				if(color == null) {
+				if (color == null) {
 					System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Invalid color format.");
-				}
-				else if(item.getType() == Material.LEATHER_BOOTS || item.getType() == Material.LEATHER_CHESTPLATE || item.getType() == Material.LEATHER_HELMET || item.getType() == Material.LEATHER_LEGGINGS) {
+				} else if (item.getType() == Material.LEATHER_BOOTS || item.getType() == Material.LEATHER_CHESTPLATE || item.getType() == Material.LEATHER_HELMET || item.getType() == Material.LEATHER_LEGGINGS) {
 					LeatherArmorMeta wim = (LeatherArmorMeta) itemMeta;
 					wim.setColor(color);
 					itemMeta = wim;
@@ -475,9 +556,9 @@ public class Award {
 					System.out.println("[VoteRoulette] Couldn't add the color for the item: " + itemID + "! Item not leather armor.");
 				}
 			}
-			if(itemData.contains("skullOwner")) {
+			if (itemData.contains("skullOwner")) {
 				String skullOwner = itemData.getString("skullOwner");
-				if(item.getType() == Material.SKULL_ITEM && item.getDurability() == 3 /*playerhead*/) {
+				if (item.getType() == Material.SKULL_ITEM && item.getDurability() == 3 /* playerhead */) {
 					SkullMeta sim = (SkullMeta) itemMeta;
 					sim.setOwner(skullOwner);
 					itemMeta = sim;
@@ -485,17 +566,18 @@ public class Award {
 					System.out.println("[VoteRoulette] Couldn't add skullOwner for the item: " + itemID + ":" + item.getDurability() + "! Item not a player head.");
 				}
 			}
-			if(itemData.contains("enchants")) {
+			if (itemData.contains("enchants")) {
 				boolean useStorage = false;
 				EnchantmentStorageMeta esm = null;
-				if(item.getType() == Material.ENCHANTED_BOOK) {
+				if (item.getType() == Material.ENCHANTED_BOOK) {
 					esm = (EnchantmentStorageMeta) itemMeta;
 					useStorage = true;
 				}
 				String[] tmp = itemData.getString("enchants").split(",");
 				for (String enchantName : tmp) {
 					String level = "1";
-					if (enchantName.equals("")) continue;
+					if (enchantName.equals(""))
+						continue;
 					if (enchantName.contains("(")) {
 						String[] enchantAndLevel = enchantName.split("\\(");
 						enchantName = enchantAndLevel[0].trim();
@@ -504,31 +586,33 @@ public class Award {
 					try {
 						Enchantment enchant = Utils.getEnchantEnumFromName(enchantName);
 						int iLevel = Integer.parseInt(level);
-						if(enchant == null) {
+						if (enchant == null) {
 							System.out.println("[VoteRoulette] Couldn't find enchant with the name \"" + enchantName + "\" for the item: " + itemID + "!");
 							continue;
 						}
-						if(useStorage) {
+						if (useStorage) {
 							esm.addStoredEnchant(enchant, iLevel, true);
 						} else {
 							itemMeta.addEnchant(enchant, iLevel, true);
 						}
-					} catch(Exception e) {
+					} catch (Exception e) {
 						System.out.println("[VoteRoulette] Invalid enchant level for \"" + enchantName + "\" for the item: " + itemID + "!");
 					}
-					if(useStorage) {
+					if (useStorage) {
 						itemMeta = esm;
 					}
 				}
 			}
-			if(itemData.contains("potionEffects")) {
-				if(item.getType() == Material.POTION) {
+			if (itemData.contains("potionEffects")) {
+				if (item.getType() == Material.POTION) {
 					PotionMeta pim = (PotionMeta) itemMeta;
 
 					String[] tmp = itemData.getString("enchants").split(",");
 					for (String potionEffectRaw : tmp) {
-						if (potionEffectRaw.equals("")) continue;
-						if (!potionEffectRaw.contains("(") || !potionEffectRaw.contains("/")) continue;
+						if (potionEffectRaw.equals(""))
+							continue;
+						if (!potionEffectRaw.contains("(") || !potionEffectRaw.contains("/"))
+							continue;
 
 						String name, amplifier, duration;
 						String[] effectAndLevel = potionEffectRaw.split("\\(");
@@ -539,35 +623,35 @@ public class Award {
 						try {
 							PotionEffect pe = new PotionEffect(PotionEffectType.getByName(name), Integer.parseInt(duration), Integer.parseInt(amplifier));
 							pim.addCustomEffect(pe, true);
-						} catch(Exception e) {
+						} catch (Exception e) {
 							System.out.println("[VoteRoulette] Invalid potion effect for \"" + name + "\" for the item: " + itemID + "!");
 						}
 					}
 				}
 			}
-			if(itemData.contains("name")) {
+			if (itemData.contains("name")) {
 				String customName = itemData.getString("name");
 				itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', customName));
 			}
-			if(itemData.contains("lore")) {
+			if (itemData.contains("lore")) {
 				List<String> lore = new ArrayList<String>();
 				lore = itemData.getStringList("lore");
-				if(lore == null || lore.isEmpty()) {
+				if (lore == null || lore.isEmpty()) {
 					String loreStr = itemData.getString("lore");
-					if(loreStr.isEmpty()) {
+					if (loreStr.isEmpty()) {
 						System.out.println("[VoteRoulette] The lore for item \"" + itemID + "\" is empty or formatted incorrectly!");
 					} else {
 						String[] loreLines = loreStr.split(",");
-						for(String loreLine: loreLines) {
+						for (String loreLine : loreLines) {
 							lore.add(loreLine.trim());
 						}
-						for(int i = 0; i < lore.size(); i++) {
+						for (int i = 0; i < lore.size(); i++) {
 							lore.set(i, Utils.transcribeColorCodes(lore.get(i)));
 						}
 						itemMeta.setLore(lore);
 					}
 				} else {
-					for(int i = 0; i < lore.size(); i++) {
+					for (int i = 0; i < lore.size(); i++) {
 						lore.set(i, Utils.transcribeColorCodes(lore.get(i)));
 					}
 					itemMeta.setLore(lore);
@@ -587,12 +671,38 @@ public class Award {
 	}
 
 	public String typeString() {
-		if(type == AwardType.REWARD) {
+		if (type == AwardType.REWARD) {
 			return "Reward";
 		}
-		if(type == AwardType.MILESTONE) {
+		if (type == AwardType.MILESTONE) {
 			return "Milestone";
 		}
 		return "";
+	}
+
+	public enum RerollType {
+		NONE, SINGLE, RANDOM, ALL
+	}
+
+	public String[] parseRerollRewardData(String rerollData) {
+		String rewardName, rerollChanceMin, rerollChanceMax;
+		if (rerollData.contains("(")) {
+			String[] split = rerollData.split("(");
+			rewardName = split[0].trim();
+			split[1] = split[1].replace("%", "").trim().replace(")", "");
+			if (split[1].contains("/")) {
+				String[] chanceData = split[1].split("/");
+				rerollChanceMin = chanceData[0].trim();
+				rerollChanceMax = chanceData[1].trim();
+			} else {
+				rerollChanceMin = split[1].trim();
+				rerollChanceMax = "100";
+			}
+		} else {
+			rewardName = rerollData.trim();
+			rerollChanceMin = "0";
+			rerollChanceMax = "0";
+		}
+		return new String[] { rewardName, rerollChanceMin, rerollChanceMax };
 	}
 }
