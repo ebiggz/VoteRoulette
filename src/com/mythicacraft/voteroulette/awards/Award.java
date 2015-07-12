@@ -120,7 +120,7 @@ public class Award {
 				String rerollData = cs.getString("reroll");
 				if (rerollData.startsWith("ALL")) {
 					if (rerollData.contains("[")) {
-						rerollData = rerollData.replace("[", "").replace("]", "").trim();
+						rerollData = rerollData.replace("ALL", "").replace("[", "").replace("]", "").trim();
 						String[] rewardsData = rerollData.split(",");
 						for (String rewardData : rewardsData) {
 							String[] parsedRerollData = this.parseRerollRewardData(rewardData);
@@ -130,7 +130,7 @@ public class Award {
 					this.rerollType = RerollType.ALL;
 				} else if (rerollData.startsWith("RANDOM") || rerollData.startsWith("ANY")) {
 					if (rerollData.contains("[")) {
-						rerollData = rerollData.replace("[", "").replace("]", "").trim();
+						rerollData = rerollData.replace("RANDOM", "").replace("ANY", "").replace("[", "").replace("]", "").trim();
 						String[] rewardsData = rerollData.split(",");
 						for (String rewardData : rewardsData) {
 							String[] parsedRerollData = this.parseRerollRewardData(rewardData);
@@ -145,6 +145,10 @@ public class Award {
 				}
 				this.rerollString = cs.getString("reroll");
 			} catch (Exception e) {
+				Utils.debugMessage(e.getMessage());
+				if(VoteRoulette.DEBUG) {
+					e.printStackTrace();
+				}
 				log.warning("[VoteRoulette] Error loading reroll settings for reward:" + name + ", Skipping reroll.");
 			}
 		}
@@ -687,7 +691,7 @@ public class Award {
 	public String[] parseRerollRewardData(String rerollData) {
 		String rewardName, rerollChanceMin, rerollChanceMax;
 		if (rerollData.contains("(")) {
-			String[] split = rerollData.split("(");
+			String[] split = rerollData.split("\\(");
 			rewardName = split[0].trim();
 			split[1] = split[1].replace("%", "").trim().replace(")", "");
 			if (split[1].contains("/")) {

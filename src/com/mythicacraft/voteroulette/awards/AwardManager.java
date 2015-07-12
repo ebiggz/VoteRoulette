@@ -636,7 +636,7 @@ public class AwardManager {
 		Utils.debugMessage("Chose: " + award.getName());
 
 		if (useChance) {
-			Utils.debugMessage("\"" + award.getName() + "\" has chance (" + award.getChanceMin() + "/" + award.getChanceMax() + "), doing a chance check...");
+			Utils.debugMessage("\"" + award.getName() + "\" has chance (" + chanceMin + "/" + chanceMax + "), doing a chance check...");
 
 			int random = 1 + (int) (Math.random() * ((chanceMax - 1) + 1));
 
