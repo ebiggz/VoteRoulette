@@ -217,10 +217,16 @@ public class VoteProcessor implements Runnable {
 			return;
 		}
 		Utils.debugMessage("No rewards were chosen for " + playerName + ". Stopping random reward processing.");
-		String voteMessage = plugin.SERVER_BROADCAST_MESSAGE_NO_AWARD;
-		voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
+
 		if (!website.equals("forcevote")) {
+			String voteMessage = plugin.SERVER_BROADCAST_MESSAGE_NO_AWARD;
+			voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
 			Utils.broadcastMessageToServer(voteMessage, playerName);
+
+			String playerVoteMessage = plugin.PLAYER_VOTE_MESSAGE_NO_AWARD;
+			playerVoteMessage = playerVoteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
+			String currentCycle = Integer.toString(voter.getCurrentVoteCycle());
+			Utils.sendMessageToPlayer(playerVoteMessage.replace("%cycle%", currentCycle), playerName);
 		}
 	}
 
