@@ -162,8 +162,8 @@ public class AwardManager {
 			ItemStack[] items = Utils.updateLoreAndCustomNames(player.getName(), award.getItems(voter));
 			if (award.getRequiredSlots(voter) <= Utils.getPlayerOpenInvSlots(player)) {
 				Inventory inv = player.getInventory();
-				for (int i = 0; i < items.length; i++) {
-					inv.addItem(items[i]);
+				for (ItemStack item : items) {
+					inv.addItem(item);
 				}
 			} else {
 				Utils.debugMessage(playerName + " doesnt have space in inventory. Saving as unclaimed.");
@@ -177,8 +177,8 @@ public class AwardManager {
 
 						@Override
 						public void run() {
-							for (int i = 0; i < items.length; i++) {
-								player.getWorld().dropItemNaturally(player.getLocation(), items[i]);
+							for (ItemStack item : items) {
+								player.getWorld().dropItemNaturally(player.getLocation(), item);
 							}
 						}
 
@@ -348,9 +348,9 @@ public class AwardManager {
 
 	public void removeAward(Award award) {
 		if (award.getAwardType() == AwardType.REWARD) {
-			rewards.remove((Reward) award);
+			rewards.remove(award);
 		} else {
-			milestones.remove((Milestone) award);
+			milestones.remove(award);
 		}
 	}
 
@@ -697,6 +697,7 @@ public class AwardManager {
 
 			// arrange list by chance rarity
 			Collections.sort(entriesWithChance, new Comparator<RerollEntry>() {
+				@Override
 				public int compare(RerollEntry a1, RerollEntry a2) {
 					return Float.compare(((float) a1.getChanceMin() / a1.getChanceMax()), ((float) a2.getChanceMin() / a2.getChanceMax()));
 				}
@@ -848,20 +849,21 @@ public class AwardManager {
 		Milestone[] playerMS = getQualifiedMilestones(playerName);
 		int playerVotes = voter.getLifetimeVotes();
 
-		for (int i = 0; i < playerMS.length; i++) {
-			int milVotes = playerMS[i].getVotes();
-			if (playerMS[i].isRecurring()) {
+		for (Milestone element : playerMS) {
+			int milVotes = element.getVotes();
+			if (element.isRecurring()) {
 				if (playerVotes % milVotes == 0) {
-					reachedMils.add(playerMS[i]);
+					reachedMils.add(element);
 					continue;
 				}
 			}
 			if (milVotes == playerVotes) {
-				reachedMils.add(playerMS[i]);
+				reachedMils.add(element);
 			}
 		}
 
 		Collections.sort(reachedMils, new Comparator<Milestone>() {
+			@Override
 			public int compare(Milestone m1, Milestone m2) {
 				return m1.getPriority() - m2.getPriority();
 			}

@@ -18,9 +18,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.milkbowl.vault.economy.Economy;
-import net.milkbowl.vault.permission.Permission;
-
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -51,12 +48,15 @@ import com.mythicacraft.voteroulette.utils.Utils;
 import com.mythicacraft.voteroulette.utils.database.Database;
 import com.mythicacraft.voteroulette.utils.database.MySQL;
 
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.permission.Permission;
+
 public class VoteRoulette extends JavaPlugin {
 
 	/**
 	 * A Bukkit plugin for Minecraft servers that gives random
 	 * rewards to players who vote for the server.
-	 * 
+	 *
 	 * @author Erik Bigler (ebiggz)
 	 */
 
@@ -223,6 +223,7 @@ public class VoteRoulette extends JavaPlugin {
 	public String CURRENT_MONTH_DEF;
 
 	//Called when the plugin is booting up.
+	@Override
 	public void onEnable() {
 
 		VR = this;
@@ -306,6 +307,7 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	//Called when the plugin is getting disabled.
+	@Override
 	public void onDisable() {
 
 		//cancel scheduled events
@@ -1282,7 +1284,7 @@ public class VoteRoulette extends JavaPlugin {
 	}
 
 	/*
-	 * 
+	 *
 	 * Runnable Tasks
 	 *
 	 */
@@ -1297,7 +1299,7 @@ public class VoteRoulette extends JavaPlugin {
 
 		@Override
 		public void run() {
-			Bukkit.broadcastMessage(message);
+			Utils.broadcastMessageToServer(message);
 		}
 	}
 

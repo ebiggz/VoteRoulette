@@ -151,12 +151,12 @@ public class Utils {
 				}
 			}
 			for (ItemStack item : itemP.getCalculatedItem(voter)) { // get
-																	// calcumated
-																	// itemstacks
-																	// for each
-																	// itemstack
-																	// in
-																	// itemprize
+				// calcumated
+				// itemstacks
+				// for each
+				// itemstack
+				// in
+				// itemprize
 				// clone item, apply lore, add to calcitems list
 				ItemStack itemS = item.clone();
 				itemS.setItemMeta(im);
@@ -308,6 +308,7 @@ public class Utils {
 			return;
 		}
 		Collections.sort(topStats, new Comparator<VoterStat>() {
+			@Override
 			public int compare(VoterStat v1, VoterStat v2) {
 				return v2.getStatCount() - v1.getStatCount();
 			}
@@ -366,6 +367,25 @@ public class Utils {
 		if (player == null)
 			return;
 		player.sendMessage(message);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void broadcastMessageToServer(String message) {
+		try {
+			if (Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).getReturnType() == Collection.class)
+				for (Player player : ((Collection<? extends Player>) Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+					player.sendMessage(message);
+				}
+			else
+				for (Player player : ((Player[]) Bukkit.class.getMethod("getOnlinePlayers", new Class<?>[0]).invoke(null, new Object[0]))) {
+					player.sendMessage(message);
+				}
+		} catch (NoSuchMethodException ex) {
+		} // can never happen
+		catch (InvocationTargetException ex) {
+		} // can also never happen
+		catch (IllegalAccessException ex) {
+		} // can still never happen
 	}
 
 	@SuppressWarnings("unchecked")
@@ -848,8 +868,8 @@ public class Utils {
 		Inventory inv = player.getInventory();
 		ItemStack[] contents = inv.getContents();
 		int count = 0;
-		for (int i = 0; i < contents.length; i++) {
-			if (contents[i] == null)
+		for (ItemStack content : contents) {
+			if (content == null)
 				count++;
 		}
 		return count;
@@ -1212,9 +1232,9 @@ public class Utils {
 		} // can still never happen
 
 		OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
-		for (int i = 0; i < offlinePlayers.length; i++) {
-			if (offlinePlayers[i].getName().toLowerCase().startsWith(playername.toLowerCase())) {
-				return offlinePlayers[i].getName();
+		for (OfflinePlayer offlinePlayer : offlinePlayers) {
+			if (offlinePlayer.getName().toLowerCase().startsWith(playername.toLowerCase())) {
+				return offlinePlayer.getName();
 			}
 		}
 		return null;
