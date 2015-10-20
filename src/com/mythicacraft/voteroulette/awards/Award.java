@@ -42,6 +42,7 @@ public class Award {
 	private RerollType rerollType = RerollType.NONE;
 	private String rerollString;
 	private AwardType type;
+	private boolean alwaysRun = false;
 
 	protected Award(String name, ConfigurationSection cs, AwardType type) {
 		this.setName(name);
@@ -199,8 +200,17 @@ public class Award {
 				players[i] = players[i].trim();
 			}
 		}
+		if (cs.contains("alwaysRun")) {
+			alwaysRun = cs.getBoolean("alwaysRun", false);
+			if(this.alwaysRun) {
+				if (this.hasCurrency() || this.hasItems() || this.hasXpLevels()) {
+					log.warning("[VoteRoulette] The award \"" + this.getName() + "\" has alwaysRun set to true but has prizes other than commands. Only command-only awards can be set to always run!");
+					this.alwaysRun = false;
+				}
+			}
+		}
 		if (!this.hasCurrency() && !this.hasItems() && !this.hasXpLevels() && !this.hasCommands()) {
-			log.warning("[VoteRoulette] The Reward \"" + this.getName() + "\" appears to be empty. Check your config settings!");
+			log.warning("[VoteRoulette] The award \"" + this.getName() + "\" appears to be empty. Check your config settings!");
 		}
 	}
 
@@ -356,6 +366,10 @@ public class Award {
 			return true;
 		}
 		return false;
+	}
+
+	public boolean shouldAlwaysRun() {
+		return this.alwaysRun;
 	}
 
 	public List<String> getCommands() {

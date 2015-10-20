@@ -136,9 +136,17 @@ public class AwardManager {
 		Player player = Bukkit.getPlayerExact(playerName);
 
 		if (player == null) {
-			Utils.debugMessage(playerName + " isnt online. Saving as unclaimed.");
-			voter.saveUnclaimedAward(award);
-			return false;
+			if(award.shouldAlwaysRun()) {
+				if(award.hasCommands()) {
+					Utils.debugMessage("Player is offline but award is set to always run and has commands, running them now...");
+					this.runCommands(award, playerName);
+				}
+				return true;
+			} else {
+				Utils.debugMessage(playerName + " isn't online. Saving as unclaimed.");
+				voter.saveUnclaimedAward(award);
+				return false;
+			}
 		}
 
 		String worldName = player.getWorld().getName();
@@ -206,61 +214,7 @@ public class AwardManager {
 		}
 		if (award.hasCommands()) {
 			Utils.debugMessage("Award has commands, running them");
-			for (String command : award.getCommands()) {
-				if (command.startsWith("/")) {
-					command = command.replaceFirst("/", "");
-				}
-				if (command.startsWith("(")) {
-					command = command.replaceFirst("\\(", "");
-					String[] delayedCommandData = command.split("\\)");
-					String delayedCommand = delayedCommandData[1].trim();
-					if (delayedCommand.startsWith("/")) {
-						delayedCommand = delayedCommand.replaceFirst("/", "");
-					}
-					int delay = 1;
-					boolean runOnLogOff = false;
-					boolean runOnShutdown = false;
-					if (delayedCommandData[0].contains("/")) {
-						String[] delayedCommandOptions = delayedCommandData[0].split("/");
-						for (String cmdOption : delayedCommandOptions) {
-							if (cmdOption.trim().equalsIgnoreCase("logoff") || cmdOption.trim().equalsIgnoreCase("log off")) {
-								runOnLogOff = true;
-							} else if (cmdOption.trim().equalsIgnoreCase("shutdown")) {
-								runOnShutdown = true;
-							} else {
-								try {
-									delay = Integer.parseInt(cmdOption.trim());
-								} catch (Exception e) {
-									log.warning("[VoteRoulette] Error parsing delay for command in award: " + award.getName());
-								}
-							}
-						}
-					} else {
-						delay = Integer.parseInt(delayedCommandData[0].trim());
-					}
-					DelayedCommand dc = new DelayedCommand(delayedCommand, delay, playerName, runOnLogOff, runOnShutdown);
-					dc.runTaskLater(plugin, delay * 20);
-					VoteRoulette.delayedCommands.add(dc);
-				} else {
-					BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
-					scheduler.runTask(plugin, new Runnable() {
-
-						private String command;
-						private String playerName;
-
-						@Override
-						public void run() {
-							Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", playerName));
-						}
-
-						private Runnable init(String command, String playerName) {
-							this.command = command;
-							this.playerName = playerName;
-							return this;
-						}
-					}.init(command, player.getName()));
-				}
-			}
+			this.runCommands(award, playerName);
 		}
 		if (plugin.MESSAGE_PLAYER) {
 			if (!muteMessage) {
@@ -1093,5 +1047,63 @@ public class AwardManager {
 
 	public List<DelayedCommand> getDelayedCommands() {
 		return delayedCommands;
+	}
+
+	private void runCommands(Award award, String playerName) {
+		for (String command : award.getCommands()) {
+			if (command.startsWith("/")) {
+				command = command.replaceFirst("/", "");
+			}
+			if (command.startsWith("(")) {
+				command = command.replaceFirst("\\(", "");
+				String[] delayedCommandData = command.split("\\)");
+				String delayedCommand = delayedCommandData[1].trim();
+				if (delayedCommand.startsWith("/")) {
+					delayedCommand = delayedCommand.replaceFirst("/", "");
+				}
+				int delay = 1;
+				boolean runOnLogOff = false;
+				boolean runOnShutdown = false;
+				if (delayedCommandData[0].contains("/")) {
+					String[] delayedCommandOptions = delayedCommandData[0].split("/");
+					for (String cmdOption : delayedCommandOptions) {
+						if (cmdOption.trim().equalsIgnoreCase("logoff") || cmdOption.trim().equalsIgnoreCase("log off")) {
+							runOnLogOff = true;
+						} else if (cmdOption.trim().equalsIgnoreCase("shutdown")) {
+							runOnShutdown = true;
+						} else {
+							try {
+								delay = Integer.parseInt(cmdOption.trim());
+							} catch (Exception e) {
+								log.warning("[VoteRoulette] Error parsing delay for command in award: " + award.getName());
+							}
+						}
+					}
+				} else {
+					delay = Integer.parseInt(delayedCommandData[0].trim());
+				}
+				DelayedCommand dc = new DelayedCommand(delayedCommand, delay, playerName, runOnLogOff, runOnShutdown);
+				dc.runTaskLater(plugin, delay * 20);
+				VoteRoulette.delayedCommands.add(dc);
+			} else {
+				BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
+				scheduler.runTask(plugin, new Runnable() {
+
+					private String command;
+					private String playerName;
+
+					@Override
+					public void run() {
+						Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("%player%", this.playerName));
+					}
+
+					private Runnable init(String command, String playerName) {
+						this.command = command;
+						this.playerName = playerName;
+						return this;
+					}
+				}.init(command, playerName));
+			}
+		}
 	}
 }
