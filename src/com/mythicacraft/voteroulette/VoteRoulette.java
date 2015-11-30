@@ -343,7 +343,7 @@ public class VoteRoulette extends JavaPlugin {
 
 	private boolean setupVotifier() {
 		Plugin votifier =  getServer().getPluginManager().getPlugin("Votifier");
-		if (!(votifier != null && votifier instanceof com.vexsoftware.votifier.Votifier)) {
+		if (votifier == null) {
 			log.severe("[VoteRoulette] Votifier was not found! Votifier is required for VoteRoulette to work!");
 			return false;
 		}
