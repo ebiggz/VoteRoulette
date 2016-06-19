@@ -344,22 +344,22 @@ public class Utils {
 	 * unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
 	 * if(unclaimedRewardsCount > 0) {
 	 * sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%",
-	 * plugin.REWARDS_PURAL_DEF.toLowerCase()).replace("%amount%",
+	 * plugin.REWARDS_PURAL_DEF).replace("%amount%",
 	 * Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" +
 	 * plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " +
-	 * plugin.REWARDS_PURAL_DEF.toLowerCase())); } else {
+	 * plugin.REWARDS_PURAL_DEF)); } else {
 	 * sender.sendMessage(plugin
 	 * .NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%",
-	 * plugin.REWARDS_PURAL_DEF.toLowerCase())); } if(unclaimedMilestonesCount >
+	 * plugin.REWARDS_PURAL_DEF)); } if(unclaimedMilestonesCount >
 	 * 0) {
 	 * sender.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%",
-	 * plugin.MILESTONE_PURAL_DEF.toLowerCase()).replace("%amount%",
+	 * plugin.MILESTONE_PURAL_DEF).replace("%amount%",
 	 * Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" +
 	 * plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " +
-	 * plugin.MILESTONE_PURAL_DEF.toLowerCase())); } else {
+	 * plugin.MILESTONE_PURAL_DEF)); } else {
 	 * sender.sendMessage(plugin
 	 * .NO_UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%",
-	 * plugin.MILESTONE_PURAL_DEF.toLowerCase())); } }
+	 * plugin.MILESTONE_PURAL_DEF)); } }
 	 */
 
 	public static void sendMessageToPlayer(String message, String playerName) {
@@ -544,13 +544,13 @@ public class Utils {
 
 		if (awards.get(0) instanceof Milestone) {
 			if (awards.size() > 1) {
-				summerizeMessage = summerizeMessage.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase());
+				summerizeMessage = summerizeMessage.replace("%type%", plugin.MILESTONE_PURAL_DEF);
 			} else {
 				summerizeMessage = summerizeMessage.replace("%type%", plugin.MILESTONE_DEF.toLowerCase());
 			}
 		} else {
 			if (awards.size() > 0) {
-				summerizeMessage = summerizeMessage.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase());
+				summerizeMessage = summerizeMessage.replace("%type%", plugin.REWARDS_PURAL_DEF);
 			} else {
 				summerizeMessage = summerizeMessage.replace("%type%", plugin.REWARD_DEF.toLowerCase());
 			}
@@ -1263,13 +1263,13 @@ public class Utils {
 			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + "colors" + ChatColor.GRAY + " - See the colorcodes.\n");
 		}
 		if (player.hasPermission("voteroulette.viewrewards")) {
-			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + ChatColor.GRAY + " - See rewards you are eligible to get.\n");
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF + ChatColor.GRAY + " - See rewards you are eligible to get.\n");
 		}
 		if (player.hasPermission("voteroulette.viewmilestones")) {
-			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + ChatColor.GRAY + " - See milestones you are eligible to get.\n");
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF + ChatColor.GRAY + " - See milestones you are eligible to get.\n");
 		}
 		if (player.hasPermission("voteroulette.viewallawards")) {
-			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " [" + plugin.REWARDS_PURAL_DEF.toLowerCase() + "/" + plugin.MILESTONE_PURAL_DEF.toLowerCase() + "]" + " -a" + ChatColor.GRAY + " - See all the awards, regardless of if you are eligable.\n");
+			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " [" + plugin.REWARDS_PURAL_DEF + "/" + plugin.MILESTONE_PURAL_DEF + "]" + " -a" + ChatColor.GRAY + " - See all the awards, regardless of if you are eligable.\n");
 		}
 		if (player.hasPermission("voteroulette.top10")) {
 			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + "10 " + plugin.TOTAL_DEF.toLowerCase().replace(" ", "") + ChatColor.GRAY + " - See the top 10 players for total votes.\n");
@@ -1293,9 +1293,9 @@ public class Utils {
 			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETSTREAK_DEF + " [#]" + ChatColor.GRAY + " - Set a players current vote streak.\n");
 		}
 		sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + ChatColor.GRAY + " - Tells you if you have any unclaimed rewards or\n milestones you received while offline.\n");
-		sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + ChatColor.GRAY + " - Lists any of your unclaimed rewards.\n");
-		sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]" + ChatColor.GRAY + " - Gives you the reward with the given # or all of them.\n");
-		sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + ChatColor.GRAY + " - Lists any of your unclaimed milestones.\n");
+		sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF + ChatColor.GRAY + " - Lists any of your unclaimed rewards.\n");
+		sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF + " [#/" + plugin.ALL_DEF + "]" + ChatColor.GRAY + " - Gives you the reward with the given # or all of them.\n");
+		sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF + ChatColor.GRAY + " - Lists any of your unclaimed milestones.\n");
 		sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF + " [#/" + plugin.ALL_DEF + "]" + ChatColor.GRAY + " - Gives you the milestone with the given # or all of them.\n");
 		if (player.hasPermission("voteroulette.forcevote")) {
 			sb.append(ChatColor.AQUA + "/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEVOTE_DEF + " [" + plugin.PLAYER_DEF + "]" + ChatColor.GRAY + " - Make it as if the given player just voted, this will update their stats and give them an applicable reward/milestone.\n");
@@ -1339,14 +1339,14 @@ public class Utils {
 			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + "colors", "See the colorcodes", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + "colors");
 		}
 		if (player.hasPermission("voteroulette.viewrewards")) {
-			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase(), "See rewards you are eligible to get", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase());
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF, "See rewards you are eligible to get", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF);
 		}
 		if (player.hasPermission("voteroulette.viewmilestones")) {
-			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase(), "See milestones you are eligible to get", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase());
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF, "See milestones you are eligible to get", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF);
 		}
 		if (player.hasPermission("voteroulette.viewallawards")) {
-			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " -a", "See all the rewards, regardless of if you are eligable.", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " -a");
-			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " -a", "See all the milestones, regardless of if you are eligable.", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " -a");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF + " -a", "See all the rewards, regardless of if you are eligable.", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.REWARDS_PURAL_DEF + " -a");
+			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF + " -a", "See all the milestones, regardless of if you are eligable.", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.MILESTONE_PURAL_DEF + " -a");
 		}
 		if (player.hasPermission("voteroulette.top10")) {
 			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + "10 " + plugin.TOTAL_DEF.toLowerCase().replace(" ", ""), "See the top 10 players for lifetime votes", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.TOP_DEF + "10 " + plugin.TOTAL_DEF.toLowerCase().replace(" ", ""));
@@ -1370,10 +1370,10 @@ public class Utils {
 			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETSTREAK_DEF + " [#]", "Set a players current vote streak", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.STATS_DEF.toLowerCase() + " [" + plugin.PLAYER_DEF.toLowerCase() + "] " + plugin.SETSTREAK_DEF + " [#]");
 		}
 		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF, "Tells you if you have any unclaimed rewards or\nmilestones you received while offline", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF);
-		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase(), "Lists any of your unclaimed rewards", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase());
-		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]", "Claims the reward with the given # or all of them", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]");
-		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase(), "Lists any of your unclaimed milestones", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase());
-		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]", "Claims the milestone with the given # or all of them", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase() + " [#/" + plugin.ALL_DEF + "]");
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF, "Lists any of your unclaimed rewards", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF);
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF + " [#/" + plugin.ALL_DEF + "]", "Claims the reward with the given # or all of them", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.REWARDS_PURAL_DEF + " [#/" + plugin.ALL_DEF + "]");
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF, "Lists any of your unclaimed milestones", ClickEvent.RUN_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF);
+		fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF + " [#/" + plugin.ALL_DEF + "]", "Claims the milestone with the given # or all of them", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF + " " + plugin.MILESTONE_PURAL_DEF + " [#/" + plugin.ALL_DEF + "]");
 		if (player.hasPermission("voteroulette.forcevote")) {
 			fancyMenu.addCommand("/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEVOTE_DEF + " [" + plugin.PLAYER_DEF + "]", "Make it as if the given player just voted,\nthis will update their stats and give\n them an applicable reward/milestone.", ClickEvent.SUGGEST_COMMAND, "/" + plugin.DEFAULT_ALIAS + " " + plugin.FORCEVOTE_DEF + " [" + plugin.PLAYER_DEF + "]");
 		}

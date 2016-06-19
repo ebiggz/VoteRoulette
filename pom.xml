@@ -2,28 +2,30 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.mythicacraft</groupId>
   <artifactId>VoteRoulette</artifactId>
-  <version>3.2.1</version>
+  <version>3.2.3</version>
   <name>VoteRoulette</name>
           <repositories>
-                <repository>
-                        <id>spigot-repo</id>
-                        <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
-                </repository>
+			<repository>
+		    	<id>spigot-repo</id>
+		        <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+		    </repository>
         </repositories>
         <!--Spigot-API -->
         <dependencies>
-                <dependency>
-                        <groupId>org.spigotmc</groupId>
-                        <artifactId>spigot-api</artifactId>
-                        <version>1.8-R0.1-SNAPSHOT</version>
-                </dependency>
- 
-                <!--Bukkit API -->
-                <dependency>
-                        <groupId>org.bukkit</groupId>
-                        <artifactId>bukkit</artifactId>
-                        <version>1.8-R0.1-SNAPSHOT</version>
-                </dependency>
+			 <!--Spigot API-->
+			    <dependency>
+			           <groupId>org.spigotmc</groupId>
+			           <artifactId>spigot-api</artifactId>
+			           <version>1.10-R0.1-SNAPSHOT</version>
+			           <scope>provided</scope>
+			    </dependency>
+			    <!--Bukkit API-->
+			    <dependency>
+			            <groupId>org.bukkit</groupId>
+			            <artifactId>bukkit</artifactId>
+			            <version>1.10-R0.1-SNAPSHOT</version>
+			            <scope>provided</scope>
+			    </dependency>
                
       		    <dependency>
                        <groupId>com.vexsoftware</groupId>

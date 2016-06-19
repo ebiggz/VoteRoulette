@@ -63,7 +63,7 @@ public class LoginListener implements Listener {
 						if(VoteRoulette.AUTO_CLAIM) {
 							VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.REWARD);
 						} else {
-							player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF.toLowerCase()));
+							player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF).replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF));
 						}
 					}
 
@@ -71,7 +71,7 @@ public class LoginListener implements Listener {
 						if(VoteRoulette.AUTO_CLAIM) {
 							VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.MILESTONE);
 						} else {
-							player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF.toLowerCase()).replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF.toLowerCase()));
+							player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF).replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF));
 						}
 					}
 				}
@@ -100,15 +100,28 @@ public class LoginListener implements Listener {
 
 	@EventHandler (priority = EventPriority.MONITOR)
 	public void onWorldChange(PlayerChangedWorldEvent event) {
-		Voter voter = VoteRoulette.getVoterManager().getVoter(event.getPlayer().getName());
-		int unclaimedRewardsCount = voter.getUnclaimedRewardCount();
-		int unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
+		Player player = event.getPlayer();
+		Voter voter = VoteRoulette.getVoterManager().getVoter(player.getName());
 
-		if(unclaimedRewardsCount > 0) {
-			VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.REWARD);
-		}
-		if(unclaimedMilestonesCount > 0) {
-			VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.MILESTONE);
+		if(!VoteRoulette.DISABLE_UNCLAIMED) {
+			int unclaimedRewardsCount = voter.getUnclaimedRewardCount();
+			int unclaimedMilestonesCount = voter.getUnclaimedMilestoneCount();
+
+			if(unclaimedRewardsCount > 0) {
+				if(VoteRoulette.AUTO_CLAIM) {
+					VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.REWARD);
+				} else {
+					player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.REWARDS_PURAL_DEF).replace("%amount%", Integer.toString(unclaimedRewardsCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.REWARDS_PURAL_DEF));
+				}
+			}
+
+			if(unclaimedMilestonesCount > 0) {
+				if(VoteRoulette.AUTO_CLAIM) {
+					VoteRoulette.getAwardManager().administerAllUnclaimedAwards(voter, AwardType.MILESTONE);
+				} else {
+					player.sendMessage(plugin.UNCLAIMED_AWARDS_NOTIFICATION.replace("%type%", plugin.MILESTONE_PURAL_DEF).replace("%amount%", Integer.toString(unclaimedMilestonesCount)).replace("%command%", "/" + plugin.DEFAULT_ALIAS + " " + plugin.CLAIM_DEF.toLowerCase() + " " + plugin.MILESTONE_PURAL_DEF));
+				}
+			}
 		}
 	}
 

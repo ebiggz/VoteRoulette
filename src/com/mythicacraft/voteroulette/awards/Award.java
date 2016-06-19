@@ -30,7 +30,7 @@ public class Award {
 	private int chanceMin;
 	private int chanceMax = 100;
 	private boolean hasChance = false;
-	private ArrayList<ItemPrize> items = new ArrayList<>();
+	private ArrayList<ItemPrize> items = new ArrayList<ItemPrize>();
 	private String[] permGroups;
 	private String[] players;
 	private String name;

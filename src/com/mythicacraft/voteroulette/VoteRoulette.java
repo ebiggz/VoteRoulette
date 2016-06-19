@@ -257,7 +257,7 @@ public class VoteRoulette extends JavaPlugin {
 			String[] array = vString.split("_");
 			v = Double.parseDouble(array[0] + "." + array[1]);
 		}
-		if(v > 1.6) {
+		if(v != 1.6 && v != 1.5 && v != 1.4 && v != 1.3) {
 			isOn1dot7 = true;
 		}
 

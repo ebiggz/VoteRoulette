@@ -113,7 +113,7 @@ public class AwardManager {
 			}
 
 			player.sendMessage(plugin.WRONG_AWARD_WORLD_AUTOCLAIM_NOTIFICATION.replace("%type%", awardType == AwardType.REWARD ? plugin.REWARDS_PURAL_DEF.toLowerCase()
-					: plugin.MILESTONE_PURAL_DEF.toLowerCase()).replace("%worlds%", sb.toString()));
+					: plugin.MILESTONE_PURAL_DEF).replace("%worlds%", sb.toString()));
 		}
 	}
 
