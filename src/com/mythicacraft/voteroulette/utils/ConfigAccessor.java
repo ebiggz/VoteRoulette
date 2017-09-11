@@ -3,6 +3,8 @@ package com.mythicacraft.voteroulette.utils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -26,14 +28,14 @@ public class ConfigAccessor {
 		configFile = new File(folderPath + File.separator + fileName);
 	}
 
-	@SuppressWarnings("deprecation")
 	public void reloadConfig() {
 		fileConfiguration = YamlConfiguration.loadConfiguration(configFile);
 
 		// Look for defaults in the jar
 		InputStream defConfigStream = plugin.getResource(fileName);
 		if (defConfigStream != null) {
-			YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+			Reader defConfigReader = new InputStreamReader(defConfigStream);
+			YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigReader);
 			fileConfiguration.setDefaults(defConfig);
 			try {
 				//fileConfiguration.save(configFile);
