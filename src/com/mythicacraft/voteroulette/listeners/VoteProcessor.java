@@ -67,10 +67,10 @@ public class VoteProcessor implements Runnable {
 		VoteRoulette.getStatsManager().updateStatsWithPlayer(playerName);
 
 		String voteMessage = plugin.SERVER_BROADCAST_MESSAGE_NO_AWARD;
-		voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
+		voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServer().getName()).replace("%site%", website);
 
 		String playerVoteMessage = plugin.PLAYER_VOTE_MESSAGE_NO_AWARD;
-		playerVoteMessage = playerVoteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
+		playerVoteMessage = playerVoteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServer().getName()).replace("%site%", website);
 
 		// First check if player is blacklisted & check if the blacklist is
 		// being used as a white list
@@ -220,11 +220,11 @@ public class VoteProcessor implements Runnable {
 
 		if (!website.equals("forcevote")) {
 			String voteMessage = plugin.SERVER_BROADCAST_MESSAGE_NO_AWARD;
-			voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
+			voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServer().getName()).replace("%site%", website);
 			Utils.broadcastMessageToServer(voteMessage, playerName);
 
 			String playerVoteMessage = plugin.PLAYER_VOTE_MESSAGE_NO_AWARD;
-			playerVoteMessage = playerVoteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
+			playerVoteMessage = playerVoteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServer().getName()).replace("%site%", website);
 			String currentCycle = Integer.toString(voter.getCurrentVoteCycle());
 			Utils.sendMessageToPlayer(playerVoteMessage.replace("%cycle%", currentCycle), playerName);
 		}
@@ -287,7 +287,7 @@ public class VoteProcessor implements Runnable {
 		}
 		if (!website.equals("forcevote")) {
 			String voteMessage = plugin.SERVER_BROADCAST_MESSAGE_NO_AWARD;
-			voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServerName()).replace("%site%", website);
+			voteMessage = voteMessage.replace("%player%", playerName).replace("%server%", Bukkit.getServer().getName()).replace("%site%", website);
 			Utils.broadcastMessageToServer(voteMessage, playerName);
 		}
 	}
