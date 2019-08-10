@@ -14,6 +14,7 @@ public class PlayerEarnedAwardEvent extends Event {
 	private boolean cancelled;
 
 	public PlayerEarnedAwardEvent(String playerName, Award award) {
+		super(true); // make event async
 		this.playerName = playerName;
 		this.award = award;
 	}
