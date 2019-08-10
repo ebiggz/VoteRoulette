@@ -461,7 +461,7 @@ public class Utils {
 			Award award, Voter voter) {
 		awardMessage = awardMessage.replace("%name%", award.getName());
 		awardMessage = awardMessage.replace("%player%", voter.getPlayerName());
-		awardMessage = awardMessage.replace("%server%", Bukkit.getServerName());
+		awardMessage = awardMessage.replace("%server%", Bukkit.getServer().getName());
 
 		if (award.getAwardType() == AwardType.MILESTONE) {
 			awardMessage = awardMessage.replace("%type%", plugin.MILESTONE_DEF.toLowerCase());
@@ -477,7 +477,7 @@ public class Utils {
 		if (!award.hasMessage()) {
 			awardMessage = awardMessage.replace("%name%", award.getName());
 			awardMessage = awardMessage.replace("%player%", voter.getPlayerName());
-			awardMessage = awardMessage.replace("%server%", Bukkit.getServerName());
+			awardMessage = awardMessage.replace("%server%", Bukkit.getServer().getName());
 
 			if (award.getAwardType() == AwardType.MILESTONE) {
 				awardMessage = awardMessage.replace("%type%", plugin.MILESTONE_DEF.toLowerCase());
@@ -540,7 +540,7 @@ public class Utils {
 		String awardsListStr = sb.toString();
 		String summerizeMessage = plugin.PLAYER_AWARDS_SUMMARY_MESSAGE;
 
-		summerizeMessage = summerizeMessage.replace("%names%", awardsListStr).replace("%player%", voter.getPlayerName()).replace("%server%", Bukkit.getServerName()).replace("%prizes%", getSummarizedAwardPrizesString(awards, voter));
+		summerizeMessage = summerizeMessage.replace("%names%", awardsListStr).replace("%player%", voter.getPlayerName()).replace("%server%", Bukkit.getServer().getName()).replace("%prizes%", getSummarizedAwardPrizesString(awards, voter));
 
 		if (awards.get(0) instanceof Milestone) {
 			if (awards.size() > 1) {

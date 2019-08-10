@@ -726,7 +726,7 @@ public class VoteRoulette extends JavaPlugin {
 
 		PLAYER_AWARDS_SUMMARY_MESSAGE = Utils.transcribeColorCodes(messageData.getConfig().getString("player-awards-summary-message", "&bYou have received the %type% &e%names% &bwhich gave you, combined:&e %prizes%"));
 
-		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("periodic-reminder").replace("%server%", Bukkit.getServerName()));
+		PERIODIC_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("periodic-reminder").replace("%server%", Bukkit.getServer().getName()));
 
 		TWENTYFOUR_REMINDER = Utils.transcribeColorCodes(messageData.getConfig().getString("twentyfour-hour-reminder", "&b24 hours have passed since your last vote!"));
 
